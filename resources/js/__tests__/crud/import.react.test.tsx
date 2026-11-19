@@ -68,7 +68,8 @@ describe('import (React)', () => {
         expect(crud.getState().toasts.map((toast) => toast.text)).toEqual(['Importação concluída: 2 criados, 0 atualizados.']);
 
         // Done: the token is spent, so closing does not discard anything.
-        click('Fechar');
+        // The ✕ of the header is also "Fechar" (modal_close), as in the Blade: the footer button is the last one.
+        fireEvent.click(screen.getAllByRole('button', { name: 'Fechar' }).at(-1)!);
         expect(screen.queryByRole('dialog')).toBeNull();
         expect(crud.getState().panel).toBeNull();
         expect(server.calls.some((call) => call.method === 'DELETE')).toBe(false);

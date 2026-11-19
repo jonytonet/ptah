@@ -23,7 +23,10 @@ import {
     uploadAttachments,
 } from '../../core/crud/records';
 import type { AttachmentItem, HistoryChange, HistoryEntry, RecordsWords } from '../../core/crud/records';
-import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal } from '../forge';
+import { modalButton } from '../../core/crud/form';
+import PtahConfirm from '../PtahConfirm.vue';
+import { icon } from '../icons';
+import { PtahCrudModal, PtahModalAlert, PtahModalEmpty } from './modal';
 import { usePtahCrud } from '../usePtahCrud';
 
 const panelProps = {
@@ -33,14 +36,15 @@ const panelProps = {
 
 let ids = 0;
 
-const MUTED = { color: 'var(--pc-text-muted)' };
+const loading = (t: RecordsWords) => h('div', { class: 'pc-fm-loading', role: 'status', 'aria-live': 'polite' }, [h('span', { class: 'pc-fm-spin', 'aria-hidden': 'true' }), ` ${t.loading}`]);
 
-const loading = (t: RecordsWords) => h('div', { class: 'pc-state', role: 'status', 'aria-live': 'polite' }, [h('span', { class: 'pf-spinner', 'aria-hidden': 'true' }), ` ${t.loading}`]);
+const alertLines = (messages: string[]) => messages.map((message) => h('p', { role: 'alert', class: 'pc-fm-err' }, message));
 
-const alertLines = (messages: string[]) => messages.map((message) => h('p', { role: 'alert', style: { margin: 0, fontSize: '12px', color: 'var(--pc-danger)' } }, message));
+const modal = (onClose: () => void, closeLabel: string, title: string, size: 'sm' | 'lg', body: () => unknown, footer: () => unknown) =>
+    h(PtahCrudModal, { title, size, closeLabel, onClose }, { default: body, footer });
 
-const modal = (open: boolean, onClose: () => void, title: string, size: string, body: () => unknown, footer: () => unknown) =>
-    h(ForgeModal, { modelValue: open, 'onUpdate:modelValue': (value: boolean) => !value && onClose(), title, size }, { default: body, footer });
+/** forge-button dark flat. */
+const flatButton = (label: string, onClick: () => void) => h('button', { type: 'button', class: modalButton('flat'), onClick }, label);
 
 /** The record of the panel `name`, when it is the open one. */
 function usePanel(crud: CrudController, name: string) {
@@ -84,9 +88,9 @@ export const PtahCrudRecordButtons = defineComponent({
 
             return [
                 features.attachments
-                    ? h('button', { type: 'button', class: 'pc-icon-btn', onClick: () => props.crud.openPanel(PANEL_ATTACHMENTS, props.row.id) }, `${t.value.attachments}${count !== null && count >= 0 ? ` (${count})` : ''}`)
+                    ? h('button', { type: 'button', class: modalButton('flat'), onClick: () => props.crud.openPanel(PANEL_ATTACHMENTS, props.row.id) }, `${t.value.attachments}${count !== null && count >= 0 ? ` (${count})` : ''}`)
                     : null,
-                features.history ? h('button', { type: 'button', class: 'pc-icon-btn', onClick: () => props.crud.openPanel(PANEL_HISTORY, props.row.id) }, t.value.history) : null,
+                features.history ? h('button', { type: 'button', class: modalButton('flat'), onClick: () => props.crud.openPanel(PANEL_HISTORY, props.row.id) }, t.value.history) : null,
             ];
         };
     },
@@ -96,10 +100,10 @@ export const PtahCrudRecordButtons = defineComponent({
 
 function change(item: HistoryChange, updated: boolean, t: RecordsWords): VNode[] {
     return [
-        h('dt', { class: 'pc-label', style: { margin: 0 } }, item.label),
-        h('dd', { style: { margin: 0, color: 'var(--pc-text)', overflowWrap: 'anywhere' } }, [
+        h('dt', item.label),
+        h('dd', [
             ...(updated
-                ? [h('span', { style: { ...MUTED, textDecoration: 'line-through' } }, item.old), ' ', h('span', { 'aria-hidden': 'true', style: MUTED }, '→'), h('span', { style: SR_ONLY }, t.became), ' ']
+                ? [h('span', { class: 'pc-hist-old', style: { textDecoration: 'line-through' } }, item.old), ' ', h('span', { 'aria-hidden': 'true', class: 'pc-fm-muted' }, '→'), h('span', { style: SR_ONLY }, t.became), ' ']
                 : []),
             h('span', item.new),
         ]),
@@ -143,41 +147,32 @@ export const PtahCrudHistory = defineComponent({
             const words = t.value;
 
             return modal(
-                true,
                 close,
+                words.close,
                 words.historyTitle,
                 'lg',
                 () =>
                     error.value
-                        ? h(ForgeAlert, { color: 'danger' }, () => error.value)
+                        ? h(PtahModalAlert, null, () => error.value)
                         : items.value === null
                           ? loading(words)
                           : items.value.length === 0
-                            ? h(ForgeEmpty, { title: words.historyEmpty })
+                            ? h(PtahModalEmpty, { title: words.historyEmpty })
                             : h(
                                   'ol',
-                                  { style: { listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '16px' } },
+                                  { class: 'pc-hist' },
                                   items.value.map((item, index) =>
-                                      h('li', { key: index, style: { border: '1px solid var(--pc-line)', borderRadius: 'var(--pc-radius)', background: 'var(--pc-bg)', padding: '12px' } }, [
-                                          h('div', { style: { display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: '8px' } }, [
-                                              h('p', { style: { margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--pc-text-strong)' } }, [
-                                                  `${words.events[item.event] ?? item.event} `,
-                                                  h('span', { style: { ...MUTED, fontWeight: 400 } }, `· ${item.who}`),
-                                              ]),
-                                              h('time', { style: { ...MUTED, fontSize: '12px', fontVariantNumeric: 'tabular-nums' } }, item.when),
+                                      h('li', { key: index, class: 'pc-hist-item' }, [
+                                          h('div', { class: 'pc-hist-top' }, [
+                                              h('p', { class: 'pc-hist-event' }, [`${words.events[item.event] ?? item.event} `, h('span', { class: 'pc-hist-who' }, `· ${item.who}`)]),
+                                              h('time', { class: 'pc-hist-when' }, item.when),
                                           ]),
-                                          item.changes.length > 0
-                                              ? h(
-                                                    'dl',
-                                                    { style: { margin: '8px 0 0', display: 'grid', gridTemplateColumns: 'minmax(8rem, auto) 1fr', columnGap: '12px', rowGap: '4px', fontSize: '14px' } },
-                                                    item.changes.flatMap((c) => change(c, item.event === 'updated', words)),
-                                                )
-                                              : null,
-                                          item.hidden > 0 ? h('p', { style: { ...MUTED, margin: '4px 0 0', fontSize: '12px' } }, plural(words.hiddenFields, item.hidden)) : null,
+                                          item.changes.length > 0 ? h('dl', { class: 'pc-hist-changes' }, item.changes.flatMap((c) => change(c, item.event === 'updated', words))) : null,
+                                          item.hidden > 0 ? h('p', { class: 'pc-hist-hidden' }, plural(words.hiddenFields, item.hidden)) : null,
                                       ]),
                                   ),
                               ),
-                () => h(ForgeButton, { color: 'dark', flat: true, onClick: close }, () => words.close),
+                () => flatButton(words.close, close),
             );
         };
     },
@@ -278,9 +273,10 @@ export const PtahCrudAttachments = defineComponent({
         };
 
         const picker = (words: RecordsWords) =>
-            h('div', { style: { display: 'grid', gap: '8px', justifyItems: 'start' } }, [
-                h('label', { for: inputId, class: 'pc-btn', style: { cursor: 'pointer', position: 'relative' } }, [
-                    `📎 ${words.pick}`,
+            h('div', { class: 'pc-att-up' }, [
+                h('label', { for: inputId, class: 'pc-fm-pick' }, [
+                    icon('paperclip'),
+                    words.pick,
                     h('input', {
                         id: inputId,
                         type: 'file',
@@ -297,8 +293,12 @@ export const PtahCrudAttachments = defineComponent({
                 ]),
                 ...(files.value.length > 0
                     ? [
-                          h('ul', { style: { ...MUTED, margin: 0, paddingLeft: '18px', fontSize: '12px' } }, files.value.map((file, index) => h('li', { key: index }, file.name))),
-                          h(ForgeButton, { color: 'primary', size: 'sm', loading: busy.value, onClick: () => id.value !== null && void upload(id.value) }, () => (busy.value ? words.uploading : plural(words.send, files.value.length))),
+                          h('ul', { class: 'pc-att-files' }, files.value.map((file, index) => h('li', { key: index }, file.name))),
+                          h(
+                              'button',
+                              { type: 'button', class: modalButton('primary', true), disabled: busy.value, 'aria-busy': busy.value || undefined, onClick: () => id.value !== null && void upload(id.value) },
+                              [busy.value ? h('span', { class: 'pc-fm-spin', 'aria-hidden': 'true' }) : null, busy.value ? words.uploading : plural(words.send, files.value.length)],
+                          ),
                       ]
                     : []),
                 ...alertLines(errors.value),
@@ -307,25 +307,24 @@ export const PtahCrudAttachments = defineComponent({
         const list = (words: RecordsWords, list: AttachmentItem[]) =>
             h(
                 'ul',
-                { style: { listStyle: 'none', margin: 0, padding: 0, border: '1px solid var(--pc-line)', borderRadius: 'var(--pc-radius)' } },
-                list.map((item, index) =>
-                    h('li', { key: item.id, style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '8px 12px', borderTop: index === 0 ? undefined : '1px solid var(--pc-line)' } }, [
-                        h('div', { style: { minWidth: 0 } }, [
+                { class: 'pc-att-list' },
+                list.map((item) =>
+                    h('li', { key: item.id, class: 'pc-att-row' }, [
+                        h('div', { class: 'pc-att-info' }, [
                             h(
                                 'a',
                                 {
                                     href: item.url,
                                     download: item.name,
                                     'aria-label': words.download.replace(':name', item.name),
-                                    class: 'pc-link',
-                                    style: { display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '14px', fontWeight: 500, color: 'var(--pc-primary)' },
+                                    class: 'pc-att-name',
                                 },
                                 item.name,
                             ),
-                            h('p', { style: { ...MUTED, margin: 0, fontSize: '12px' } }, `${item.size} · ${item.when}`),
+                            h('p', { class: 'pc-att-meta' }, `${item.size} · ${item.when}`),
                         ]),
                         canWrite.value
-                            ? h(ForgeButton, { color: 'danger', flat: true, size: 'sm', disabled: busy.value, 'aria-label': `${words.delete} ${item.name}`, onClick: () => (removing.value = item) }, () => words.delete)
+                            ? h('button', { type: 'button', class: modalButton('flat-danger', true), disabled: busy.value, 'aria-label': `${words.delete} ${item.name}`, onClick: () => (removing.value = item) }, words.delete)
                             : null,
                     ]),
                 ),
@@ -339,33 +338,33 @@ export const PtahCrudAttachments = defineComponent({
             const words = t.value;
             const pending = removing.value;
 
-            return [
-                modal(
-                    pending === null,
-                    close,
-                    words.attachmentsTitle,
-                    'lg',
-                    () =>
-                        error.value
-                            ? h(ForgeAlert, { color: 'danger' }, () => error.value)
-                            : h('div', { style: { display: 'grid', gap: '16px' } }, [
-                                  canWrite.value ? picker(words) : alertLines(errors.value),
-                                  items.value === null ? loading(words) : items.value.length === 0 ? h(ForgeEmpty, { title: words.attachmentsEmpty }) : list(words, items.value),
-                              ]),
-                    () => h(ForgeButton, { color: 'dark', flat: true, onClick: close }, () => words.close),
-                ),
-                modal(
-                    pending !== null,
-                    () => (removing.value = null),
-                    words.deleteTitle,
-                    'sm',
-                    () => h('p', pending ? words.deleteConfirm.replace(':name', pending.name) : ''),
-                    () => [
-                        h(ForgeButton, { color: 'light', onClick: () => (removing.value = null) }, () => words.cancel),
-                        h(ForgeButton, { color: 'danger', onClick: () => pending && void remove(record, pending) }, () => words.delete),
-                    ],
-                ),
-            ];
+            if (pending !== null) {
+                return h(PtahConfirm, {
+                    title: words.deleteTitle,
+                    text: words.deleteConfirm.replace(':name', pending.name),
+                    confirm: words.delete,
+                    cancel: words.cancel,
+                    closeLabel: words.close,
+                    danger: true,
+                    onCancel: () => (removing.value = null),
+                    onConfirm: () => void remove(record, pending),
+                });
+            }
+
+            return modal(
+                close,
+                words.close,
+                words.attachmentsTitle,
+                'lg',
+                () =>
+                    error.value
+                        ? h(PtahModalAlert, null, () => error.value)
+                        : h('div', { class: 'pc-att' }, [
+                              canWrite.value ? picker(words) : alertLines(errors.value),
+                              items.value === null ? loading(words) : items.value.length === 0 ? h(PtahModalEmpty, { title: words.attachmentsEmpty }) : list(words, items.value),
+                          ]),
+                () => flatButton(words.close, close),
+            );
         };
     },
 });

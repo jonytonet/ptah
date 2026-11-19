@@ -1,13 +1,22 @@
 /**
  * The dashboard for Vue: the widgets of config/ptah-dashboard.php, computed
- * by the server — the same four kinds ptah::dashboard.widgets draws.
+ * by the server — the same four kinds ptah::dashboard.widgets draws — or,
+ * with none configured, the four cards of livewire/auth/dashboard.blade.php.
  */
 import { computed, defineComponent, h, onMounted, ref, watch } from 'vue';
 import type { PropType, VNode } from 'vue';
 import { PtahApi, words } from '../core';
-import type { Me, Widget } from '../core';
+import type { DashboardPage, Me, Widget } from '../core';
+import { icon } from './icons';
+import { PtahPageHead } from './page-head';
 
-const TONE: Record<string, string> = { primary: 'var(--pc-primary)', success: 'var(--pc-success)', danger: 'var(--pc-danger)', warn: 'var(--pc-warn)' };
+/** ptah::dashboard.widgets' tones: the strong variants of the semantic colours. */
+const TONE: Record<string, string> = {
+    primary: 'var(--ptah-primary, var(--pc-primary))',
+    success: 'var(--ptah-success-strong, var(--pc-success))',
+    danger: 'var(--ptah-danger-strong, var(--pc-danger))',
+    warn: 'var(--ptah-warn-strong, var(--pc-warn))',
+};
 const tone = (color: string) => TONE[color] ?? TONE.primary;
 
 function body(widget: Widget): (VNode | null)[] {
@@ -19,17 +28,17 @@ function body(widget: Widget): (VNode | null)[] {
         const width = 100 / Math.max(1, points.length);
 
         return [
-            h('div', { class: 'pa-row' }, [
-                h('span', { class: 'pf-stat-value', style: { color } }, widget.display_total),
-                points.length > 0 ? h('span', { class: 'pf-chart-subtitle' }, `${points[0].label} – ${points[points.length - 1].label}`) : null,
+            h('div', { class: 'pd-trend-head' }, [
+                h('span', { class: 'pd-value', style: { color } }, widget.display_total),
+                points.length > 0 ? h('span', { class: 'pd-muted' }, `${points[0].label} – ${points[points.length - 1].label}`) : null,
             ]),
             h(
                 'svg',
-                { viewBox: '0 0 100 40', preserveAspectRatio: 'none', role: 'img', style: { width: '100%', height: '64px', marginTop: '10px' }, 'aria-label': `${widget.label}: ${points.map((point) => `${point.label} ${point.display}`).join(', ')}` },
+                { class: 'pd-trend', viewBox: '0 0 100 40', preserveAspectRatio: 'none', role: 'img', 'aria-label': `${widget.label}: ${points.map((point) => `${point.label} ${point.display}`).join(', ')}` },
                 points.map((point, index) => {
                     const height = point.value > 0 ? Math.max(1.5, (38 * point.value) / max) : 0.6;
 
-                    return h('rect', { key: index, x: index * width + width * 0.15, y: 40 - height, width: width * 0.7, height, style: { fill: point.value > 0 ? color : 'var(--pc-line)' } }, [h('title', `${point.label}: ${point.display}`)]);
+                    return h('rect', { key: index, x: index * width + width * 0.15, y: 40 - height, width: width * 0.7, height, style: { fill: point.value > 0 ? color : 'var(--ptah-line, var(--pc-line))' } }, [h('title', `${point.label}: ${point.display}`)]);
                 }),
             ),
         ];
@@ -40,14 +49,14 @@ function body(widget: Widget): (VNode | null)[] {
         const max = Math.max(1, Number(widget.max) || 1);
 
         return [
-            h('div', { class: 'pf-stat-value', style: { color } }, widget.display_total),
-            h('ul', { style: { listStyle: 'none', margin: '10px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: '8px' } }, [
-                items.length === 0 ? h('li', { class: 'pf-chart-subtitle' }, '—') : null,
+            h('p', { class: 'pd-value', style: { color } }, widget.display_total),
+            h('ul', { class: 'pd-bars' }, [
+                items.length === 0 ? h('li', { class: 'pd-muted pd-small' }, '—') : null,
                 ...items.map((item, index) =>
                     h('li', { key: index }, [
-                        h('div', { class: 'pa-row' }, [h('span', item.label), h('span', { class: 'pf-chart-subtitle' }, item.display)]),
-                        h('div', { class: 'pf-progress-track', 'aria-hidden': 'true', style: { height: '6px', marginTop: '4px' } }, [
-                            h('div', { class: 'pf-progress-bar', style: { width: `${item.value > 0 ? Math.max(1, Math.round((1000 * item.value) / max) / 10) : 0}%`, background: item.others ? 'var(--pc-line-field)' : color } }),
+                        h('div', { class: 'pd-bar-head' }, [h('span', { class: item.others ? 'pd-bar-label pd-muted' : 'pd-bar-label' }, item.label), h('span', { class: 'pd-muted pd-num' }, item.display)]),
+                        h('div', { class: 'pd-bar-track', 'aria-hidden': 'true' }, [
+                            h('div', { class: 'pd-bar', style: { width: `${item.value > 0 ? Math.max(1, Math.round((1000 * item.value) / max) / 10) : 0}%`, background: item.others ? 'var(--ptah-line-strong, var(--pc-line-field))' : color } }),
                         ]),
                     ]),
                 ),
@@ -59,14 +68,14 @@ function body(widget: Widget): (VNode | null)[] {
         const rows = widget.rows ?? [];
 
         return [
-            h('table', { class: 'pf-table', style: { marginTop: '6px' } }, [
+            h('table', { class: 'pd-table' }, [
                 h('tbody', [
-                    rows.length === 0 ? h('tr', [h('td', { class: 'pf-chart-subtitle' }, '—')]) : null,
+                    rows.length === 0 ? h('tr', [h('td', { class: 'pd-muted pd-small' }, '—')]) : null,
                     ...rows.map((row, index) =>
                         h(
                             'tr',
                             { key: index },
-                            row.map((cell, cellIndex) => h('td', { key: cellIndex, style: cellIndex === 0 ? { fontWeight: 500 } : { color: 'var(--pc-text-muted)' } }, cell === null ? '' : String(cell))),
+                            row.map((cell, cellIndex) => h('td', { key: cellIndex, class: cellIndex === 0 ? 'pd-cell-main' : 'pd-muted' }, cell === null ? '' : String(cell))),
                         ),
                     ),
                 ]),
@@ -74,17 +83,23 @@ function body(widget: Widget): (VNode | null)[] {
         ];
     }
 
-    return [h('div', { class: 'pf-stat-value', style: { color } }, widget.value === undefined ? '' : String(widget.value))];
+    return [h('p', { class: 'pd-value', style: { color } }, widget.value === undefined ? '' : String(widget.value))];
 }
 
 function card(widget: Widget, index: number): VNode {
     const wide = ['trend', 'latest', 'breakdown'].includes(widget.type);
-    const content = h('div', { class: 'pf-card-body' }, [h('div', { class: 'pf-stat-title' }, widget.label), ...(widget.error ? [h('p', { class: 'pf-field-error', role: 'alert' }, widget.error)] : body(widget))]);
+    const className = ['pd-card', wide && 'pd-wide', widget.link && 'pd-card--link'];
+    const content = [h('p', { class: 'pd-label' }, widget.label), ...(widget.error ? [h('p', { class: 'pd-error', role: 'alert' }, widget.error)] : body(widget))];
 
-    return widget.link
-        ? h('a', { key: index, class: ['pf pf-card pf-card--hoverable', wide && 'pd-wide'], href: widget.link, style: { textDecoration: 'none', color: 'inherit' } }, [content])
-        : h('div', { key: index, class: ['pf pf-card', wide && 'pd-wide'] }, [content]);
+    return widget.link ? h('a', { key: index, class: className, href: widget.link }, content) : h('div', { key: index, class: className }, content);
 }
+
+/** A forge-stat-card: title, big value, the tinted icon square on the right. */
+const statCard = (title: string, value: string, name: string, color: 'primary' | 'success') =>
+    h('div', { class: 'pd-stat', 'data-color': color }, [
+        h('div', { class: 'pd-stat-text' }, [h('p', { class: 'pd-stat-title' }, title), h('p', { class: 'pd-stat-value' }, value)]),
+        h('div', { class: 'pd-stat-icon' }, [icon(name, 24)]),
+    ]);
 
 /** The widgets of a group (default: the dashboard's), anywhere in a page. */
 export const PtahWidgets = defineComponent({
@@ -96,10 +111,10 @@ export const PtahWidgets = defineComponent({
         const widgets = ref<Widget[] | null>(null);
         const load = () =>
             void client
-                .dashboard(props.group)
-                .then((list) => {
-                    widgets.value = list;
-                    emit('load', list);
+                .dashboardPage(props.group)
+                .then((page) => {
+                    widgets.value = page.data;
+                    emit('load', page.data, page);
                 })
                 .catch(() => {
                     widgets.value = [];
@@ -108,18 +123,18 @@ export const PtahWidgets = defineComponent({
         onMounted(load);
         watch(() => props.group, load);
 
-        return () => (widgets.value ? h('div', { class: 'pf pd-grid' }, widgets.value.map(card)) : null);
+        return () => (widgets.value && widgets.value.length > 0 ? h('div', { class: 'pf pd-grid' }, widgets.value.map(card)) : null);
     },
 });
 
-/** The dashboard page: a welcome and the widgets. */
+/** The dashboard page: the header of livewire/auth/dashboard, and the widgets (or its four default cards). */
 export const PtahDashboard = defineComponent({
     name: 'PtahDashboard',
     props: { api: { type: Object as PropType<PtahApi>, default: undefined }, locale: { type: String, default: undefined }, group: { type: String, default: undefined } },
     setup(props) {
         const client = props.api ?? new PtahApi();
         const me = ref<Me | null>(null);
-        const count = ref<number | null>(null);
+        const page = ref<DashboardPage | null>(null);
         const t = computed(() => words(props.locale ?? me.value?.locale));
 
         onMounted(() => {
@@ -131,11 +146,22 @@ export const PtahDashboard = defineComponent({
                 .catch(() => undefined);
         });
 
-        return () =>
-            h('div', { class: 'pf' }, [
-                h('h1', { class: 'pd-welcome' }, `${t.value.welcome}${me.value?.user?.name ? `, ${me.value.user.name}` : ''}`),
-                h(PtahWidgets, { api: client, group: props.group, onLoad: (list: Widget[]) => (count.value = list.length) }),
-                count.value === 0 ? h('p', { class: 'pf-chart-subtitle' }, t.value.empty) : null,
+        return () => {
+            const fallback = page.value?.fallback ?? null;
+
+            return h('div', { class: 'pf' }, [
+                h(PtahPageHead, { title: t.value.dashboard, subtitle: t.value.dashboardSubtitle }),
+                h(PtahWidgets, { api: client, group: props.group, onLoad: (_list: Widget[], answer: DashboardPage) => (page.value = answer) }),
+                fallback
+                    ? h('div', { class: 'pd-stats' }, [
+                          statCard(t.value.welcome, me.value?.user?.name ?? '', 'user', 'primary'),
+                          statCard(t.value.dashboardSystem, fallback.app, 'server', 'primary'),
+                          statCard(t.value.dashboardEnvironment, fallback.environment, 'checkCircle', 'success'),
+                          statCard(t.value.dashboardLaravel, fallback.laravel, 'bolt', 'primary'),
+                      ])
+                    : null,
+                page.value && page.value.data.length === 0 && !fallback ? h('p', { class: 'pd-muted pd-small' }, t.value.empty) : null,
             ]);
+        };
     },
 });

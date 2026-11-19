@@ -33,9 +33,10 @@ describe('<PtahCrud> (Vue)', () => {
     it('draws the listing the server answered', async () => {
         await mount();
 
-        expect(screen.getByRole('heading', { name: 'Itens' })).toBeTruthy();
+        // No title row: the page header above the screen names it, as on the Livewire screen.
+        expect(screen.queryByRole('heading', { name: 'Itens' })).toBeNull();
         expect(rowNames()).toEqual(['Gama', 'Beta', 'Alfa']);
-        expect(screen.getByText('1–3 de 3')).toBeTruthy();
+        expect(screen.getByText('Exibindo 1–3 de 3 registros')).toBeTruthy();
         expect(screen.getAllByText('Ativo').length).toBe(2);
     });
 
@@ -81,7 +82,7 @@ describe('<PtahCrud> (Vue)', () => {
     it('creates a record, showing the server errors on the field', async () => {
         await mount();
 
-        await fireEvent.click(screen.getByRole('button', { name: '+ Novo' }));
+        await fireEvent.click(screen.getByRole('button', { name: 'Novo' }));
         const dialog = await readyDialog();
         await fireEvent.click(within(dialog).getByRole('button', { name: 'Criar' }));
 
@@ -99,7 +100,7 @@ describe('<PtahCrud> (Vue)', () => {
     it('masks a field while typing', async () => {
         await mount();
 
-        await fireEvent.click(screen.getByRole('button', { name: '+ Novo' }));
+        await fireEvent.click(screen.getByRole('button', { name: 'Novo' }));
         const phone = (await screen.findByLabelText('Telefone')) as HTMLInputElement;
         await fireEvent.update(phone, '41988887777');
 
@@ -138,7 +139,7 @@ describe('<PtahCrud> (Vue)', () => {
     it('selects rows and runs a bulk action', async () => {
         const { calls } = await mount();
 
-        await fireEvent.click(screen.getByRole('checkbox', { name: 'Todos' }));
+        await fireEvent.click(screen.getByRole('checkbox', { name: 'Selecionar todas as linhas' }));
         expect(await screen.findByText('3 selecionado(s)')).toBeTruthy();
 
         await fireEvent.click(screen.getByRole('button', { name: 'Arquivar' }));

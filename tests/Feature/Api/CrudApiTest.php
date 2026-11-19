@@ -88,6 +88,8 @@ class CrudApiTest extends TestCase
         $this->assertTrue($json['form'][0]['required']);
         $this->assertSame([['label' => 'Ativo', 'value' => 'active'], ['label' => 'Arquivado', 'value' => 'archived']], $json['form'][1]['options']);
         $this->assertSame(['name', 'status'], array_column($json['filters'], 'field'));
+        // The export menu lists the formats of the config, as the Livewire one (default excel).
+        $this->assertSame(['excel'], $json['export']['formats']);
         $this->assertTrue($json['permissions']['canCreate']);
 
         // Named keys only: nothing of the raw config.
@@ -146,6 +148,25 @@ class CrudApiTest extends TestCase
         $this->assertStringContainsString('10,00', $json['data'][0]['cells']['amount']['html']);
         $this->assertSame('Ativo', $json['data'][0]['cells']['status']['html']);
         $this->assertEquals(540, $json['totals'][0]['value']);
+        // Formatted as the Livewire footer prints it: like the money cells.
+        $this->assertSame('R$ 540,00', $json['totals'][0]['text']);
+        $this->assertSame([], $json['breaks']);
+    }
+
+    #[Test]
+    public function the_listing_carries_the_group_breaks_of_the_page_with_their_subtotals(): void
+    {
+        $config = CrudConfig::where('model', ApiItem::class)->where('route', '')->firstOrFail();
+        $config->update(['config' => ['groupBreak' => 'status'] + $config->config]);
+
+        $json = $this->getJson('/ptah/api/crud/items?sort=status&direction=asc')->assertOk()->json();
+
+        $this->assertSame(['Alfa', 'Gama', 'Beta'], $this->names($json));
+        $this->assertCount(2, $json['breaks']);
+        $this->assertSame(['start' => 0, 'count' => 2, 'label' => 'Situação', 'title' => 'Ativo', 'subtotals' => ['amount' => 'R$ 40,00']], $json['breaks'][0]);
+        $this->assertSame(2, $json['breaks'][1]['start']);
+        $this->assertSame('Arquivado', $json['breaks'][1]['title']);
+        $this->assertSame(['amount' => 'R$ 500,00'], $json['breaks'][1]['subtotals']);
     }
 
     #[Test]

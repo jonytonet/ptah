@@ -32,9 +32,10 @@ describe('<PtahCrud> (React)', () => {
     it('draws the listing the server answered', async () => {
         await mount();
 
-        expect(screen.getByRole('heading', { name: 'Itens' })).toBeTruthy();
+        // No title row: the page header above the screen names it, as on the Livewire screen.
+        expect(screen.queryByRole('heading', { name: 'Itens' })).toBeNull();
         expect(rowNames()).toEqual(['Gama', 'Beta', 'Alfa']);
-        expect(screen.getByText('1–3 de 3')).toBeTruthy();
+        expect(screen.getByText('Exibindo 1–3 de 3 registros')).toBeTruthy();
         // The cell is the server's rendering, not the raw value.
         expect(screen.getAllByText('Ativo').length).toBe(2);
     });
@@ -76,7 +77,7 @@ describe('<PtahCrud> (React)', () => {
     it('creates a record, showing the server errors on the field', async () => {
         await mount();
 
-        fireEvent.click(screen.getByRole('button', { name: '+ Novo' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Novo' }));
         const dialog = await readyDialog();
         fireEvent.click(within(dialog).getByRole('button', { name: 'Criar' }));
 
@@ -94,7 +95,7 @@ describe('<PtahCrud> (React)', () => {
     it('masks a field while typing', async () => {
         await mount();
 
-        fireEvent.click(screen.getByRole('button', { name: '+ Novo' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Novo' }));
         const phone = (await screen.findByLabelText('Telefone')) as HTMLInputElement;
         fireEvent.change(phone, { target: { value: '41988887777' } });
 
@@ -133,7 +134,7 @@ describe('<PtahCrud> (React)', () => {
     it('selects rows and runs a bulk action', async () => {
         const { calls } = await mount();
 
-        fireEvent.click(screen.getByRole('checkbox', { name: 'Todos' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Selecionar todas as linhas' }));
         expect(await screen.findByText('3 selecionado(s)')).toBeTruthy();
 
         fireEvent.click(screen.getByRole('button', { name: 'Arquivar' }));

@@ -256,7 +256,7 @@ describe('master/detail (React)', () => {
         expect(await within(region).findByText('L1')).toBeTruthy();
         expect(within(region).getByText('L2')).toBeTruthy();
         expect(within(region).queryByText('L3')).toBeNull();
-        expect(within(region).getByRole('heading', { name: 'Linhas' })).toBeTruthy();
+        expect(within(region).getByText('Linhas', { selector: '.pc-detail-title' })).toBeTruthy();
         expect(server.calls.some((call) => call.path === '..1.0/schema')).toBe(true);
 
         fireEvent.click(within(region).getByRole('button', { name: /Novo/ }));
@@ -279,7 +279,7 @@ describe('columns (React)', () => {
 
         fireEvent.click(screen.getByLabelText('Situação'));
         await waitFor(() => expect(puts()).toContainEqual({ columns: { status: false } }));
-        expect(await screen.findByText('(1 ocultas)')).toBeTruthy();
+        expect(await screen.findByRole('button', { name: 'Colunas (1 ocultas)' })).toBeTruthy();
         expect((screen.getByLabelText('Situação') as HTMLInputElement).checked).toBe(false);
 
         // id is not in the menu but keeps its place.
@@ -293,7 +293,7 @@ describe('columns (React)', () => {
         expect(within(dialog).getByText(/esquecer a ordem/)).toBeTruthy();
         fireEvent.click(within(dialog).getByRole('button', { name: 'Restaurar' }));
         await waitFor(() => expect(server.calls.some((call) => call.path === '/columns/reset')).toBe(true));
-        await waitFor(() => expect(screen.queryByText('(1 ocultas)')).toBeNull());
+        await waitFor(() => expect(screen.queryByRole('button', { name: 'Colunas (1 ocultas)' })).toBeNull());
 
         fireEvent.click(screen.getByRole('button', { name: 'Ocultar todas' }));
         await waitFor(() => expect(puts()).toContainEqual({ columns: { id: false, name: false, status: false, amount: false } }));

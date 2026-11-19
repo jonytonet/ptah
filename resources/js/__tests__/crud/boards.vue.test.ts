@@ -303,14 +303,14 @@ describe('row link, responsive cards and card buttons (Vue)', () => {
         expect(screen.queryByRole('table')).toBeNull();
     });
 
-    it('the cards of PtahCrud carry the same row buttons as the table, history included', async () => {
+    it('the cards of PtahCrud carry the same row buttons as the table (history lives in the edit form, as in Livewire)', async () => {
         const server = fakeBoards({ viewMode: 'cards', history: true });
         render(PtahCrud, { props: { screen: 'tasks', api: server.api, locale: 'pt_BR', toastMs: 0, remember: false } });
         const card = await screen.findByRole('article', { name: '#1' });
 
-        expect(within(card).getByRole('button', { name: 'Histórico' })).toBeTruthy();
+        expect(within(card).queryByRole('button', { name: 'Histórico' })).toBeNull();
         expect(within(card).getByRole('button', { name: 'Editar' })).toBeTruthy();
-        expect(within(card).getByRole('button', { name: 'Duplicar' })).toBeTruthy();
+        expect(within(card).getByRole('button', { name: 'Duplicar registro' })).toBeTruthy();
 
         // The configured action asks first, in the screen's own dialog.
         await fireEvent.click(within(card).getByRole('button', { name: 'Aprovar' }));

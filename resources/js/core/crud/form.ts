@@ -6,6 +6,7 @@
  * when closing must ask first.
  */
 import type { CrudController, FormState } from '../controller';
+import { controlOf } from '../form';
 import type { Words } from '../i18n';
 import type { Field, Schema } from '../types';
 
@@ -242,4 +243,28 @@ export function savedPreview(field: Field, form: FormState): string {
     const value = form.data[field.field];
 
     return typeof value === 'string' && /^(https?:\/\/|data:image\/|\/)/i.test(value) ? value : '';
+}
+
+// ── Look (shared by the React and Vue modals) ───────────────────────────────
+
+/** A forge-button of the modals: solid primary/danger, or flat dark/primary/danger. */
+export type ModalButton = 'primary' | 'danger' | 'flat' | 'flat-primary' | 'flat-danger';
+
+/** The classes of a modal button (`pc-fm-btn`), `small` for forge-button size="sm". */
+export function modalButton(kind: ModalButton = 'primary', small = false): string {
+    return `pc-fm-btn${kind === 'primary' ? '' : ` pc-fm-btn--${kind}`}${small ? ' pc-fm-btn--sm' : ''}`;
+}
+
+/**
+ * The label of a field as the Livewire modal draws it: a plain input is a
+ * forge-input (sentence-case label); every custom block (select, lookup,
+ * switch, masked, money, colour, image, read-only…) has the uppercase one.
+ */
+export function capsLabel(field: Field): boolean {
+    const control = controlOf(field);
+    if (field.readonly || field.type === 'image' || ['switch', 'select', 'yesno', 'lookup', 'file'].includes(control)) {
+        return true;
+    }
+
+    return specialOf(field) !== null || Boolean(field.maskPatterns?.length);
 }

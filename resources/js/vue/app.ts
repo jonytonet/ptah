@@ -16,7 +16,7 @@ import { PtahPages, PtahPermissionGuide, PtahRoles } from './admin/roles';
 import { PtahExportsPanel } from './admin/shell';
 import { PtahForgotPassword, PtahLogin, PtahProfile, PtahResetPassword, PtahTwoFactor } from './auth';
 import { PtahDashboard } from './dashboard';
-import { ForgePageHeader } from './forge';
+import { PtahPageHead } from './page-head';
 import PtahCrud from './PtahCrud.vue';
 import PtahLayout from './PtahLayout.vue';
 
@@ -86,18 +86,20 @@ export const PtahApp = defineComponent({
             if (props.page in props.pages) {
                 content = h(props.pages[props.page]);
             } else if (props.page === 'profile') {
-                content = [h(ForgePageHeader, { title: t.profile }), h(PtahProfile, common)];
+                content = [h(PtahPageHead, { title: t.profileTitle, subtitle: t.profileSubtitle }), h(PtahProfile, common)];
             } else if (props.page === 'dashboard') {
                 content = h(PtahDashboard, common);
             } else if (props.page in ADMIN) {
                 content = h(ADMIN[props.page], common);
             } else {
-                content = h(PtahCrud, { screen: props.screen, ...common, onAction: props.onAction });
+                // The header of the page ptah:forge writes (view.index.stub): the title, and Dashboard / title.
+                const crud = h(PtahCrud, { screen: props.screen, ...common, onAction: props.onAction });
+                content = props.title ? [h(PtahPageHead, { title: props.title, crumbs: [{ label: t.dashboard, url: '/dashboard' }, { label: props.title }] }), crud] : crud;
             }
 
             return h(
                 PtahLayout,
-                { api, brand: props.brand, title: props.title, locale: props.locale, profileUrl: props.profileUrl, themeModeUrl: props.themeModeUrl, onLogout: props.canLogout ? () => void logout() : undefined },
+                { api, brand: props.brand, locale: props.locale, profileUrl: props.profileUrl, themeModeUrl: props.themeModeUrl, onLogout: props.canLogout ? () => void logout() : undefined },
                 // The `topbar` slot of PtahApp goes into the bar (a company switcher, the notification bell).
                 { default: () => content, topbar: () => slots.topbar?.() },
             );

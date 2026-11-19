@@ -17,6 +17,7 @@ use Ptah\Http\Headless\HeadlessTwoFactorChallenge;
 use Ptah\Models\UserPreference;
 use Ptah\Services\Auth\TwoFactorService;
 use Ptah\Support\AppearancePresets;
+use Ptah\Support\Brand;
 use Ptah\Support\ProfilePhoto;
 use Ptah\Support\PtahGuard;
 
@@ -39,6 +40,9 @@ class AuthApiController extends Controller
     {
         return response()->json([
             'app' => config('app.name'),
+            // The logo above the card of forge-auth (ptah.brand) — public, the Blade login shows it too.
+            'logo' => Brand::logo(),
+            'logo_dark' => Brand::logoDark(),
             'locale' => app()->getLocale(),
             'remember_me' => (bool) config('ptah.auth.remember_me', true),
             'home' => (string) config('ptah.auth.home', '/dashboard'),
@@ -344,8 +348,38 @@ class AuthApiController extends Controller
                     'density' => AppearancePresets::DENSITY,
                     'fontsize' => AppearancePresets::FONTSIZE,
                 ],
+                // What the "Aparência" tab of the Livewire profile prints: each
+                // option's name (profile_appearance_<axis>_<option>) and the
+                // colour dot of each accent (the brand's first, when custom).
+                'labels' => $this->appearanceLabels(),
+                'swatches' => AppearancePresets::brandIsCustom()
+                    ? [AppearancePresets::BRAND_ACCENT => (string) config('ptah.theme.colors.primary')] + AppearancePresets::ACCENT_HEX
+                    : AppearancePresets::ACCENT_HEX,
             ],
         ];
+    }
+
+    /** @return array<string, array<string, string>> axis => option => label, plus `_axis` => the axis' title. */
+    private function appearanceLabels(): array
+    {
+        $axes = [
+            'light' => AppearancePresets::LIGHT,
+            'dark' => AppearancePresets::DARK,
+            'accent' => AppearancePresets::accentChoices(),
+            'text' => AppearancePresets::TEXT,
+            'density' => AppearancePresets::DENSITY,
+            'fontsize' => AppearancePresets::FONTSIZE,
+        ];
+        $labels = ['_axis' => []];
+
+        foreach ($axes as $axis => $options) {
+            $labels['_axis'][$axis] = (string) trans("ptah::ui.profile_appearance_{$axis}_label");
+            foreach ($options as $option) {
+                $labels[$axis][$option] = (string) trans("ptah::ui.profile_appearance_{$axis}_{$option}");
+            }
+        }
+
+        return $labels;
     }
 
     /** @param  array<string, mixed>  $body */

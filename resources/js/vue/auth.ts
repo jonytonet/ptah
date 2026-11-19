@@ -3,11 +3,14 @@
  * throttles, 2FA, "the current password for every sensitive change" — are the
  * server's; these pages only ask and show.
  */
-import { computed, defineComponent, h, onMounted, ref, watch } from 'vue';
+import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { PropType, Ref, VNode } from 'vue';
-import { applyAppearance, PtahApi, words } from '../core';
+import { applyAppearance, firstLetter, PtahApi, words } from '../core';
 import type { AuthConfig, AuthResult, Profile, SessionInfo, Words } from '../core';
-import { ForgeAlert, ForgeAvatar, ForgeButton, ForgeCheckbox, ForgeInput, ForgeTabs, forgeToast, ForgeToastHost } from './forge';
+import { APPEARANCE_AXES, confirmed, isMobilePlatform, profileWords } from '../core/profile-words';
+import type { ProfileWords } from '../core/profile-words';
+import { ForgeAlert, ForgeButton, ForgeCard, ForgeCheckbox, ForgeInput, ForgeTabs, forgeToast, ForgeToastHost } from './forge';
+import { icon } from './icons';
 
 const pageProps = {
     api: { type: Object as PropType<PtahApi>, default: undefined },
@@ -60,8 +63,28 @@ function useAction() {
     return { busy, result, run, errors, error };
 }
 
-const card = (brand: string | undefined, title: string, children: (VNode | null)[]) =>
-    h('div', { class: 'pf pa-shell' }, [h('main', { class: 'pa-card' }, [h('h1', { class: 'pa-brand' }, brand), h('p', { class: 'pa-title' }, title), ...children])]);
+/**
+ * layouts/forge-auth: the brand above (the logo, or the accent square with
+ * the initial, and the app's name), the card with the page's title and
+ * subtitle, and the copyright line below.
+ */
+const card = (config: AuthConfig | null, t: Words, title: string, subtitle: string, children: (VNode | null)[]) => {
+    const app = config?.app ?? '';
+
+    return h('div', { class: 'pf pa-shell ptah-c-auth_bg' }, [
+        h('div', { class: 'pa-brand-block' }, [
+            config?.logo
+                ? h('div', { class: 'pa-logo' }, [
+                      h('img', { class: config.logo_dark ? 'pa-logo-img pa-logo--light' : 'pa-logo-img', src: config.logo, alt: app }),
+                      config.logo_dark ? h('img', { class: 'pa-logo-img pa-logo--dark', src: config.logo_dark, alt: app }) : null,
+                  ])
+                : h('div', { class: 'pa-mark', 'aria-hidden': 'true' }, firstLetter(app || 'P')),
+            h('h1', { class: 'pa-app' }, app),
+        ]),
+        h('main', { class: 'pa-card' }, [h('div', { class: 'pa-head' }, [h('h2', { class: 'pa-title' }, title), h('p', { class: 'pa-subtitle' }, subtitle)]), ...children]),
+        h('p', { class: 'pa-copy' }, `© ${new Date().getFullYear()} ${app}. ${t.rightsReserved}`),
+    ]);
+};
 
 const alert = (type: string, text: string | null | undefined) => (text ? h(ForgeAlert, { type }, () => text) : null);
 
@@ -111,17 +134,17 @@ export const PtahLogin = defineComponent({
         };
 
         return () =>
-            card(config.value?.app, t.value.signIn, [
+            card(config.value, t.value, t.value.loginTitle, t.value.loginSubtitle, [
+                alert('success', config.value?.status),
+                alert('danger', action.error.value),
                 submit(send, [
-                    alert('success', config.value?.status),
-                    alert('danger', action.error.value),
-                    field(email, { label: t.value.email, type: 'email', name: 'email', autocomplete: 'username', required: true, error: action.errors.value.email }),
+                    field(email, { label: t.value.email, type: 'email', name: 'email', autocomplete: 'username', autofocus: true, required: true, error: action.errors.value.email }),
                     field(password, { label: t.value.password, type: 'password', name: 'password', autocomplete: 'current-password', required: true, error: action.errors.value.password }),
                     h('div', { class: 'pa-row' }, [
-                        config.value?.remember_me ? h(ForgeCheckbox, { label: t.value.rememberMe, modelValue: remember.value, 'onUpdate:modelValue': (value: boolean) => (remember.value = value) }) : h('span'),
+                        config.value?.remember_me ? h(ForgeCheckbox, { label: t.value.loginRemember, modelValue: remember.value, 'onUpdate:modelValue': (value: boolean) => (remember.value = value) }) : h('span'),
                         config.value?.urls.forgot ? h('a', { class: 'pa-link', href: config.value.urls.forgot }, t.value.forgotPassword) : null,
                     ]),
-                    h(ForgeButton, { type: 'submit', loading: action.busy.value }, () => (action.busy.value ? t.value.signingIn : t.value.signIn)),
+                    h(ForgeButton, { type: 'submit', class: 'pa-submit', loading: action.busy.value }, () => (action.busy.value ? t.value.loginBusy : t.value.signIn)),
                 ]),
             ]);
     },
@@ -160,16 +183,17 @@ export const PtahTwoFactor = defineComponent({
         };
 
         return () =>
-            card(config.value?.app, t.value.twoFactorTitle, [
+            card(config.value, t.value, t.value.twoFaTitle, recovery.value ? t.value.twoFaRecoverySubtitle : t.value.twoFaSubtitle, [
+                alert('success', notice.value),
+                alert('danger', action.error.value),
                 submit(send, [
-                    alert('success', notice.value),
-                    alert('danger', action.error.value),
-                    field(code, { label: recovery.value ? t.value.recoveryCode : t.value.twoFactorCode, name: 'code', inputmode: recovery.value ? 'text' : 'numeric', autocomplete: 'one-time-code', required: true, error: action.errors.value.code }),
-                    h(ForgeButton, { type: 'submit', loading: action.busy.value }, () => t.value.verify),
-                    h('div', { class: 'pa-row' }, [
-                        h('button', { type: 'button', class: 'pa-link', onClick: () => (recovery.value = !recovery.value) }, recovery.value ? t.value.useCode : t.value.useRecovery),
-                        h('button', { type: 'button', class: 'pa-link', onClick: () => void sendEmail() }, t.value.sendCodeByEmail),
-                    ]),
+                    field(code, { label: recovery.value ? t.value.recoveryCode : t.value.twoFactorCode, name: 'code', inputmode: recovery.value ? 'text' : 'numeric', autocomplete: 'one-time-code', autofocus: true, required: true, error: action.errors.value.code }),
+                    h(ForgeButton, { type: 'submit', class: 'pa-submit', loading: action.busy.value }, () => (action.busy.value ? t.value.twoFaBusy : t.value.verify)),
+                ]),
+                h('div', { class: 'pa-links' }, [
+                    h('button', { type: 'button', class: 'pa-link', onClick: () => (recovery.value = !recovery.value) }, recovery.value ? t.value.twoFaUseAuthenticator : t.value.twoFaUseRecovery),
+                    h('button', { type: 'button', class: 'pa-link pa-link--muted', onClick: () => void sendEmail() }, t.value.twoFaResend),
+                    config.value?.urls.login ? h('a', { class: 'pa-link pa-link--muted', href: config.value.urls.login }, t.value.backToLogin) : null,
                 ]),
             ]);
     },
@@ -193,14 +217,14 @@ export const PtahForgotPassword = defineComponent({
         };
 
         return () =>
-            card(config.value?.app, t.value.forgotPassword, [
+            card(config.value, t.value, t.value.forgotTitle, t.value.forgotSubtitle, [
+                alert('success', action.result.value?.ok ? action.result.value.message : null),
+                alert('danger', action.error.value),
                 submit(send, [
-                    alert('success', action.result.value?.ok ? action.result.value.message : null),
-                    alert('danger', action.error.value),
-                    field(email, { label: t.value.email, type: 'email', name: 'email', autocomplete: 'username', required: true, error: action.errors.value.email }),
-                    h(ForgeButton, { type: 'submit', loading: action.busy.value }, () => t.value.sendLink),
+                    field(email, { label: t.value.email, type: 'email', name: 'email', autocomplete: 'username', autofocus: true, required: true, error: action.errors.value.email }),
+                    h(ForgeButton, { type: 'submit', class: 'pa-submit', loading: action.busy.value }, () => (action.busy.value ? t.value.forgotBusy : t.value.forgotButton)),
                 ]),
-                config.value?.urls.login ? h('p', { class: 'pa-foot' }, [h('a', { class: 'pa-link', href: config.value.urls.login }, t.value.backToSignIn)]) : null,
+                config.value?.urls.login ? h('p', { class: 'pa-foot' }, [`${t.value.forgotRemembered} `, h('a', { class: 'pa-link', href: config.value.urls.login }, t.value.backToLogin)]) : null,
             ]);
     },
 });
@@ -223,13 +247,13 @@ export const PtahResetPassword = defineComponent({
         };
 
         return () =>
-            card(config.value?.app, t.value.resetPassword, [
+            card(config.value, t.value, t.value.resetTitle, t.value.resetSubtitle, [
+                alert('danger', action.error.value),
                 submit(send, [
-                    alert('danger', action.error.value),
                     field(email, { label: t.value.email, type: 'email', name: 'email', autocomplete: 'username', required: true, error: action.errors.value.email }),
                     field(password, { label: t.value.newPassword, type: 'password', name: 'password', autocomplete: 'new-password', required: true, error: action.errors.value.password }),
-                    field(confirmation, { label: t.value.confirmPassword, type: 'password', name: 'password_confirmation', autocomplete: 'new-password', required: true }),
-                    h(ForgeButton, { type: 'submit', loading: action.busy.value }, () => t.value.resetPassword),
+                    field(confirmation, { label: t.value.resetConfirm, type: 'password', name: 'password_confirmation', autocomplete: 'new-password', required: true }),
+                    h(ForgeButton, { type: 'submit', class: 'pa-submit', loading: action.busy.value }, () => (action.busy.value ? t.value.resetBusy : t.value.resetPassword)),
                 ]),
             ]);
     },
@@ -241,8 +265,11 @@ const tabProps = {
     client: { type: Object as PropType<PtahApi>, required: true as const },
     profile: { type: Object as PropType<Profile>, required: true as const },
     t: { type: Object as PropType<Words>, required: true as const },
+    p: { type: Object as PropType<ProfileWords>, required: true as const },
     took: { type: Function as PropType<(answer: AuthResult) => void>, required: true as const },
 };
+
+const box = (children: (VNode | null | false)[]) => h(ForgeCard, null, () => children.filter(Boolean));
 
 const ProfileTab = defineComponent({
     name: 'PtahProfileTab',
@@ -252,8 +279,6 @@ const ProfileTab = defineComponent({
         const name = ref(props.profile.name);
         const email = ref(props.profile.email);
         const password = ref('');
-        // The server asks for the current password only when the e-mail changes.
-        const emailChanged = computed(() => email.value.trim().toLowerCase() !== props.profile.email.toLowerCase());
 
         const save = async () => {
             const answer = await action.run(() => props.client.updateProfile(name.value, email.value, password.value));
@@ -262,48 +287,32 @@ const ProfileTab = defineComponent({
                 password.value = '';
             }
         };
-        const upload = (event: Event) => {
-            const file = (event.target as HTMLInputElement).files?.[0];
-            if (file) {
-                void action.run(() => props.client.updatePhoto(file)).then(props.took);
-            }
-        };
 
         return () =>
-            h('div', { class: 'pa-section' }, [
-                h('div', { class: 'pa-photo' }, [
-                    h(ForgeAvatar, { src: props.profile.photo_url ?? undefined, text: props.profile.name, size: 'xl' }),
-                    h('input', { type: 'file', accept: 'image/*', 'aria-label': props.t.photo, onChange: upload }),
-                    props.profile.photo_url ? h(ForgeButton, { flat: true, color: 'danger', onClick: () => void action.run(() => props.client.removePhoto()).then(props.took) }, () => props.t.removePhoto) : null,
-                ]),
-                alert('danger', action.errors.value.photo),
-                submit(save, [
+            box([
+                h('form', { class: 'pa-form pa-narrow', novalidate: true, onSubmit: (event: Event) => (event.preventDefault(), void save()) }, [
                     alert('danger', action.error.value),
-                    field(name, { label: props.t.name, name: 'name', required: true, error: action.errors.value.name }),
-                    field(email, { label: props.t.email, type: 'email', name: 'email', required: true, error: action.errors.value.email }),
-                    emailChanged.value ? field(password, { label: props.t.currentPassword, type: 'password', name: 'current_password', autocomplete: 'current-password', error: action.errors.value.current_password }) : null,
-                    h('div', [h(ForgeButton, { type: 'submit', loading: action.busy.value }, () => props.t.save)]),
+                    field(name, { label: props.p.name, name: 'name', required: true, error: action.errors.value.name }),
+                    field(email, { label: 'E-mail', type: 'email', name: 'email', required: true, error: action.errors.value.email }),
+                    // Asked only when the e-mail changes, by the server; the field is always there, as on Livewire.
+                    field(password, { label: props.p.emailPassword, type: 'password', name: 'email_password', autocomplete: 'current-password', error: action.errors.value.current_password }),
+                    h('div', [h(ForgeButton, { type: 'submit', loading: action.busy.value }, () => props.p.saveProfile)]),
                 ]),
             ]);
     },
 });
 
-const SecurityTab = defineComponent({
-    name: 'PtahSecurityTab',
+const PasswordTab = defineComponent({
+    name: 'PtahPasswordTab',
     props: tabProps,
     setup(props) {
-        const password = useAction();
-        const twoFactor = useAction();
+        const action = useAction();
         const current = ref('');
         const next = ref('');
         const confirmation = ref('');
-        const confirm2fa = ref('');
-        const code = ref('');
-        const setup = ref<{ secret: string | null; qr: string | null } | null>(null);
-        const codes = ref<string[]>([]);
 
-        const savePassword = async () => {
-            const answer = await password.run(() => props.client.updatePassword(current.value, next.value, confirmation.value));
+        const save = async () => {
+            const answer = await action.run(() => props.client.updatePassword(current.value, next.value, confirmation.value));
             props.took(answer);
             if (answer.ok) {
                 current.value = '';
@@ -312,8 +321,31 @@ const SecurityTab = defineComponent({
             }
         };
 
+        return () =>
+            box([
+                alert('danger', action.error.value),
+                h('form', { class: 'pa-form pa-narrow', novalidate: true, onSubmit: (event: Event) => (event.preventDefault(), void save()) }, [
+                    field(current, { label: props.p.currentPassword, type: 'password', name: 'current_password', autocomplete: 'current-password', required: true, error: action.errors.value.current_password }),
+                    field(next, { label: props.p.newPassword, type: 'password', name: 'password', autocomplete: 'new-password', required: true, error: action.errors.value.password }),
+                    field(confirmation, { label: props.p.confirmPassword, type: 'password', name: 'password_confirmation', autocomplete: 'new-password', required: true }),
+                    h('div', [h(ForgeButton, { type: 'submit', loading: action.busy.value }, () => props.p.changePassword)]),
+                ]),
+            ]);
+    },
+});
+
+const TwoFactorTab = defineComponent({
+    name: 'PtahTwoFactorTab',
+    props: tabProps,
+    setup(props) {
+        const action = useAction();
+        const password = ref('');
+        const code = ref('');
+        const setup = ref<{ secret: string | null; qr: string | null } | null>(null);
+        const codes = ref<string[]>([]);
+
         const act = async (call: () => Promise<AuthResult>) => {
-            const answer = await twoFactor.run(call);
+            const answer = await action.run(call);
             props.took(answer);
             if (answer.recovery_codes) {
                 codes.value = answer.recovery_codes;
@@ -322,81 +354,93 @@ const SecurityTab = defineComponent({
             return answer;
         };
 
-        const startTotp = () =>
-            void act(() => props.client.startTotp(confirm2fa.value)).then((answer) => {
-                if (answer.ok) {
-                    setup.value = { secret: answer.secret ?? null, qr: answer.qr ?? null };
-                }
-            });
         const confirmTotp = () =>
             void act(() => props.client.confirmTotp(code.value)).then((answer) => {
                 code.value = '';
                 if (answer.ok) {
                     setup.value = null;
-                    confirm2fa.value = '';
+                    password.value = '';
                 }
             });
-        const disable = () =>
-            void act(() => props.client.disableTwoFactor(confirm2fa.value)).then((answer) => {
+
+        const disable = () => {
+            if (!confirmed(props.p.disableTwoFactorConfirm)) {
+                return;
+            }
+            void act(() => props.client.disableTwoFactor(password.value)).then((answer) => {
                 if (answer.ok) {
                     codes.value = [];
                     setup.value = null;
-                    confirm2fa.value = '';
+                    password.value = '';
                 }
             });
+        };
+
+        const methodHead = (name: string, tone: string, title: string, hint: string) =>
+            h('div', { class: 'pa-method-head' }, [h('span', { class: 'pa-method-icon', 'data-tone': tone }, [icon(name, 20)]), h('div', [h('p', { class: 'pa-method-title' }, title), h('p', { class: 'pa-hint' }, hint)])]);
 
         return () => {
-            const { t, profile, client } = props;
+            const { p, t, profile } = props;
             const two = profile.two_factor;
 
-            return h('div', { class: 'pa-section' }, [
-                h('h3', t.password),
-                submit(savePassword, [
-                    alert('danger', password.error.value),
-                    field(current, { label: t.currentPassword, type: 'password', name: 'current_password', autocomplete: 'current-password', error: password.errors.value.current_password }),
-                    field(next, { label: t.newPassword, type: 'password', name: 'password', autocomplete: 'new-password', error: password.errors.value.password }),
-                    field(confirmation, { label: t.confirmPassword, type: 'password', name: 'password_confirmation', autocomplete: 'new-password' }),
-                    h('div', [h(ForgeButton, { type: 'submit', loading: password.busy.value }, () => t.save)]),
-                ]),
-                ...(two.available || two.enabled
-                    ? [
-                          h('h3', `${t.twoFactor}: ${two.enabled ? t.twoFactorOn : t.twoFactorOff}`),
-                          alert('danger', twoFactor.error.value),
-                          // Every 2FA change asks for the current password.
-                          field(confirm2fa, { label: t.currentPassword, type: 'password', name: 'twofa_password', autocomplete: 'current-password', error: twoFactor.errors.value.current_password }),
-                          h('div', { class: 'pa-row', style: { justifyContent: 'flex-start' } }, [
-                              ...(two.available && !two.enabled
-                                  ? [h(ForgeButton, { onClick: startTotp }, () => t.enableApp), h(ForgeButton, { flat: true, onClick: () => void act(() => client.enableEmailTwoFactor(confirm2fa.value)) }, () => t.enableEmail)]
-                                  : []),
-                              ...(two.enabled
-                                  ? [
-                                        h(ForgeButton, { flat: true, onClick: () => void act(() => client.recoveryCodes(confirm2fa.value)) }, () => t.showRecovery),
-                                        two.available ? h(ForgeButton, { flat: true, onClick: () => void act(() => client.recoveryCodes(confirm2fa.value, true)) }, () => t.regenerate) : null,
-                                        h(ForgeButton, { color: 'danger', onClick: disable }, () => t.disable),
-                                    ]
-                                  : []),
+            return box([
+                alert('danger', action.error.value),
+                // Every 2FA change asks for the current password.
+                h('div', { class: 'pa-narrow pa-gap' }, [field(password, { label: p.twoFactorPassword, type: 'password', name: 'twofa_password', autocomplete: 'current-password', error: action.errors.value.current_password })]),
+                !two.enabled
+                    ? h('div', { class: 'pa-narrow' }, [
+                          h('p', { class: 'pa-text pa-text--body pa-gap' }, p.twoFactorIntro),
+                          h('div', { class: 'pa-method' }, [
+                              methodHead('deviceMobile', 'blue', p.totpTitle, p.totpApps),
+                              setup.value
+                                  ? h('div', { class: 'pa-setup' }, [
+                                        ...(setup.value.qr ? [h('p', { class: 'pa-text' }, p.scanQr), h('div', { class: 'pa-qr-box' }, [h('img', { class: 'pa-qr', src: setup.value.qr, alt: 'QR Code 2FA' })])] : []),
+                                        setup.value.secret ? h('p', { class: 'pa-hint pa-center' }, [`${p.enterKey} `, h('code', { class: 'pa-chip' }, setup.value.secret)]) : null,
+                                        h('form', { class: 'pa-inline', novalidate: true, onSubmit: (event: Event) => (event.preventDefault(), confirmTotp()) }, [
+                                            field(code, { label: t.twoFactorCode, name: 'totp_code', placeholder: '000000', inputmode: 'numeric', autocomplete: 'one-time-code', error: action.errors.value.totp_code }),
+                                            h(ForgeButton, { type: 'submit', loading: action.busy.value }, () => p.confirm),
+                                        ]),
+                                    ])
+                                  : two.available
+                                    ? h(
+                                          ForgeButton,
+                                          {
+                                              color: 'light',
+                                              size: 'sm',
+                                              onClick: () =>
+                                                  void act(() => props.client.startTotp(password.value)).then((answer) => {
+                                                      if (answer.ok) {
+                                                          setup.value = { secret: answer.secret ?? null, qr: answer.qr ?? null };
+                                                      }
+                                                  }),
+                                          },
+                                          () => p.setUp,
+                                      )
+                                    : null,
                           ]),
-                          setup.value && !two.enabled
-                              ? submit(confirmTotp, [
-                                    h('p', t.scanQr),
-                                    setup.value.qr ? h('img', { class: 'pa-qr', src: setup.value.qr, alt: 'QR code' }) : null,
-                                    setup.value.secret ? h('p', [`${t.secretKey}: `, h('span', { class: 'pa-secret' }, setup.value.secret)]) : null,
-                                    field(code, { label: t.twoFactorCode, name: 'totp_code', inputmode: 'numeric', autocomplete: 'one-time-code', error: twoFactor.errors.value.totp_code }),
-                                    h('div', [h(ForgeButton, { type: 'submit', loading: twoFactor.busy.value }, () => t.verify)]),
-                                ])
-                              : null,
-                          ...(codes.value.length > 0
-                              ? [
-                                    h('strong', t.recoveryCodes),
+                          h('div', { class: 'pa-method' }, [
+                              h('div', { class: 'pa-method-row' }, [
+                                  methodHead('mail', 'sky', p.emailTitle, p.emailCodeHint.replace(':email', profile.email)),
+                                  two.available ? h(ForgeButton, { color: 'light', size: 'sm', onClick: () => void act(() => props.client.enableEmailTwoFactor(password.value)) }, () => p.enable) : null,
+                              ]),
+                          ]),
+                      ])
+                    : h('div', { class: 'pa-narrow pa-stack' }, [
+                          h(ForgeAlert, { type: 'success' }, () => `${p.twoFactorActive} (${two.type === 'totp' ? p.authenticator : 'E-mail'}).`),
+                          codes.value.length > 0
+                              ? h('div', [
+                                    h('p', { class: 'pa-method-title' }, p.recoveryTitle),
+                                    h('p', { class: 'pa-hint pa-gap-sm' }, p.recoveryHint),
                                     h(
                                         'ul',
                                         { class: 'pa-codes' },
                                         codes.value.map((item) => h('li', { key: item }, item)),
                                     ),
-                                ]
-                              : []),
-                      ]
-                    : []),
+                                    two.available ? h('div', { class: 'pa-gap-top' }, [h(ForgeButton, { color: 'light', size: 'sm', onClick: () => void act(() => props.client.recoveryCodes(password.value, true)) }, () => p.regenerate)]) : null,
+                                ])
+                              : h('div', [h(ForgeButton, { color: 'light', size: 'sm', onClick: () => void act(() => props.client.recoveryCodes(password.value)) }, () => p.viewRecovery)]),
+                          h('div', [h(ForgeButton, { color: 'danger', onClick: disable }, () => p.disableTwoFactor)]),
+                      ]),
             ]);
         };
     },
@@ -428,29 +472,88 @@ const SessionsTab = defineComponent({
         };
 
         return () => {
-            const { t, client } = props;
-            if (sessions.value === null) {
-                return h('p', { role: 'status' }, t.loading);
-            }
+            const { p, t } = props;
+            const list = sessions.value;
 
-            return h('div', { class: 'pa-section' }, [
-                sessions.value.length === 0 ? h('p', t.empty) : null,
-                ...sessions.value.map((session) =>
-                    h('div', { key: session.id, class: 'pa-session' }, [
-                        h('span', { class: 'pa-session-text' }, [
-                            h('strong', `${session.browser} · ${session.platform}`),
-                            h('span', { class: 'pa-session-meta' }, `${session.ip_address} · ${session.is_current ? t.thisDevice : session.last_activity_human}`),
-                        ]),
-                        session.is_current ? null : h(ForgeButton, { flat: true, color: 'danger', size: 'sm', onClick: () => void act(() => client.revokeSession(session.id)) }, () => t.revoke),
-                    ]),
-                ),
-                sessions.value.some((session) => !session.is_current) ? h('div', [h(ForgeButton, { color: 'danger', onClick: () => void act(() => client.revokeOtherSessions()) }, () => t.revokeOthers)]) : null,
+            return box([
+                h('div', { class: 'pa-sessions-head' }, [
+                    h('p', { class: 'pa-text' }, p.sessionsIntro),
+                    h(ForgeButton, { color: 'danger', size: 'sm', onClick: () => confirmed(p.disconnectConfirm) && void act(() => props.client.revokeOtherSessions()) }, () => p.disconnectOthers),
+                ]),
+                list === null
+                    ? h('p', { class: 'pa-empty', role: 'status' }, t.loading)
+                    : list.length === 0
+                      ? h('p', { class: 'pa-empty' }, p.noSessions)
+                      : h(
+                            'div',
+                            { class: 'pa-sessions' },
+                            list.map((session) =>
+                                h('div', { key: session.id, class: 'pa-session' }, [
+                                    h('div', { class: 'pa-session-main' }, [
+                                        h('span', { class: 'pa-session-icon' }, [icon(isMobilePlatform(session.platform) ? 'deviceMobile' : 'viewAuto', 20)]),
+                                        h('div', [
+                                            h('p', { class: 'pa-session-browser' }, [session.browser || p.unknownBrowser, session.is_current ? h('span', { class: 'pa-session-current' }, `(${p.thisSession})`) : null]),
+                                            h('p', { class: 'pa-hint' }, `${session.platform} · ${session.ip_address} · ${p.lastActivity} ${session.last_activity_human}`),
+                                        ]),
+                                    ]),
+                                    !session.is_current ? h(ForgeButton, { color: 'light', size: 'sm', onClick: () => void act(() => props.client.revokeSession(session.id)) }, () => p.revoke) : null,
+                                ]),
+                            ),
+                        ),
             ]);
         };
     },
 });
 
-const AXES = ['light', 'dark', 'accent', 'text', 'density', 'fontsize'] as const;
+const PhotoTab = defineComponent({
+    name: 'PtahPhotoTab',
+    props: tabProps,
+    setup(props) {
+        const action = useAction();
+        const file = ref<File | null>(null);
+        const preview = ref<string | null>(null);
+
+        const pick = (chosen: File | null) => {
+            if (preview.value) {
+                URL.revokeObjectURL?.(preview.value);
+            }
+            file.value = chosen;
+            preview.value = chosen && typeof URL.createObjectURL === 'function' ? URL.createObjectURL(chosen) : null;
+        };
+        onBeforeUnmount(() => pick(null));
+
+        const save = async () => {
+            if (!file.value) {
+                return;
+            }
+            const chosen = file.value;
+            const answer = await action.run(() => props.client.updatePhoto(chosen));
+            props.took(answer);
+            if (answer.ok) {
+                pick(null);
+            }
+        };
+
+        return () => {
+            const { p, profile } = props;
+            const shown = preview.value ?? profile.photo_url;
+
+            return box([
+                h('div', { class: 'pa-photo-tab' }, [
+                    shown ? h('img', { class: 'pa-photo-img', src: shown, alt: profile.name }) : h('span', { class: 'pa-photo-img pa-photo-initial' }, firstLetter(profile.name)),
+                    h('div', { class: 'pa-photo-form' }, [
+                        h('label', { class: 'pa-label' }, [p.selectImage, h('input', { class: 'pa-file', type: 'file', accept: 'image/*', onChange: (event: Event) => pick((event.target as HTMLInputElement).files?.[0] ?? null) })]),
+                        action.errors.value.photo ? h('p', { class: 'pa-field-error' }, action.errors.value.photo) : null,
+                        h('div', { class: 'pa-photo-actions' }, [
+                            h(ForgeButton, { class: 'pa-grow', loading: action.busy.value, disabled: !file.value, onClick: () => void save() }, () => (action.busy.value ? p.saving : p.savePhoto)),
+                            profile.photo_url ? h(ForgeButton, { color: 'light', onClick: () => confirmed(p.removeConfirm) && void action.run(() => props.client.removePhoto()).then(props.took) }, () => p.remove) : null,
+                        ]),
+                    ]),
+                ]),
+            ]);
+        };
+    },
+});
 
 const AppearanceTab = defineComponent({
     name: 'PtahAppearanceTab',
@@ -458,25 +561,40 @@ const AppearanceTab = defineComponent({
     setup(props) {
         const set = (changes: Record<string, string | boolean>) => void props.client.updateAppearance(changes).then(props.took);
 
-        return () =>
-            h('div', { class: 'pa-section' }, [
-                ...AXES.map((axis) =>
-                    h('div', { key: axis }, [
-                        h('strong', props.t[axis]),
-                        h(
-                            'div',
-                            { class: 'pa-choices', role: 'group', 'aria-label': props.t[axis] },
-                            props.profile.appearance.choices[axis].map((choice) =>
-                                h('button', { key: choice, type: 'button', class: 'pa-choice', 'aria-pressed': props.profile.appearance[axis] === choice, onClick: () => set({ [axis]: choice }) }, choice),
+        return () => {
+            const appearance = props.profile.appearance;
+            const labels = appearance.labels ?? {};
+            const swatches = appearance.swatches ?? {};
+
+            return box([
+                h('div', { class: 'pa-appearance' }, [
+                    ...APPEARANCE_AXES.map((axis) =>
+                        h('div', { key: axis }, [
+                            h('p', { class: 'pa-axis' }, labels._axis?.[axis] ?? axis),
+                            h(
+                                'div',
+                                { class: 'pa-choices', role: 'group', 'aria-label': labels._axis?.[axis] ?? axis },
+                                appearance.choices[axis].map((choice) =>
+                                    // The chip previews its own option (.ptah-swatch[data-ptah-*]), as on Livewire.
+                                    h('button', { key: choice, type: 'button', class: ['pa-choice ptah-swatch', appearance[axis] === choice ? 'ptah-c-btn_on' : 'ptah-c-btn'], [`data-ptah-${axis}`]: choice, 'aria-pressed': appearance[axis] === choice ? 'true' : 'false', onClick: () => set({ [axis]: choice }) }, [
+                                        axis === 'accent' && swatches[choice] ? h('span', { class: 'pa-swatch', style: { backgroundColor: swatches[choice] }, 'aria-hidden': 'true' }) : null,
+                                        labels[axis]?.[choice] ?? choice,
+                                    ]),
+                                ),
                             ),
-                        ),
-                    ]),
-                ),
-                h('div', [h(ForgeButton, { flat: true, onClick: () => set({ reset: true }) }, () => props.t.restoreDefaults)]),
+                        ]),
+                    ),
+                    h('div', [h(ForgeButton, { color: 'light', flat: true, size: 'sm', onClick: () => set({ reset: true }) }, () => props.p.resetAppearance)]),
+                ]),
             ]);
+        };
     },
 });
 
+/**
+ * livewire/auth/profile: the page header, then six tabs — Perfil, Senha,
+ * Autenticação 2FA, Sessões, Foto, Aparência — each one a card.
+ */
 export const PtahProfile = defineComponent({
     name: 'PtahProfile',
     props: { api: pageProps.api, locale: pageProps.locale },
@@ -484,6 +602,7 @@ export const PtahProfile = defineComponent({
         const client = props.api ?? new PtahApi();
         const profile = ref<Profile | null>(null);
         const t = computed(() => words(props.locale));
+        const p = computed(() => profileWords(props.locale));
 
         onMounted(() => {
             void client
@@ -509,16 +628,30 @@ export const PtahProfile = defineComponent({
                 return h('div', { class: 'pf pc-state', role: 'status' }, t.value.loading);
             }
 
-            const part = { client, profile: profile.value, t: t.value, took };
+            const current = profile.value;
+            const part = { client, profile: current, t: t.value, p: p.value, took };
             const tabs = [
-                { id: 'profile', label: t.value.profile },
-                { id: 'security', label: t.value.security },
-                ...(profile.value.sessions_available ? [{ id: 'sessions', label: t.value.sessions }] : []),
-                { id: 'appearance', label: t.value.appearance },
+                { id: 'profile', label: p.value.tabProfile },
+                { id: 'password', label: p.value.tabPassword },
+                ...(current.two_factor.available || current.two_factor.enabled ? [{ id: 'two_factor', label: p.value.tabTwoFactor }] : []),
+                ...(current.sessions_available ? [{ id: 'sessions', label: p.value.tabSessions }] : []),
+                { id: 'photo', label: p.value.tabPhoto },
+                { id: 'appearance', label: p.value.tabAppearance },
             ];
 
-            return h('div', { class: 'pf' }, [
-                h(ForgeTabs, { tabs }, { profile: () => h(ProfileTab, part), security: () => h(SecurityTab, part), sessions: () => h(SessionsTab, part), appearance: () => h(AppearanceTab, part) }),
+            return h('div', { class: 'pf pa-profile' }, [
+                h(
+                    ForgeTabs,
+                    { tabs },
+                    {
+                        profile: () => h(ProfileTab, part),
+                        password: () => h(PasswordTab, part),
+                        two_factor: () => h(TwoFactorTab, part),
+                        sessions: () => h(SessionsTab, part),
+                        photo: () => h(PhotoTab, part),
+                        appearance: () => h(AppearanceTab, part),
+                    },
+                ),
                 h(ForgeToastHost),
             ]);
         };

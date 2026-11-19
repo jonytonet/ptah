@@ -16,9 +16,9 @@ import { PtahPages, PtahPermissionGuide, PtahRoles } from './admin/roles';
 import { PtahExportsPanel } from './admin/shell';
 import { PtahForgotPassword, PtahLogin, PtahProfile, PtahResetPassword, PtahTwoFactor } from './auth';
 import { PtahDashboard } from './dashboard';
-import { ForgePageHeader } from './forge';
 import { PtahCrud } from './PtahCrud';
 import { PtahLayout } from './PtahLayout';
+import { PtahPageHead } from './page-head';
 
 /** The administration screens ptah ships, by the page key the server names. */
 const ADMIN = {
@@ -88,7 +88,7 @@ export function PtahApp({ page, screen = '', title, brand, locale, apiUrl, props
     } else if (page === 'profile') {
         content = (
             <>
-                <ForgePageHeader title={t.profile} />
+                <PtahPageHead title={t.profileTitle} subtitle={t.profileSubtitle} />
                 <PtahProfile {...common} />
             </>
         );
@@ -98,11 +98,17 @@ export function PtahApp({ page, screen = '', title, brand, locale, apiUrl, props
         const Screen = ADMIN[page as keyof typeof ADMIN];
         content = <Screen {...common} />;
     } else {
-        content = <PtahCrud screen={screen} {...common} onAction={onAction} />;
+        // The header of the page ptah:forge writes (view.index.stub): the title, and Dashboard / title.
+        content = (
+            <>
+                {title && <PtahPageHead title={title} crumbs={[{ label: t.dashboard, url: '/dashboard' }, { label: title }]} />}
+                <PtahCrud screen={screen} {...common} onAction={onAction} />
+            </>
+        );
     }
 
     return (
-        <PtahLayout api={api} brand={brand} title={title} locale={locale} topbar={topbar} profileUrl={profileUrl} themeModeUrl={themeModeUrl} onLogout={canLogout ? () => void logout() : undefined}>
+        <PtahLayout api={api} brand={brand} locale={locale} topbar={topbar} profileUrl={profileUrl} themeModeUrl={themeModeUrl} onLogout={canLogout ? () => void logout() : undefined}>
             {content}
         </PtahLayout>
     );

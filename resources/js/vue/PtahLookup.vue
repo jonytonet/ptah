@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { debounce } from '../core';
 import { optionLines } from '../core/crud/form';
 import type { LookupItem, Words } from '../core';
+import { Icon } from './icons';
 
 const props = defineProps<{
     id: string;
@@ -132,7 +133,7 @@ onBeforeUnmount(() => {
                 @input="onInput"
                 @keydown="onKey"
             />
-            <button type="button" tabindex="-1" class="pc-combo-toggle" :aria-label="t.toggleOptions" :disabled="disabled" @mousedown.prevent="toggle">▾</button>
+            <button type="button" tabindex="-1" class="pc-combo-toggle" :aria-label="t.toggleOptions" :aria-expanded="items !== null" :disabled="disabled" @mousedown.prevent="toggle"><Icon name="chevronDown" /></button>
         </div>
         <ul v-if="items !== null" :id="`${id}-list`" :class="['pc-combo-list', { 'pc-combo-list--up': opensUp }]" role="listbox">
             <li v-if="items.length === 0" class="pc-combo-note">{{ t.noResults }}</li>

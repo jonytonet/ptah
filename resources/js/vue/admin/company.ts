@@ -10,6 +10,7 @@ import { PtahApi } from '../../core';
 import { badgeColor, companies, companySwitcher, companyWords, departments, nextSort, rangeText, switchCompany, TAX_TYPES } from '../../core/admin/company';
 import type { AdminListing, AdminListQuery, AdminResource, AdminResult, CompanyForm, CompanyRow, CompanyWords, DepartmentForm, DepartmentRow, SwitcherState } from '../../core/admin/company';
 import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeInput, ForgeModal, ForgePageHeader, ForgePagination, ForgeSelect, ForgeSwitch, ForgeTextarea, forgeToast, ForgeToastHost } from '../forge';
+import { icon as ptahIcon } from '../icons';
 
 const screenProps = {
     api: { type: Object as PropType<PtahApi>, default: undefined },
@@ -439,28 +440,34 @@ export const PtahCompanySwitcher = defineComponent({
             const active = current.companies.find((company) => company.id === current.active_id);
 
             if (props.layout === 'stacked') {
-                return h('div', { class: 'pf', role: 'group', 'aria-label': t.value.selectCompany, 'aria-busy': busy.value || undefined }, [
-                    h('p', { class: 'pc-help' }, t.value.selectCompany),
+                return h('div', { class: 'pl-switcher-stack', role: 'group', 'aria-label': t.value.selectCompany, 'aria-busy': busy.value || undefined }, [
+                    h('p', { class: 'pl-switcher-heading' }, t.value.selectCompany),
                     ...current.companies.map((company) => {
                         const isActive = company.id === current.active_id;
 
-                        return h('button', { key: company.id, type: 'button', class: 'pc-menu-item', 'aria-current': isActive ? 'true' : 'false', onClick: () => void pick(company.id) }, [
+                        return h('button', { key: company.id, type: 'button', class: 'pl-switcher-item', 'aria-current': isActive ? 'true' : 'false', onClick: () => void pick(company.id) }, [
                             // The active one is marked by an icon, not only by colour.
-                            h('span', { 'aria-hidden': 'true', style: { width: '16px' } }, isActive ? '✓' : ''),
-                            h('span', { style: { flex: 1, fontWeight: isActive ? 600 : undefined } }, company.name),
-                            h('small', company.label),
+                            isActive ? ptahIcon('check', 16, undefined, 'pl-switcher-check') : h('span', { class: 'pl-switcher-check', 'aria-hidden': 'true' }),
+                            h('span', { class: 'pl-switcher-label' }, company.name),
+                            h('span', { class: 'pl-switcher-code' }, company.label),
                         ]);
                     }),
                 ]);
             }
 
-            return h('div', { class: 'pf', style: { display: 'inline-flex', alignItems: 'center', gap: '8px' }, 'aria-busy': busy.value || undefined }, [
-                h('strong', active?.name ?? ''),
+            // company-switcher.blade.php, inline: the active company's name, a rule, one tab per company.
+            return h('div', { class: 'pl-switcher', 'aria-busy': busy.value || undefined }, [
+                h('span', { class: 'pl-switcher-name' }, active?.name ?? ''),
+                h('span', { class: 'pl-switcher-sep', 'aria-hidden': 'true' }),
                 h(
-                    'div',
-                    { class: 'pf-tablist', role: 'tablist', 'aria-label': t.value.selectCompany },
+                    'nav',
+                    { class: 'pl-switcher-bar', role: 'tablist', 'aria-label': t.value.selectCompany },
                     current.companies.map((company) =>
-                        h('button', { key: company.id, type: 'button', role: 'tab', class: 'pf-tab', title: company.name, 'aria-selected': company.id === current.active_id, onClick: () => void pick(company.id) }, company.label),
+                        h(
+                            'button',
+                            { key: company.id, type: 'button', role: 'tab', class: 'pl-switcher-tab', title: company.name, 'aria-selected': company.id === current.active_id ? 'true' : 'false', onClick: () => void pick(company.id) },
+                            company.label,
+                        ),
                     ),
                 ),
             ]);

@@ -193,7 +193,7 @@ export const PtahCrudConfigButton = defineComponent({
         return () =>
             can.value
                 ? [
-                      h('button', { type: 'button', class: 'pc-btn', title: t.value.cfg_btn_title, 'aria-label': t.value.cfg_btn_title, 'aria-haspopup': 'dialog', onClick: () => (open.value = true) }, [gearIcon(), ` ${t.value.button}`]),
+                      h('button', { type: 'button', class: 'pc-tbtn pc-tbtn--flat', title: t.value.cfg_btn_title, 'aria-label': t.value.cfg_btn_title, 'aria-haspopup': 'dialog', onClick: () => (open.value = true) }, [gearIcon(), h('span', { class: 'pc-tbtn-label' }, t.value.button)]),
                       open.value
                           ? h(PtahCrudConfig, {
                                 api: props.crud.api,

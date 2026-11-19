@@ -74,9 +74,18 @@ class ShellApiController extends Controller
      */
     public function dashboard(Request $request, DashboardService $dashboard): JsonResponse
     {
-        $group = $request->query('group');
+        $group = is_string($request->query('group')) && $request->query('group') !== '' ? (string) $request->query('group') : null;
 
-        return response()->json(['data' => $dashboard->visibleWidgets(is_string($group) && $group !== '' ? $group : null)]);
+        return response()->json([
+            'data' => $dashboard->visibleWidgets($group),
+            // Without widgets, livewire/auth/dashboard draws four cards of its
+            // own: the user, the system, the environment and Laravel's version.
+            'fallback' => $group === null && ! $dashboard->hasWidgets() ? [
+                'app' => (string) config('app.name'),
+                'environment' => ucfirst((string) config('app.env')),
+                'laravel' => app()->version(),
+            ] : null,
+        ]);
     }
 
     public function me(Request $request, CrudScreenRegistry $screens): JsonResponse

@@ -26,6 +26,7 @@ import {
 } from '../../core/crud/extras';
 import type { ColumnItem, DetailScreen } from '../../core/crud/extras';
 import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal, ForgeSpinner } from '../forge';
+import { icon } from '../icons';
 import { usePtahCrud } from '../usePtahCrud';
 
 const pieceProps = {
@@ -159,8 +160,8 @@ export const PtahCrudDetailToggle = defineComponent({
             }
             const open = view.value.expanded.includes(String(props.row.id));
 
-            return h('button', { type: 'button', class: 'pc-icon-btn', title: t.showDetails, 'aria-label': t.showDetails, 'aria-expanded': open ? 'true' : 'false', onClick: () => store.toggle(props.row.id) }, [
-                h('span', { 'aria-hidden': 'true', style: { display: 'inline-block', transition: 'transform .15s', transform: open ? 'rotate(90deg)' : 'none' } }, '▸'),
+            return h('button', { type: 'button', class: 'pc-expand', title: t.showDetails, 'aria-label': t.showDetails, 'aria-expanded': open ? 'true' : 'false', onClick: () => store.toggle(props.row.id) }, [
+                icon('chevronRight'),
             ]);
         };
     },
@@ -200,7 +201,7 @@ export const PtahCrudDetailRow = defineComponent({
             const entry = view.value.entries[key];
 
             return h('tr', { class: 'pc-detail-row' }, [
-                h('td', { colspan: props.colSpan, style: { padding: '12px 24px', background: 'var(--pc-bg-soft)' }, 'aria-busy': !entry || entry.status === 'loading' ? 'true' : 'false' }, [
+                h('td', { colspan: props.colSpan, class: 'pc-detail-td', 'aria-busy': !entry || entry.status === 'loading' ? 'true' : 'false' }, [
                     !entry || (entry.status === 'loading' && entry.details.length === 0) ? h(ForgeSpinner, { label: t.loading }) : null,
                     entry?.status === 'error'
                         ? h(ForgeAlert, { color: 'danger' }, () =>
@@ -329,18 +330,31 @@ export const PtahCrudColumnsMenu = defineComponent({
             const hidden = Object.values(preferences.columns).filter((visible) => !visible).length;
             const rows = list.value;
 
-            return h('div', { class: 'pc-menu', ref: root }, [
-                h('button', { type: 'button', class: `pc-btn${hidden > 0 ? ' pc-btn--active' : ''}`, 'aria-haspopup': 'true', 'aria-expanded': open.value ? 'true' : 'false', onClick: () => (open.value = !open.value) }, [
-                    t.columns,
-                    hidden > 0 ? h('span', { style: { ...MUTED, marginLeft: '4px' } }, `(${fill(t.hiddenCount, { count: hidden })})`) : null,
-                    ' ▾',
-                ]),
+            return h('div', { class: 'pc-dd-wrap pc-tb-secondary', ref: root }, [
+                h(
+                    'button',
+                    {
+                        type: 'button',
+                        class: `pc-tbtn${hidden > 0 ? ' pc-tbtn--warn-on' : ''}`,
+                        title: t.columns,
+                        'aria-label': hidden > 0 ? `${t.columns} (${fill(t.hiddenCount, { count: hidden })})` : t.columns,
+                        'aria-haspopup': 'true',
+                        'aria-expanded': open.value ? 'true' : 'false',
+                        onClick: () => (open.value = !open.value),
+                    },
+                    [
+                        icon('columns'),
+                        h('span', { class: 'pc-tbtn-label' }, t.columns),
+                        hidden > 0 ? h('span', { class: 'pc-count pc-count--warn' }, String(hidden)) : null,
+                        icon('chevronDown', 12),
+                    ],
+                ),
                 open.value
-                    ? h('div', { class: 'pc-menu-list', role: 'group', 'aria-label': t.columns, 'aria-busy': busy.value ? 'true' : 'false', style: { minWidth: '260px', maxHeight: '360px', overflowY: 'auto' } }, [
-                          h('div', { style: { ...ROW, padding: '4px 8px 8px', borderBottom: '1px solid var(--pc-line)' } }, [
-                              h('button', { type: 'button', class: 'pc-btn', disabled: busy.value || rows.length === 0, onClick: () => all(true) }, t.showAll),
-                              h('button', { type: 'button', class: 'pc-btn', disabled: busy.value || rows.length === 0, onClick: () => all(false) }, t.hideAll),
-                              h('button', { type: 'button', class: 'pc-btn', disabled: busy.value, onClick: () => (confirming.value = true) }, t.resetColumns),
+                    ? h('div', { class: 'pc-dd pc-cols-dd', role: 'group', 'aria-label': t.columns, 'aria-busy': busy.value ? 'true' : 'false' }, [
+                          h('div', { class: 'pc-cols-quick' }, [
+                              h('button', { type: 'button', class: 'pc-cols-qbtn', disabled: busy.value || rows.length === 0, onClick: () => all(true) }, t.showAll),
+                              h('button', { type: 'button', class: 'pc-cols-qbtn', disabled: busy.value || rows.length === 0, onClick: () => all(false) }, t.hideAll),
+                              h('button', { type: 'button', class: 'pc-cols-qbtn', disabled: busy.value, onClick: () => (confirming.value = true) }, t.resetColumns),
                           ]),
                           error.value
                               ? h('div', { style: { padding: '8px' } }, [h('p', { class: 'pc-error', role: 'alert' }, error.value), h('button', { type: 'button', class: 'pc-btn', onClick: load }, t.retry)])
@@ -350,7 +364,7 @@ export const PtahCrudColumnsMenu = defineComponent({
                           rows.length > 0
                               ? h(
                                     'ul',
-                                    { style: { listStyle: 'none', margin: 0, padding: '4px 0' }, 'aria-label': t.dragHint },
+                                    { class: 'pc-cols-list', 'aria-label': t.dragHint },
                                     rows.map((item, index) =>
                                         h(
                                             'li',
@@ -373,17 +387,13 @@ export const PtahCrudColumnsMenu = defineComponent({
                                                     dragging.value = null;
                                                     over.value = null;
                                                 },
-                                                style: {
-                                                    ...ROW,
-                                                    flexWrap: 'nowrap',
-                                                    padding: '2px 8px',
-                                                    opacity: dragging.value === item.field ? 0.5 : 1,
-                                                    boxShadow: over.value === item.field && dragging.value !== item.field ? 'inset 0 2px 0 var(--pc-primary)' : undefined,
-                                                },
+                                                class: 'pc-cols-item',
+                                                'data-dragging': dragging.value === item.field ? 'true' : undefined,
+                                                'data-over': over.value === item.field && dragging.value !== item.field ? 'true' : undefined,
                                             },
                                             [
-                                                h('span', { 'aria-hidden': 'true', title: t.dragHint, style: { cursor: 'grab', color: 'var(--pc-text-muted)' } }, '⠿'),
-                                                h('label', { class: 'pc-menu-item', style: { flex: 1 } }, [
+                                                h('span', { class: 'pc-cols-grip', 'aria-hidden': 'true', title: t.dragHint }, '⠿'),
+                                                h('label', { class: 'pc-cols-label' }, [
                                                     h('input', {
                                                         type: 'checkbox',
                                                         checked: item.visible,
@@ -392,11 +402,29 @@ export const PtahCrudColumnsMenu = defineComponent({
                                                     }),
                                                     item.label,
                                                 ]),
-                                                h('button', { type: 'button', class: 'pc-icon-btn', 'aria-label': fill(t.moveUp, { label: item.label }), disabled: busy.value || index === 0, onClick: () => move(item.field, index - 1) }, '↑'),
                                                 h(
                                                     'button',
-                                                    { type: 'button', class: 'pc-icon-btn', 'aria-label': fill(t.moveDown, { label: item.label }), disabled: busy.value || index === rows.length - 1, onClick: () => move(item.field, index + 1) },
-                                                    '↓',
+                                                    {
+                                                        type: 'button',
+                                                        class: 'pc-cols-move',
+                                                        'aria-label': fill(t.moveUp, { label: item.label }),
+                                                        title: fill(t.moveUp, { label: item.label }),
+                                                        disabled: busy.value || index === 0,
+                                                        onClick: () => move(item.field, index - 1),
+                                                    },
+                                                    [icon('chevronUp', 12)],
+                                                ),
+                                                h(
+                                                    'button',
+                                                    {
+                                                        type: 'button',
+                                                        class: 'pc-cols-move',
+                                                        'aria-label': fill(t.moveDown, { label: item.label }),
+                                                        title: fill(t.moveDown, { label: item.label }),
+                                                        disabled: busy.value || index === rows.length - 1,
+                                                        onClick: () => move(item.field, index + 1),
+                                                    },
+                                                    [icon('chevronDown', 12)],
                                                 ),
                                             ],
                                         ),

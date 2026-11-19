@@ -21,6 +21,7 @@ import {
 } from '../../core/admin/shell';
 import type { BellState, ExportRow, ExportsListing, ShellMessage, ShellNotification } from '../../core/admin/shell';
 import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal, ForgePagination, ForgeSpinner } from '../forge';
+import { Icon } from '../icons';
 
 export interface ShellProps {
     api?: PtahApi;
@@ -34,12 +35,7 @@ export interface PtahNotificationBellProps extends ShellProps {
     onNavigate?: (url: string) => void;
 }
 
-const panelStyle: CSSProperties = { width: 'min(20rem, 90vw)', maxHeight: 'none', overflow: 'visible' };
-const scrollStyle: CSSProperties = { maxHeight: 'min(24rem, 60vh)', overflowY: 'auto', overscrollBehavior: 'contain' };
-const itemStyle: CSSProperties = { flexDirection: 'column', alignItems: 'flex-start', gap: 2 };
-const footStyle: CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 4, paddingTop: 6, borderTop: '1px solid var(--pc-line)' };
 const statusStyle: CSSProperties = { display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: 'var(--pf-c)', color: 'var(--pf-on)', fontSize: 12, fontWeight: 500 };
-const muted: CSSProperties = { fontSize: 12, opacity: 0.75 };
 
 /** Keeps `fn` current for a timer that was started with an older one. */
 function useLatest<T>(value: T) {
@@ -50,16 +46,7 @@ function useLatest<T>(value: T) {
 }
 
 function BellIcon() {
-    return (
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-            />
-        </svg>
-    );
+    return <Icon name="bell" size={20} className="pl-svg" />;
 }
 
 // ── Notification bell ───────────────────────────────────────────────────────
@@ -169,57 +156,58 @@ export function PtahNotificationBell({ api, locale, pollInterval, onNavigate }: 
     const label = state.unread > 0 ? `${t.bellTitle} (${t.unreadBadge(state.unread)})` : t.bellTitle;
 
     return (
-        <div className="pf pc-menu" ref={root}>
-            <button type="button" className="pc-icon-btn" aria-haspopup="menu" aria-expanded={open} aria-label={label} title={t.bellTitle} onClick={toggle}>
-                <span className="pf-badge" data-position="top-right">
-                    <BellIcon />
-                    {state.unread > 0 && (
-                        <span className="pf pf-badge-mark" data-color="danger" aria-hidden="true">
-                            {badgeText(state.unread)}
-                        </span>
-                    )}
-                </span>
+        // The markup and classes of notification-bell.blade.php: a navbar icon
+        // button with the count, and a panel of the admin dropdown's look.
+        <div className="pl-dropdown-root pl-bell" ref={root}>
+            <button type="button" className="pl-icon-btn" aria-haspopup="menu" aria-expanded={open} aria-label={label} title={t.bellTitle} onClick={toggle}>
+                <BellIcon />
+                {state.unread > 0 && (
+                    <span className="pl-badge" aria-hidden="true">
+                        {badgeText(state.unread)}
+                    </span>
+                )}
             </button>
 
             {open && (
-                <div className="pc-menu-list" role="menu" aria-label={t.bellTitle} aria-busy={busy || items === null} style={panelStyle}>
+                <div className="pl-dropdown pl-dropdown--bell" role="menu" aria-label={t.bellTitle} aria-busy={busy || items === null}>
                     {/* Only the items scroll: the footer stays reachable however long the list is. */}
-                    <div role="none" style={scrollStyle}>
+                    <div role="none" className="pl-bell-scroll">
                         {items === null ? (
-                            <div role="none" style={{ padding: 12, textAlign: 'center' }}>
+                            <div role="none" className="pl-bell-empty">
                                 <ForgeSpinner size="sm" label={t.loading} />
                             </div>
                         ) : items.length === 0 ? (
-                            <p role="none" className="pf-empty" style={{ padding: 16, margin: 0 }}>
+                            <p role="none" className="pl-bell-empty">
                                 {t.empty}
                             </p>
                         ) : (
                             items.map((item) => (
-                                <div role="none" key={item.id} style={{ borderBottom: '1px solid var(--pc-line)', paddingBottom: 4, marginBottom: 4 }}>
+                                <div role="none" key={item.id} className="pl-bell-row">
                                     {item.url ? (
-                                        <a role="menuitem" className="pc-menu-item" href={item.url} style={itemStyle} onClick={(event) => void openItem(event, item)}>
-                                            <strong>{item.title}</strong>
-                                            {item.body && <span style={muted}>{item.body}</span>}
-                                            {item.created_at_human && <span style={muted}>{item.created_at_human}</span>}
-                                            <span style={{ fontSize: 12, fontWeight: 600 }}>{item.action_label || t.actionDefault}</span>
+                                        <a role="menuitem" className="pl-bell-item" href={item.url} onClick={(event) => void openItem(event, item)}>
+                                            <span className="pl-bell-title">{item.title}</span>
+                                            {item.body && <span className="pl-bell-body">{item.body}</span>}
+                                            {item.created_at_human && <span className="pl-bell-time">{item.created_at_human}</span>}
+                                            <span className="pl-bell-action">{item.action_label || t.actionDefault}</span>
                                         </a>
                                     ) : (
-                                        <button type="button" role="menuitem" className="pc-menu-item" disabled aria-disabled="true" style={{ ...itemStyle, cursor: 'default' }}>
-                                            <strong>{item.title}</strong>
-                                            {item.body && <span style={muted}>{item.body}</span>}
-                                            {item.created_at_human && <span style={muted}>{item.created_at_human}</span>}
+                                        <button type="button" role="menuitem" className="pl-bell-item" disabled aria-disabled="true">
+                                            <span className="pl-bell-title">{item.title}</span>
+                                            {item.body && <span className="pl-bell-body">{item.body}</span>}
+                                            {item.created_at_human && <span className="pl-bell-time">{item.created_at_human}</span>}
                                         </button>
                                     )}
                                     <button
                                         type="button"
                                         role="menuitem"
-                                        className="pc-menu-item"
-                                        style={{ fontSize: 12 }}
+                                        className="pl-bell-dismiss"
                                         aria-label={`${t.dismiss}: ${item.title}`}
+                                        title={t.dismiss}
                                         disabled={busy}
                                         onClick={() => void act(() => dismissNotification(client, item.id))}
                                     >
-                                        ✕ {t.dismiss}
+                                        <Icon name="x" size={14} />
+                                        {t.dismiss}
                                     </button>
                                 </div>
                             ))
@@ -227,22 +215,22 @@ export function PtahNotificationBell({ api, locale, pollInterval, onNavigate }: 
                     </div>
 
                     {error && (
-                        <p role="alert" className="pf-field-error" style={{ margin: '6px 9px' }}>
+                        <p role="alert" className="pl-bell-note pl-bell-note--error">
                             {error}
                         </p>
                     )}
                     {notice && (
-                        <p role="status" style={{ ...muted, margin: '6px 9px' }}>
+                        <p role="status" className="pl-bell-note">
                             {notice.text}
                         </p>
                     )}
 
-                    <div role="none" style={footStyle}>
-                        <button type="button" role="menuitem" className="pc-menu-item" style={{ width: 'auto', fontWeight: 600, fontSize: 12 }} disabled={busy} onClick={() => void markAll()}>
+                    <div role="none" className="pl-bell-foot">
+                        <button type="button" role="menuitem" className="pl-bell-link" disabled={busy} onClick={() => void markAll()}>
                             {t.markAllRead}
                         </button>
                         {state.view_all_url && (
-                            <a role="menuitem" className="pc-menu-item" style={{ width: 'auto', fontWeight: 600, fontSize: 12 }} href={state.view_all_url}>
+                            <a role="menuitem" className="pl-bell-link" href={state.view_all_url}>
                                 {t.viewAll}
                             </a>
                         )}

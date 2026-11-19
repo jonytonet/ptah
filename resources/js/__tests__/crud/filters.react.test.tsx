@@ -239,7 +239,8 @@ describe('filter chips (React)', () => {
         );
 
         const chips = screen.getByRole('group', { name: 'Filtros' });
-        expect(chips.textContent).toContain('Busca:uma busca bem comprida que pas...');
+        // The search chip has the magnifier, not a label (as _toolbar.blade.php draws it).
+        expect(chips.textContent?.startsWith('uma busca bem comprida que pas...')).toBe(true);
         expect(chips.textContent).toContain('Situação:Arquivado');
         expect(chips.textContent).toContain('Categoria:Ferramentas');
         expect(chips.textContent).toContain('Valor:é vazio / sem valor');

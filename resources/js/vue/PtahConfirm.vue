@@ -1,29 +1,28 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted } from 'vue';
+/**
+ * A yes/no question: with a `title`, the delete confirmation of the Livewire
+ * screen (_modal-delete: forge-modal sm, warning icon + message, Cancelar /
+ * Excluir); without, a plain question. Mirrors React's PtahConfirmDialog.
+ */
+import { modalButton } from '../core/crud/form';
+import { PtahCrudModal } from './crud/modal';
+import { Icon } from './icons';
 
-defineProps<{ text: string; confirm: string; cancel: string; danger?: boolean }>();
+defineProps<{ text: string; confirm: string; cancel: string; danger?: boolean; title?: string; closeLabel?: string }>();
 const emit = defineEmits<{ confirm: []; cancel: [] }>();
-
-const onKey = (event: KeyboardEvent) => {
-    if (event.key === 'Escape') {
-        emit('cancel');
-    }
-};
-
-onMounted(() => document.addEventListener('keydown', onKey));
-onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
 </script>
 
 <template>
-    <div class="pc-overlay" @mousedown.self="emit('cancel')">
-        <div class="pc-modal pc-modal--sm" role="alertdialog" aria-modal="true" :aria-label="text">
-            <div class="pc-modal-body">{{ text }}</div>
-            <div class="pc-modal-foot">
-                <button type="button" class="pc-btn" @click="emit('cancel')">{{ cancel }}</button>
-                <button type="button" :class="['pc-btn', danger ? 'pc-btn--danger' : 'pc-btn--primary']" autofocus @click="emit('confirm')">
-                    {{ confirm }}
-                </button>
-            </div>
+    <PtahCrudModal :title="title ?? text" size="sm" role="alertdialog" :close-label="closeLabel ?? cancel" @close="emit('cancel')">
+        <div v-if="title" class="pc-fm-warn">
+            <span v-if="danger" class="pc-fm-warn-icon"><Icon name="warning" :size="20" /></span>
+            <p>{{ text }}</p>
         </div>
-    </div>
+        <template #footer>
+            <button type="button" :class="modalButton('flat')" @click="emit('cancel')">{{ cancel }}</button>
+            <button type="button" :class="modalButton(danger ? 'danger' : 'primary')" autofocus @click="emit('confirm')">
+                {{ confirm }}
+            </button>
+        </template>
+    </PtahCrudModal>
 </template>

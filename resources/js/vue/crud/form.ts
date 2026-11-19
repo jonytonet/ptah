@@ -12,6 +12,7 @@ import type { CrudController, FormState } from '../../core/controller';
 import type { Words } from '../../core/i18n';
 import type { Field, LookupItem } from '../../core/types';
 import {
+    capsLabel,
     colorSwatch,
     fillWord,
     isRequired,
@@ -28,6 +29,7 @@ import {
     stepOf,
 } from '../../core/crud/form';
 import PtahLookup from '../PtahLookup.vue';
+import { icon } from '../icons';
 
 /** The searchdropdown of the form (the same component the form draws). */
 export const PtahFormLookup = PtahLookup;
@@ -47,7 +49,8 @@ export const PtahFormSection = defineComponent({
 
 const target = (event: Event) => event.target as HTMLInputElement;
 const star = (required: boolean) => (required ? h('span', { class: 'pc-required', 'aria-hidden': 'true' }, ' *') : null);
-const labelOf = (field: Field, required: boolean, htmlFor?: string) => h('label', { class: 'pc-label', for: htmlFor }, [field.label, star(required)]);
+/** forge-input's label, or the uppercase one of the custom blocks (`capsLabel`). */
+const labelOf = (field: Field, required: boolean, htmlFor?: string) => h('label', { class: capsLabel(field) ? 'pc-label pc-label--caps' : 'pc-label', for: htmlFor }, [field.label, star(required)]);
 
 // ── Image: file, or a URL, with a preview ───────────────────────────────────
 
@@ -114,7 +117,8 @@ const ImageField = defineComponent({
 
             return h('div', { class: 'pc-image' }, [
                 h('div', { class: 'pc-image-row' }, [
-                    h('label', { class: 'pc-btn pc-image-pick' }, [
+                    h('label', { class: 'pc-image-pick' }, [
+                        icon('upload'),
                         t.imagePickFile,
                         h('input', {
                             ref: fileInput,
@@ -217,10 +221,10 @@ export const PtahFormField = defineComponent({
 
             if (field.readonly) {
                 // Shown, never written: text, not a disabled input.
-                label = h('span', { class: 'pc-label', id: `${id}-label` }, field.label);
+                label = h('span', { class: 'pc-label pc-label--caps', id: `${id}-label` }, field.label);
                 input = h('div', { class: 'pc-readonly', id, 'aria-labelledby': `${id}-label`, 'data-ptah-readonly': field.field }, readonlyText(field, form, t));
             } else if (control === 'switch') {
-                label = null;
+                // The label above, the switch alone under it (forge-switch with aria-label), as the Blade.
                 input = h('label', { class: 'pc-switch' }, [
                     h('input', {
                         id,
@@ -230,7 +234,6 @@ export const PtahFormField = defineComponent({
                         onChange: (event: Event) => set(target(event).checked),
                     }),
                     h('span', { class: 'pc-switch-track' }),
-                    h('span', [field.label, star(required)]),
                 ]);
             } else if (control === 'textarea') {
                 input = h('textarea', { ...common, placeholder: placeholderOf(field, form, t), value: toInput(field, value), onInput: (event: Event) => set(target(event).value) });
@@ -296,7 +299,7 @@ export const PtahFormField = defineComponent({
                         },
                     }),
                     !required && text !== ''
-                        ? h('button', { type: 'button', class: 'pc-btn pc-color-clear', 'aria-label': t.colorClear, title: t.colorClear, onClick: () => set('') }, '✕')
+                        ? h('button', { type: 'button', class: 'pc-color-clear', 'aria-label': t.colorClear, title: t.colorClear, onClick: () => set('') }, [icon('x', 18)])
                         : null,
                 ]);
             } else if (special === 'money') {

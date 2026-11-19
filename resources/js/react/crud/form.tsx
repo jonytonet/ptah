@@ -6,14 +6,23 @@
  * confirmation. The decisions live in core/crud/form; this only draws them.
  * Mirrors vue/crud/form.ts.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import type { HTMLAttributes, ReactNode } from 'react';
 import { controlOf, debounce, fromInput, inputType, isWide, toInput } from '../../core/form';
-import type { CrudController, FormState } from '../../core/controller';
+import type { CrudController, CrudState, FormState } from '../../core/controller';
 import type { Words } from '../../core/i18n';
 import type { Field, LookupItem } from '../../core/types';
 import {
+    capsLabel,
     colorSwatch,
+    focusFirstField,
+    formSections,
+    formSubtitle,
+    formTitle,
+    lockBodyScroll,
+    modalButton,
+    needsDiscardConfirm,
+    submitLabel,
     fillWord,
     isRequired,
     lookupLocked,
@@ -29,6 +38,12 @@ import {
     specialOf,
     stepOf,
 } from '../../core/crud/form';
+import { Icon } from '../icons';
+import { PtahCrudFormChanges, PtahCrudFormDraft, PtahCrudSaveAndNew } from './extras';
+import { PtahCrudRecordButtons } from './records';
+
+export { PtahConfirmDialog, PtahCrudModal, PtahModalAlert, PtahModalEmpty } from './modal';
+export type { PtahConfirmDialogProps, PtahCrudModalProps } from './modal';
 
 export interface FormFieldProps {
     crud: CrudController;
@@ -49,9 +64,10 @@ export function PtahFormSection({ title }: { title: string }) {
     );
 }
 
+/** forge-input's label, or the uppercase one of the custom blocks (`capsLabel`). */
 function Label({ htmlFor, field, required }: { htmlFor?: string; field: Field; required: boolean }) {
     return (
-        <label className="pc-label" htmlFor={htmlFor}>
+        <label className={capsLabel(field) ? 'pc-label pc-label--caps' : 'pc-label'} htmlFor={htmlFor}>
             {field.label}
             {required && (
                 <span className="pc-required" aria-hidden="true">
@@ -86,7 +102,7 @@ export function PtahFormField({ crud, form, field, t, onTouch }: FormFieldProps)
     if (field.readonly) {
         // Shown, never written: text, not a disabled input.
         label = (
-            <span className="pc-label" id={`${id}-label`}>
+            <span className="pc-label pc-label--caps" id={`${id}-label`}>
                 {field.label}
             </span>
         );
@@ -96,20 +112,11 @@ export function PtahFormField({ crud, form, field, t, onTouch }: FormFieldProps)
             </div>
         );
     } else if (control === 'switch') {
-        label = null;
+        // The label above, the switch alone under it (forge-switch with aria-label), as the Blade.
         input = (
             <label className="pc-switch">
                 <input id={id} type="checkbox" checked={[true, 1, '1'].includes(value as never)} aria-describedby={common['aria-describedby']} onChange={(event) => set(event.target.checked)} />
                 <span className="pc-switch-track" />
-                <span>
-                    {field.label}
-                    {required && (
-                        <span className="pc-required" aria-hidden="true">
-                            {' '}
-                            *
-                        </span>
-                    )}
-                </span>
             </label>
         );
     } else if (control === 'textarea') {
@@ -254,8 +261,8 @@ function ColorField({ id, className, field, value, required, t, onValue, ...aria
                 }}
             />
             {!required && text !== '' && (
-                <button type="button" className="pc-btn pc-color-clear" aria-label={t.colorClear} title={t.colorClear} onClick={() => onValue('')}>
-                    ✕
+                <button type="button" className="pc-color-clear" aria-label={t.colorClear} title={t.colorClear} onClick={() => onValue('')}>
+                    <Icon name="x" size={18} />
                 </button>
             )}
         </div>
@@ -307,7 +314,8 @@ function ImageField({ crud, form, field, t, id, invalid, describedBy, onTouch }:
     return (
         <div className="pc-image">
             <div className="pc-image-row">
-                <label className="pc-btn pc-image-pick">
+                <label className="pc-image-pick">
+                    <Icon name="upload" />
                     {t.imagePickFile}
                     <input
                         ref={fileInput}
@@ -484,6 +492,7 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
                     tabIndex={-1}
                     className="pc-combo-toggle"
                     aria-label={t.toggleOptions}
+                    aria-expanded={items !== null}
                     disabled={disabled}
                     onMouseDown={(event) => {
                         event.preventDefault();
@@ -495,7 +504,7 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
                         }
                     }}
                 >
-                    ▾
+                    <Icon name="chevronDown" />
                 </button>
             </div>
             {items !== null && (
@@ -514,5 +523,162 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
                 </ul>
             )}
         </div>
+    );
+}
+
+// ── The create/edit modal (_modal-form) ─────────────────────────────────────
+
+export interface PtahCrudFormModalProps {
+    crud: CrudController;
+    state: CrudState;
+    t: Words;
+    locale?: string;
+}
+
+/**
+ * The create/edit modal, as the Livewire one (forge-modal size 2xl): title by
+ * gender and subtitle, sections, one column of fields, focus on the first
+ * field, the page locked behind it, "discard changes?" before closing a
+ * changed form (Cancel, ✕, Escape, a click outside), a loading state while
+ * the form is on its way — mounted with `state.form || crud.formOpening` —
+ * and the footer of the Blade: Anexos (n), Histórico, Cancelar, Salvar e
+ * criar outro, Criar / Salvar alterações. Mirrors vue/PtahForm.vue.
+ */
+export function PtahCrudFormModal({ crud, state, t, locale }: PtahCrudFormModalProps) {
+    const schema = state.schema!;
+    const form = state.form;
+    const titleId = `pc-form-title-${crud.screen}`;
+    const [dirty, setDirty] = useState(false);
+    const [confirming, setConfirming] = useState(false);
+    const body = useRef<HTMLDivElement>(null);
+    const instance = form?.instance ?? 0;
+
+    // A new opening (also "save & new", a draft reverted) starts clean and focused.
+    useEffect(() => {
+        setDirty(false);
+        setConfirming(false);
+        if (form) {
+            focusFirstField(body.current);
+        }
+    }, [instance, form === null]); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => lockBodyScroll(), []);
+
+    const tryClose = () => {
+        if (needsDiscardConfirm(crud, dirty)) {
+            setConfirming(true);
+        } else {
+            crud.closeForm();
+        }
+    };
+    // The confirmation takes the Escape first; a panel over the form (history, attachments) too.
+    const latest = useRef({ tryClose, confirming });
+    latest.current = { tryClose, confirming };
+    useEffect(() => {
+        const listen = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape') {
+                return;
+            }
+            if (latest.current.confirming) {
+                setConfirming(false);
+            } else if (!crud.getState().panel) {
+                latest.current.tryClose();
+            }
+        };
+        document.addEventListener('keydown', listen);
+
+        return () => document.removeEventListener('keydown', listen);
+    }, [crud]);
+
+    const editing = form ? form.mode === 'edit' : crud.formOpening === 'edit';
+    const title = form ? formTitle(form, schema, t) : `${editing ? t.editPrefix : t.newPrefix} ${schema.titleSingular}`;
+
+    return (
+        <>
+            <div className="pc-root pc-fm-back" onMouseDown={(event) => event.target === event.currentTarget && tryClose()}>
+                <div className="pc-fm-panel pc-fm" data-size="2xl" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-busy={form ? undefined : true}>
+                    <form
+                        noValidate
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            void crud.save();
+                        }}
+                    >
+                        <div className="pc-fm-head">
+                            <div>
+                                <h3 className="pc-fm-title" id={titleId}>
+                                    {title}
+                                </h3>
+                                <p className="pc-fm-sub">{form ? formSubtitle(form, t) : editing ? t.editSubtitle : t.createSubtitle}</p>
+                            </div>
+                            <button type="button" className="pc-fm-close" aria-label={t.close} title={t.close} onClick={tryClose}>
+                                <Icon name="x" size={20} />
+                            </button>
+                        </div>
+                        <div className="pc-fm-body" ref={body}>
+                            {!form ? (
+                                <div className="pc-fm-loading" role="status">
+                                    <span className="pc-fm-spin" aria-hidden="true" />
+                                    {t.formLoading}
+                                </div>
+                            ) : (
+                                <>
+                                    {form.errors._general && (
+                                        <p className="pc-alert" role="alert">
+                                            {form.errors._general}
+                                        </p>
+                                    )}
+                                    <PtahCrudFormDraft crud={crud} locale={locale} />
+                                    <PtahCrudFormChanges crud={crud} />
+                                    {/* Typing anywhere in the fields makes the form dirty, as the Blade's @input/@change. */}
+                                    <div className="pc-form" onInput={() => setDirty(true)} onChange={() => setDirty(true)}>
+                                        {formSections(schema.form).map(({ field, heading }) => (
+                                            <Fragment key={field.field}>
+                                                {heading !== null && <PtahFormSection title={heading} />}
+                                                <PtahFormField field={field} crud={crud} form={form} t={t} onTouch={() => setDirty(true)} />
+                                            </Fragment>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        <div className="pc-fm-foot">
+                            {/* Anexos (n) and Histórico of the record being edited; then the rest pushed right. */}
+                            {form && form.mode === 'edit' && form.id !== null && <PtahCrudRecordButtons crud={crud} row={{ id: form.id }} locale={locale} />}
+                            <span className="pc-fm-push" aria-hidden="true" />
+                            <button type="button" className={modalButton('flat')} disabled={form?.saving} onClick={tryClose}>
+                                {t.cancel}
+                            </button>
+                            {form && <PtahCrudSaveAndNew crud={crud} locale={locale} />}
+                            {form && (
+                                <button type="submit" className={modalButton('primary')} disabled={form.saving} aria-busy={form.saving || undefined}>
+                                    {form.saving && <span className="pc-fm-spin" aria-hidden="true" />}
+                                    {form.saving ? t.saving : submitLabel(form, t)}
+                                </button>
+                            )}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {confirming && (
+                <div className="pc-root pc-fm-back pc-fm-back--top" onMouseDown={(event) => event.target === event.currentTarget && setConfirming(false)}>
+                    <div className="pc-fm-mini" role="alertdialog" aria-modal="true" aria-labelledby={`${titleId}-discard`} aria-describedby={`${titleId}-discard-text`}>
+                        <p className="pc-fm-mini-ttl" id={`${titleId}-discard`}>
+                            {t.unsavedTitle}
+                        </p>
+                        <p className="pc-fm-mini-sub" id={`${titleId}-discard-text`}>
+                            {t.unsavedConfirm}
+                        </p>
+                        <div className="pc-fm-mini-foot">
+                            <button type="button" className={modalButton('flat')} autoFocus onClick={() => setConfirming(false)}>
+                                {t.unsavedKeep}
+                            </button>
+                            <button type="button" className={modalButton('danger')} onClick={() => crud.closeForm()}>
+                                {t.unsavedDiscard}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }

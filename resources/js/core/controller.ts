@@ -14,6 +14,7 @@ import type {
     RowId,
     Schema,
     Total,
+    GroupBreak,
 } from './types';
 
 export interface Toast extends Message {
@@ -46,6 +47,7 @@ export interface CrudState {
     rows: Row[];
     meta: Meta | null;
     totals: Total[];
+    breaks: GroupBreak[];
     list: ListState;
     preferences: Preferences | null;
     /** A listing request is in flight (the first load is `status: loading`). */
@@ -117,6 +119,7 @@ export class CrudController {
             rows: [],
             meta: null,
             totals: [],
+            breaks: [],
             list: emptyList(),
             preferences: null,
             busy: false,
@@ -171,6 +174,7 @@ export class CrudController {
                 rows: listing.data,
                 meta: listing.meta,
                 totals: listing.totals,
+                breaks: listing.breaks ?? [],
                 list: this.normalise(listing.state),
             });
             this.say(listing.messages);
@@ -222,6 +226,7 @@ export class CrudController {
                 rows: listing.data,
                 meta: listing.meta,
                 totals: listing.totals,
+                breaks: listing.breaks ?? [],
                 list: { ...this.state.list, page: listing.meta.page },
                 selection: this.state.selection.filter((id) => known.has(id)),
             });

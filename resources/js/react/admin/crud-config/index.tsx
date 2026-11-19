@@ -218,8 +218,10 @@ export function PtahCrudConfigButton({ crud, locale }: PtahCrudConfigButtonProps
 
     return (
         <>
-            <button type="button" className="pc-btn" title={t.cfg_btn_title} aria-label={t.cfg_btn_title} aria-haspopup="dialog" onClick={() => setOpen(true)}>
-                <GearIcon /> {t.button}
+            {/* forge-button dark flat sm + .ptah-c-control, as crud-config.blade.php draws it. */}
+            <button type="button" className="pc-tbtn pc-tbtn--flat" title={t.cfg_btn_title} aria-label={t.cfg_btn_title} aria-haspopup="dialog" onClick={() => setOpen(true)}>
+                <GearIcon />
+                <span className="pc-tbtn-label">{t.button}</span>
             </button>
             {open && <PtahCrudConfig api={crud.api} screen={crud.screen} locale={locale} onClose={() => setOpen(false)} onSaved={() => void crud.savePreferences({})} />}
         </>

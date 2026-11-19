@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { applyAppearance, isActive, pathIs, searchMenu } from '../../core';
+import { adminEntries, applyAppearance, firstLetter, iconOnlyOf, isActive, pathIs, searchMenu } from '../../core';
+import { adminIcons } from '../../core/icons';
 import { PtahLayout } from '../../react';
 import { fakeApi } from '../fake-api';
 
@@ -41,6 +42,36 @@ describe('layout rules (core)', () => {
 
         expect(searchMenu(links, 'cotação compras').map((link) => link.label)).toEqual(['Cotação']);
         expect(searchMenu(links, '   ')).toEqual([]);
+    });
+
+    it('is a rail when forge-sidebar is: a tablet, or a collapsed desktop, unless hovered or opened', () => {
+        const base = { hovered: false, peek: false, open: false, collapsed: false, md: true, lg: true };
+        expect(iconOnlyOf(base)).toBe(false);
+        expect(iconOnlyOf({ ...base, collapsed: true })).toBe(true);
+        expect(iconOnlyOf({ ...base, collapsed: true, hovered: true })).toBe(false);
+        expect(iconOnlyOf({ ...base, lg: false })).toBe(true);
+        expect(iconOnlyOf({ ...base, lg: false, peek: true })).toBe(false);
+        expect(iconOnlyOf({ ...base, lg: false, open: true })).toBe(false);
+        // A phone: off-canvas, never a rail.
+        expect(iconOnlyOf({ ...base, lg: false, md: false, collapsed: true })).toBe(false);
+    });
+
+    it('orders the administration links with the navbar rules and icons', () => {
+        const entries = adminEntries(
+            [
+                { label: 'Empresa', url: '/c', icon: 'bx bx-buildings' },
+                { label: 'Menu', url: '/m', icon: 'bx bx-menu' },
+                { label: 'IA', url: '/ai', icon: 'bx bx-bot' },
+            ],
+            adminIcons,
+        );
+        expect(entries.map((entry) => [entry.icon, entry.rule])).toEqual([
+            ['office', false],
+            ['menuLeft', true],
+            [null, true],
+        ]);
+        expect(adminEntries([{ label: 'IA', url: '/ai', icon: 'bx bx-bot' }], adminIcons)[0].rule).toBe(false);
+        expect(firstLetter('ana souza')).toBe('A');
     });
 
     it('puts the appearance presets on <html>', () => {
@@ -112,7 +143,7 @@ describe('<PtahLayout> (React)', () => {
     it('"go to a screen": finds without accents, arrows and Enter go, Escape clears', async () => {
         const go = vi.fn();
         await mount({ onNavigate: go });
-        const input = screen.getByRole('combobox', { name: 'Ir para uma tela…' });
+        const input = screen.getByRole('combobox', { name: 'Ir para uma tela' });
 
         fireEvent.change(input, { target: { value: 'cotacao' } });
         expect(screen.getByRole('option').textContent).toContain('Cotação');
@@ -124,16 +155,16 @@ describe('<PtahLayout> (React)', () => {
         expect((input as HTMLInputElement).value).toBe('');
 
         fireEvent.change(input, { target: { value: 'zzz' } });
-        expect(screen.getByText('Nenhuma tela encontrada.')).toBeTruthy();
+        expect(screen.getByText('Nenhuma tela corresponde.')).toBeTruthy();
         fireEvent.keyDown(input, { key: 'Escape' });
-        expect(screen.queryByText('Nenhuma tela encontrada.')).toBeNull();
+        expect(screen.queryByText('Nenhuma tela corresponde.')).toBeNull();
     });
 
     it('the magnifier of the rail expands the sidebar', async () => {
         localStorage.setItem('ptah_sidebar_collapsed', 'true');
         const { shell } = await mount();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Ir para uma tela…' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Ir para uma tela' }));
         expect(shell.dataset.collapsed).toBe('false');
     });
 
@@ -142,12 +173,12 @@ describe('<PtahLayout> (React)', () => {
         vi.stubGlobal('fetch', fetchMock);
         await mount({ themeModeUrl: '/appearance/theme-mode' });
 
-        fireEvent.click(screen.getByRole('button', { name: 'Modo escuro' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Ativar modo escuro' }));
         expect(document.documentElement.classList.contains('ptah-dark')).toBe(true);
         expect(localStorage.getItem('ptah_dark_mode')).toBe('true');
         expect(fetchMock).toHaveBeenCalledWith('/appearance/theme-mode', expect.objectContaining({ method: 'POST', body: JSON.stringify({ mode: 'dark' }) }));
 
-        fireEvent.click(await screen.findByRole('button', { name: 'Modo claro' }));
+        fireEvent.click(await screen.findByRole('button', { name: 'Ativar modo claro' }));
         expect(document.documentElement.classList.contains('ptah-dark')).toBe(false);
         vi.unstubAllGlobals();
     });

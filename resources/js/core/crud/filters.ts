@@ -633,56 +633,6 @@ export function operatorLabel(t: FiltersWords, op: string, symbols = false): str
     return t.ops[op] ?? op;
 }
 
-// ── Styles ──────────────────────────────────────────────────────────────────
-
-/**
- * What ptah-ui.css has no class for yet, on its CSS variables (so the dark
- * theme and the appearance presets apply). Plain objects: React and Vue take
- * the same camelCase style.
- */
-export const filterStyles = {
-    panel: { border: '1px solid var(--pc-line)', borderRadius: 'var(--pc-radius)', background: 'var(--pc-bg)', marginBottom: '12px' },
-    head: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '10px 14px', borderBottom: '1px solid var(--pc-line)' },
-    headSide: { display: 'flex', alignItems: 'center', gap: '8px' },
-    title: { margin: 0, fontSize: '0.875rem', fontWeight: 600, color: 'var(--pc-text-strong)' },
-    count: { fontSize: '0.75rem', padding: '1px 8px', borderRadius: '999px', border: '1px solid var(--pc-primary)', background: 'var(--pc-primary-soft)', color: 'var(--pc-text-strong)' },
-    body: { display: 'flex', flexDirection: 'column', gap: '14px', padding: '12px 14px' },
-    section: { margin: '0 0 6px', fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--pc-text-muted)' },
-    wrap: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' },
-    wide: { gridColumn: '1 / -1' },
-    pair: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' },
-    fieldset: { border: 0, padding: 0, margin: 0, minWidth: 0 },
-    row: { display: 'flex', gap: '4px' },
-    op: { width: '110px', flexShrink: 0 },
-    opNarrow: { width: '64px', flexShrink: 0 },
-    grow: { flex: '1 1 auto', minWidth: 0 },
-    spaced: { marginBottom: '6px' },
-    muted: { margin: '0 0 4px', fontSize: '0.75rem', color: 'var(--pc-text-muted)' },
-    chip: { display: 'inline-flex', alignItems: 'center', gap: '4px', maxWidth: '100%', padding: '2px 8px', borderRadius: '999px', border: '1px solid var(--pc-line)', background: 'var(--pc-bg-soft)', color: 'var(--pc-text-strong)', fontSize: '0.75rem' },
-    chipLabel: { opacity: 0.65 },
-    chipButton: { display: 'inline-flex', border: 0, padding: '0 2px', background: 'transparent', color: 'inherit', cursor: 'pointer', fontSize: '0.875rem', lineHeight: 1 },
-    comboBox: { position: 'relative', display: 'flex', alignItems: 'center' },
-    comboInput: { paddingRight: '30px' },
-    chevron: { position: 'absolute', right: '6px', border: 0, background: 'transparent', color: 'var(--pc-text-muted)', cursor: 'pointer', fontSize: '0.875rem' },
-    listTop: { top: 'auto', bottom: 'calc(100% + 4px)' },
-    sub: { display: 'block', fontSize: '0.6875rem', opacity: 0.7 },
-    foot: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', padding: '10px 14px', borderTop: '1px solid var(--pc-line)' },
-    saveForm: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', width: '100%' },
-    savedLoad: { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 0 },
-    savedDelete: { borderTopLeftRadius: 0, borderBottomLeftRadius: 0, paddingLeft: '8px', paddingRight: '8px' },
-    plainList: { listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: '6px' },
-    menuList: { listStyle: 'none', margin: 0, padding: 0 },
-    advancedRow: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px', marginTop: '8px' },
-    advancedControl: { width: 'auto', flex: '1 1 140px', minWidth: 0 },
-    badges: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px', margin: '0 0 10px' },
-    banner: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', margin: '0 0 12px', padding: '10px 12px', borderRadius: 'var(--pc-radius)', border: '1px solid var(--pc-warn)', background: 'color-mix(in srgb, var(--pc-warn) 12%, var(--pc-bg))', color: 'var(--pc-text-strong)' },
-    pushRight: { marginLeft: 'auto' },
-    error: { margin: 0, padding: '10px 12px', borderRadius: 'var(--pc-radius)', background: 'color-mix(in srgb, var(--pc-danger) 12%, var(--pc-bg))', color: 'var(--pc-text-strong)' },
-    note: { margin: 0, padding: '7px 9px', color: 'var(--pc-text-muted)', fontSize: '0.8125rem' },
-    danger: { color: 'var(--pc-danger)' },
-} as const;
-
 // ── Words ───────────────────────────────────────────────────────────────────
 
 const en = {
@@ -764,6 +714,8 @@ const en = {
     historyClearText: 'Forget the recent searches of this screen?',
     historyError: 'Could not load the recent searches.',
     filterByCell: 'Filter by this value',
+    clearFilters: 'Clear filters',
+    historyLabel: 'Recent:',
 };
 
 export type FiltersWords = typeof en;
@@ -847,6 +799,8 @@ const ptBR: FiltersWords = {
     historyClearText: 'Esquecer as buscas recentes desta tela?',
     historyError: 'Não foi possível carregar as buscas recentes.',
     filterByCell: 'Filtrar por este valor',
+    clearFilters: 'Limpar filtros',
+    historyLabel: 'Recentes:',
 };
 
 const dictionaries: Record<string, FiltersWords> = { en, pt: ptBR };

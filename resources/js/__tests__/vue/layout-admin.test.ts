@@ -9,24 +9,39 @@ afterEach(cleanup);
 
 const mount = (api: PtahApi, path: string) => render(PtahLayout, { props: { api, locale: 'pt_BR', path }, slots: { default: '<p>conteúdo</p>' } });
 
-describe('PtahLayout administration links (Vue)', () => {
-    it('lists in the account menu the links the server allowed, marking the current one', async () => {
-        mount(fakeApiWithShell(adminLinks).api, '/ptah-roles');
+describe('PtahLayout administration menu (Vue)', () => {
+    // forge-navbar: the links live in the gear "Administração", not in the account menu.
+    it('lists under the gear the links the server allowed, marking the current one', async () => {
+        const view = mount(fakeApiWithShell(adminLinks).api, '/ptah-roles');
 
-        await fireEvent.click(await screen.findByRole('button', { name: 'Conta: Ana' }));
+        const gear = await screen.findByRole('button', { name: 'Administração' });
+        expect(gear.getAttribute('title')).toBe('Administração');
+        await fireEvent.click(gear);
+        expect(gear.getAttribute('aria-expanded')).toBe('true');
 
-        expect(await screen.findByText('Administração')).toBeTruthy();
         const roles = screen.getByRole('link', { name: 'Perfis de Acesso' });
         expect(roles.getAttribute('href')).toBe('/ptah-roles');
         expect(roles.getAttribute('aria-current')).toBe('page');
         expect(screen.getByRole('link', { name: 'Gerenciar Menu' }).getAttribute('aria-current')).toBeNull();
+        // The navbar's rule before "Gerenciar Menu", and each link with its Heroicon.
+        expect(view.container.querySelectorAll('.pl-dropdown--admin hr')).toHaveLength(1);
+        expect(roles.querySelector('svg')).toBeTruthy();
+
+        // Not in the account menu any more.
+        await fireEvent.click(screen.getByRole('button', { name: 'Conta: Ana' }));
+        expect(view.container.querySelector('.pl-dropdown--account')?.textContent).not.toContain('Perfis de Acesso');
     });
 
-    it('shows no administration block to who has no link', async () => {
+    it('shows no gear to who has no link and no company module', async () => {
         mount(fakeApi().api, '/items');
 
-        await fireEvent.click(await screen.findByRole('button', { name: 'Conta: Ana' }));
+        await screen.findByRole('button', { name: 'Conta: Ana' });
+        expect(screen.queryByRole('button', { name: 'Administração' })).toBeNull();
+    });
 
-        expect(screen.queryByText('Administração')).toBeNull();
+    it('draws the plain bell of the navbar when the server asks for it', async () => {
+        mount(fakeApiWithShell({ ...adminLinks, static_bell: true }).api, '/items');
+
+        expect(await screen.findByRole('button', { name: 'Notificações' })).toBeTruthy();
     });
 });

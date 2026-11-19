@@ -62,7 +62,7 @@ final class StackPage
      * forge-navbar.blade.php: the company switcher, the bell, and each
      * administration link only for who passes the lock of the screen it opens.
      *
-     * @return array{company_switcher: bool, notifications: bool, ai_chat: bool, admin: list<array{label: string, url: string, icon: string}>}
+     * @return array{company_switcher: bool, notifications: bool, static_bell: bool, ai_chat: bool, admin: list<array{label: string, url: string, icon: string}>}
      */
     public static function shell(): array
     {
@@ -91,9 +91,15 @@ final class StackPage
             }
         }
 
+        // The bell slot of the navbar (NavbarSlot): `false`/'none' hides it,
+        // unset draws the plain bell of the Blade (no list behind it).
+        $slot = NavbarSlot::resolve(config('ptah.navbar.notifications'))['mode'];
+        $notifications = $auth && (bool) config('ptah.notifications.enabled') && $slot !== NavbarSlot::MODE_HIDDEN;
+
         return [
             'company_switcher' => $auth && (bool) config('ptah.modules.company'),
-            'notifications' => $auth && (bool) config('ptah.notifications.enabled'),
+            'notifications' => $notifications,
+            'static_bell' => $auth && ! $notifications && $slot === NavbarSlot::MODE_DEFAULT,
             // The floating assistant of the layout ($ptahHasAiLauncher).
             'ai_chat' => $auth && (bool) config('ptah.modules.ai_agent'),
             'admin' => $admin,

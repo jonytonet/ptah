@@ -10,6 +10,7 @@ import { PtahApi } from '../../core';
 import { badgeColor, companies, companySwitcher, companyWords, departments, nextSort, rangeText, switchCompany, TAX_TYPES } from '../../core/admin/company';
 import type { AdminListing, AdminListQuery, AdminResource, AdminResult, CompanyForm, CompanyRow, CompanyWords, DepartmentForm, DepartmentRow, SwitcherState } from '../../core/admin/company';
 import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeInput, ForgeModal, ForgePageHeader, ForgePagination, ForgeSelect, ForgeSwitch, ForgeTextarea, forgeToast, ForgeToastHost } from '../forge';
+import { Icon } from '../icons';
 
 export interface CompanyScreenProps {
     api?: PtahApi;
@@ -509,19 +510,17 @@ export function PtahCompanySwitcher({ api, locale, layout = 'inline', onSwitched
 
     if (layout === 'stacked') {
         return (
-            <div className="pf" role="group" aria-label={t.selectCompany} aria-busy={busy || undefined}>
-                <p className="pc-help">{t.selectCompany}</p>
+            <div className="pl-switcher-stack" role="group" aria-label={t.selectCompany} aria-busy={busy || undefined}>
+                <p className="pl-switcher-heading">{t.selectCompany}</p>
                 {state.companies.map((company) => {
                     const isActive = company.id === state.active_id;
 
                     return (
-                        <button key={company.id} type="button" className="pc-menu-item" aria-current={isActive ? 'true' : 'false'} onClick={() => void pick(company.id)}>
+                        <button key={company.id} type="button" className="pl-switcher-item" aria-current={isActive ? 'true' : 'false'} onClick={() => void pick(company.id)}>
                             {/* The active one is marked by an icon, not only by colour. */}
-                            <span aria-hidden="true" style={{ width: 16 }}>
-                                {isActive ? '✓' : ''}
-                            </span>
-                            <span style={{ flex: 1, fontWeight: isActive ? 600 : undefined }}>{company.name}</span>
-                            <small>{company.label}</small>
+                            {isActive ? <Icon name="check" size={16} className="pl-switcher-check" /> : <span className="pl-switcher-check" aria-hidden="true" />}
+                            <span className="pl-switcher-label">{company.name}</span>
+                            <span className="pl-switcher-code">{company.label}</span>
                         </button>
                     );
                 })}
@@ -529,16 +528,18 @@ export function PtahCompanySwitcher({ api, locale, layout = 'inline', onSwitched
         );
     }
 
+    // company-switcher.blade.php, inline: the active company's name, a rule, one tab per company.
     return (
-        <div className="pf" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }} aria-busy={busy || undefined}>
-            <strong>{active?.name ?? ''}</strong>
-            <div className="pf-tablist" role="tablist" aria-label={t.selectCompany}>
+        <div className="pl-switcher" aria-busy={busy || undefined}>
+            <span className="pl-switcher-name">{active?.name ?? ''}</span>
+            <span className="pl-switcher-sep" aria-hidden="true" />
+            <nav className="pl-switcher-bar" role="tablist" aria-label={t.selectCompany}>
                 {state.companies.map((company) => (
-                    <button key={company.id} type="button" role="tab" className="pf-tab" title={company.name} aria-selected={company.id === state.active_id} onClick={() => void pick(company.id)}>
+                    <button key={company.id} type="button" role="tab" className="pl-switcher-tab" title={company.name} aria-selected={company.id === state.active_id} onClick={() => void pick(company.id)}>
                         {company.label}
                     </button>
                 ))}
-            </div>
+            </nav>
         </div>
     );
 }

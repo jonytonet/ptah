@@ -82,7 +82,7 @@ describe('PtahLayout (Vue)', () => {
     it('"go to a screen": finds without accents, arrows and Enter go, Escape clears', async () => {
         const go = vi.fn();
         await mount({ onNavigate: go });
-        const input = screen.getByRole('combobox', { name: 'Ir para uma tela…' }) as HTMLInputElement;
+        const input = screen.getByRole('combobox', { name: 'Ir para uma tela' }) as HTMLInputElement;
 
         await fireEvent.update(input, 'cotacao');
         expect(screen.getByRole('option').textContent).toContain('Cotação');
@@ -94,16 +94,16 @@ describe('PtahLayout (Vue)', () => {
         await waitFor(() => expect(input.value).toBe(''));
 
         await fireEvent.update(input, 'zzz');
-        expect(screen.getByText('Nenhuma tela encontrada.')).toBeTruthy();
+        expect(screen.getByText('Nenhuma tela corresponde.')).toBeTruthy();
         await fireEvent.keyDown(input, { key: 'Escape' });
-        expect(screen.queryByText('Nenhuma tela encontrada.')).toBeNull();
+        expect(screen.queryByText('Nenhuma tela corresponde.')).toBeNull();
     });
 
     it('the magnifier of the rail expands the sidebar', async () => {
         localStorage.setItem('ptah_sidebar_collapsed', 'true');
         const { shell } = await mount();
 
-        await click('Ir para uma tela…');
+        await click('Ir para uma tela');
         expect(shell.dataset.collapsed).toBe('false');
     });
 
@@ -112,12 +112,12 @@ describe('PtahLayout (Vue)', () => {
         vi.stubGlobal('fetch', fetchMock);
         await mount({ themeModeUrl: '/appearance/theme-mode' });
 
-        await click('Modo escuro');
+        await click('Ativar modo escuro');
         expect(document.documentElement.classList.contains('ptah-dark')).toBe(true);
         expect(localStorage.getItem('ptah_dark_mode')).toBe('true');
         expect(fetchMock).toHaveBeenCalledWith('/appearance/theme-mode', expect.objectContaining({ method: 'POST', body: JSON.stringify({ mode: 'dark' }) }));
 
-        await fireEvent.click(await screen.findByRole('button', { name: 'Modo claro' }));
+        await fireEvent.click(await screen.findByRole('button', { name: 'Ativar modo claro' }));
         expect(document.documentElement.classList.contains('ptah-dark')).toBe(false);
         vi.unstubAllGlobals();
     });

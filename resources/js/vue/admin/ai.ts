@@ -820,6 +820,7 @@ export const PtahAiChat = defineComponent({
                           role: 'dialog',
                           'aria-modal': 'false',
                           'aria-label': w.chatTitle,
+                          class: 'pl-ai-panel ptah-c-chat_panel',
                           style: expanded.value ? { ...chatStyles.panel, ...chatStyles.panelExpanded } : chatStyles.panel,
                           onPaste: (event: ClipboardEvent) => {
                               // A pasted screenshot arrives as a file; text pastes go on as usual.
@@ -874,15 +875,30 @@ export const PtahAiChat = defineComponent({
             return h('div', { class: 'pf', style: chatStyles.root }, [
                 panel,
                 !launcherHidden.value && !(expanded.value && open.value)
-                    ? h('div', { style: { position: 'relative' } }, [
-                          h('button', { type: 'button', style: chatStyles.launcher, title: open.value ? w.chatClose : w.chatOpen, 'aria-label': open.value ? w.chatClose : w.chatOpen, 'aria-expanded': open.value ? 'true' : 'false', onClick: () => (open.value = !open.value) }, open.value ? '✕' : '✦'),
-                          !open.value ? h('button', { type: 'button', style: chatStyles.dismiss, title: w.chatHide, 'aria-label': w.chatHide, onClick: () => (launcherHidden.value = true) }, '✕') : null,
+                    ? // The round button of ai-chat-widget.blade.php (w-14, bg-primary, bx-bot / bx-x), and the
+                      // "hide" corner that shows on hover or keyboard focus.
+                      h('div', { class: 'pl-ai-corner' }, [
+                          h(
+                              'button',
+                              {
+                                  type: 'button',
+                                  class: open.value ? 'pl-ai-launcher pl-ai-launcher--open' : 'pl-ai-launcher',
+                                  title: open.value ? w.chatClose : w.chatOpen,
+                                  'aria-label': open.value ? w.chatClose : w.chatOpen,
+                                  'aria-expanded': open.value ? 'true' : 'false',
+                                  onClick: () => (open.value = !open.value),
+                              },
+                              [h('i', { class: open.value ? 'bx bx-x' : 'bx bx-bot', 'aria-hidden': 'true' })],
+                          ),
+                          !open.value
+                              ? h('button', { type: 'button', class: 'pl-ai-dismiss ptah-c-chat_dismiss', title: w.chatHide, 'aria-label': w.chatHide, onClick: () => (launcherHidden.value = true) }, [h('i', { class: 'bx bx-x', 'aria-hidden': 'true' })])
+                              : null,
                       ])
                     : null,
                 launcherHidden.value
                     ? h('button', {
                           type: 'button',
-                          style: chatStyles.handle,
+                          class: 'pl-ai-handle ptah-c-chat_handle',
                           title: w.chatShow,
                           'aria-label': w.chatShow,
                           onClick: () => {

@@ -171,7 +171,8 @@ object comes in `schema.preferences`, so one call draws the screen.
   "state": { "page": 1, "per_page": 25, "sort": "name", "direction": "ASC", "search": "",
              "filters": {}, "operators": {}, "date_ranges": {}, "date_operators": {},
              "quick_date": "", "trashed": false },
-  "totals": [ { "field": "amount", "aggregate": "sum", "value": 98765.4 } ],
+  "totals": [ { "field": "amount", "aggregate": "sum", "value": 98765.4, "text": "R$ 98.765,40" } ],
+  "breaks": [],
   "messages": []
 }
 ```
@@ -180,6 +181,13 @@ object comes in `schema.preferences`, so one call draws the screen.
   cell — the same renderer, already escaped. Draw `html` to get every renderer
   for free, or `value` with a renderer of your own.
 - Only the columns this user may see are present.
+- `totals[].text` is the total as the Livewire footer prints it (a `money`
+  column in its currency, a count never as money); `value` stays raw.
+- `breaks` (screens with `groupBreak`): one entry per group of this page —
+  `start` (index in `data` of its first row), `count`, `label` (the column),
+  `title` (the group header, HTML already escaped) and `subtotals` (field →
+  formatted sum over the group's rows of the page), as the Livewire table
+  draws its break header and subtotal rows. Empty without a break.
 
 ### Writes
 

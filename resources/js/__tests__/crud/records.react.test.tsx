@@ -73,7 +73,8 @@ describe('records (React)', () => {
         expect(screen.getByText('Criado')).toBeTruthy();
         expect(screen.getAllByText('passou a')).toHaveLength(1);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+        // The ✕ of the header is also "Fechar" (modal_close), as in the Blade: the footer button is the last one.
+        fireEvent.click(screen.getAllByRole('button', { name: 'Fechar' }).at(-1)!);
         expect(screen.queryByRole('dialog')).toBeNull();
         expect(crud.getState().panel).toBeNull();
     });
@@ -117,7 +118,8 @@ describe('records (React)', () => {
         expect(server.calls.some((call) => call.method === 'DELETE')).toBe(false);
 
         fireEvent.click(screen.getByRole('button', { name: 'Excluir nota.pdf' }));
-        fireEvent.click(within(dialog()).getByRole('button', { name: 'Excluir' }));
+        // The removal is confirmed in an alertdialog (_modal-delete's look).
+        fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Excluir' }));
         await waitFor(() => expect(screen.queryByRole('link', { name: 'Baixar nota.pdf' })).toBeNull());
         expect(row(1).getByRole('button', { name: 'Anexos (2)' })).toBeTruthy();
         expect(server.files()[1].map((item) => item.name)).toEqual(['b.pdf', 'a.pdf']);

@@ -242,7 +242,7 @@ describe('master/detail (Vue)', () => {
         expect(await within(region).findByText('L1')).toBeTruthy();
         expect(within(region).getByText('L2')).toBeTruthy();
         expect(within(region).queryByText('L3')).toBeNull();
-        expect(within(region).getByRole('heading', { name: 'Linhas' })).toBeTruthy();
+        expect(within(region).getByText('Linhas', { selector: '.pc-detail-title' })).toBeTruthy();
         expect(server.calls.some((call) => call.path === '..1.0/schema')).toBe(true);
 
         await fireEvent.click(within(region).getByRole('button', { name: /Novo/ }));
@@ -265,7 +265,7 @@ describe('columns (Vue)', () => {
 
         await fireEvent.click(screen.getByLabelText('Situação'));
         await waitFor(() => expect(puts()).toContainEqual({ columns: { status: false } }));
-        expect(await screen.findByText('(1 ocultas)')).toBeTruthy();
+        expect(await screen.findByRole('button', { name: 'Colunas (1 ocultas)' })).toBeTruthy();
 
         expect((screen.getByRole('button', { name: 'Mover Nome para cima' }) as HTMLButtonElement).disabled).toBe(true);
         await fireEvent.click(screen.getByRole('button', { name: 'Mover Valor para cima' }));
@@ -276,7 +276,7 @@ describe('columns (Vue)', () => {
         const dialog = await screen.findByRole('dialog');
         await fireEvent.click(within(dialog).getByRole('button', { name: 'Restaurar' }));
         await waitFor(() => expect(server.calls.some((call) => call.path === '/columns/reset')).toBe(true));
-        await waitFor(() => expect(screen.queryByText('(1 ocultas)')).toBeNull());
+        await waitFor(() => expect(screen.queryByRole('button', { name: 'Colunas (1 ocultas)' })).toBeNull());
 
         await fireEvent.click(screen.getByRole('button', { name: 'Ocultar todas' }));
         await waitFor(() => expect(puts()).toContainEqual({ columns: { id: false, name: false, status: false, amount: false } }));

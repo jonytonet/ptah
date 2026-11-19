@@ -15,6 +15,7 @@ import type {
     Schema,
     SessionInfo,
     Shell,
+    DashboardPage,
     Widget,
 } from './types';
 
@@ -245,7 +246,14 @@ export class PtahApi {
 
     /** The dashboard widgets this user may see; `group` names a group of them. */
     async dashboard(group?: string): Promise<Widget[]> {
-        return (await this.request<{ data: Widget[] }>('GET', `/dashboard${group ? `?group=${encodeURIComponent(group)}` : ''}`)).data ?? [];
+        return (await this.dashboardPage(group)).data;
+    }
+
+    /** The widgets, and the four cards of the Livewire dashboard when there are none (`fallback`). */
+    async dashboardPage(group?: string): Promise<DashboardPage> {
+        const answer = await this.request<Partial<DashboardPage>>('GET', `/dashboard${group ? `?group=${encodeURIComponent(group)}` : ''}`);
+
+        return { data: answer.data ?? [], fallback: answer.fallback ?? null };
     }
 
     // ── Auth (ptah's auth module) ───────────────────────────────────────────

@@ -120,6 +120,56 @@ export function isCollapseShortcut(event: KeyboardEvent): boolean {
     return (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'b';
 }
 
+/** The breakpoints of forge-dashboard-layout: md (the rail) and lg (the full sidebar). */
+export const MEDIA_MD = '(min-width: 768px)';
+export const MEDIA_LG = '(min-width: 1024px)';
+
+export interface SidebarState {
+    /** The mouse is over the sidebar. */
+    hovered: boolean;
+    /** Opened for a moment on a tablet (a group or the magnifier clicked on the rail). */
+    peek: boolean;
+    /** Opened by the hamburger (phone and tablet). */
+    open: boolean;
+    collapsed: boolean;
+    md: boolean;
+    lg: boolean;
+}
+
+/**
+ * forge-sidebar's iconOnly(): only the icons when nobody is over it and it is
+ * either a tablet (always a rail) or a desktop with the sidebar collapsed.
+ */
+export function iconOnlyOf(state: SidebarState): boolean {
+    return !state.hovered && !state.peek && !(state.open && !state.lg) && ((!state.lg && state.md) || (state.lg && state.collapsed));
+}
+
+export interface AdminEntry {
+    label: string;
+    url: string;
+    /** A key of core/icons.ts, or null to draw `boxicon`. */
+    icon: string | null;
+    boxicon: string;
+    /** The navbar draws a rule before "Manage menu" and before "AI models" when links precede them. */
+    rule: boolean;
+}
+
+/** The administration links in the navbar's order, with its icons and its rules. */
+export function adminEntries(links: { label: string; url: string; icon: string }[], icons: Record<string, string>): AdminEntry[] {
+    return links.map((link, index) => ({
+        label: link.label,
+        url: link.url,
+        icon: icons[link.icon] ?? null,
+        boxicon: link.icon,
+        rule: index > 0 && (link.icon === 'bx bx-menu' || link.icon === 'bx bx-bot'),
+    }));
+}
+
+/** The navbar's avatar: the first letter of the name (`mb_substr($name, 0, 1)`). */
+export function firstLetter(name: string | null | undefined): string {
+    return Array.from((name ?? '').trim())[0]?.toUpperCase() ?? 'U';
+}
+
 /** The initials of a name, for an avatar without a photo. */
 export function initials(name: string | null | undefined): string {
     return (name ?? '')

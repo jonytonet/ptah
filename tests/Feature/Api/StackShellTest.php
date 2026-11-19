@@ -105,6 +105,38 @@ class StackShellTest extends TestCase
     }
 
     #[Test]
+    public function the_page_carries_the_brand_palette_like_the_livewire_layout(): void
+    {
+        config(['ptah.theme.colors' => ['primary' => '#0f766e']]);
+
+        $html = $this->get(route('ptah.dashboard'))->assertOk()->getContent();
+
+        $this->assertStringContainsString('id="ptah-theme-colors"', $html);
+        $this->assertStringContainsString('--color-primary: #0f766e', $html);
+    }
+
+    #[Test]
+    public function the_bell_follows_the_navbar_slot(): void
+    {
+        // Unset slot, notifications off: the plain bell of forge-navbar.
+        $shell = $this->getJson('/ptah/api/menu')->assertOk()->json('shell');
+        $this->assertFalse($shell['notifications']);
+        $this->assertTrue($shell['static_bell']);
+
+        // Notifications on: the live bell, not the plain one.
+        config(['ptah.notifications.enabled' => true]);
+        $shell = $this->getJson('/ptah/api/menu')->json('shell');
+        $this->assertTrue($shell['notifications']);
+        $this->assertFalse($shell['static_bell']);
+
+        // The slot switched off hides every bell, as in the navbar.
+        config(['ptah.navbar.notifications' => false]);
+        $shell = $this->getJson('/ptah/api/menu')->json('shell');
+        $this->assertFalse($shell['notifications']);
+        $this->assertFalse($shell['static_bell']);
+    }
+
+    #[Test]
     public function me_carries_the_photo_for_the_account_menu(): void
     {
         $this->getJson('/ptah/api/me')->assertOk()->assertJsonPath('user.name', 'Ana')->assertJsonStructure(['user' => ['photo_url']]);

@@ -25,6 +25,7 @@ import {
 } from '../../core/crud/extras';
 import type { ColumnItem, DetailScreen, ExtrasWords } from '../../core/crud/extras';
 import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal, ForgeSpinner } from '../forge';
+import { Icon } from '../icons';
 
 interface PieceProps {
     crud: CrudController;
@@ -141,10 +142,8 @@ export function PtahCrudDetailToggle({ crud, row, locale }: PieceProps & { row: 
     const open = view.expanded.includes(String(row.id));
 
     return (
-        <button type="button" className="pc-icon-btn" title={t.showDetails} aria-label={t.showDetails} aria-expanded={open} onClick={() => store.toggle(row.id)}>
-            <span aria-hidden="true" style={{ display: 'inline-block', transition: 'transform .15s', transform: open ? 'rotate(90deg)' : 'none' }}>
-                ▸
-            </span>
+        <button type="button" className="pc-expand" title={t.showDetails} aria-label={t.showDetails} aria-expanded={open} onClick={() => store.toggle(row.id)}>
+            <Icon name="chevronRight" />
         </button>
     );
 }
@@ -181,7 +180,7 @@ export function PtahCrudDetailRow({ crud, row, colSpan, locale, renderDetail }: 
 
     return (
         <tr className="pc-detail-row">
-            <td colSpan={colSpan} style={{ padding: '12px 24px', background: 'var(--pc-bg-soft)' }} aria-busy={!entry || entry.status === 'loading'}>
+            <td colSpan={colSpan} className="pc-detail-td" aria-busy={!entry || entry.status === 'loading'}>
                 {(!entry || (entry.status === 'loading' && entry.details.length === 0)) && <ForgeSpinner label={t.loading} />}
                 {entry?.status === 'error' && (
                     <ForgeAlert color="danger">
@@ -314,21 +313,31 @@ export function PtahCrudColumnsMenu({ crud, locale }: PieceProps) {
     };
 
     return (
-        <div className="pc-menu" ref={ref}>
-            <button type="button" className={`pc-btn${hidden > 0 ? ' pc-btn--active' : ''}`} aria-haspopup="true" aria-expanded={open} onClick={() => setOpen(!open)}>
-                {t.columns}
-                {hidden > 0 && <span style={{ ...MUTED, marginLeft: 4 }}>({fill(t.hiddenCount, { count: hidden })})</span>} ▾
+        <div className="pc-dd-wrap pc-tb-secondary" ref={ref}>
+            <button
+                type="button"
+                className={`pc-tbtn${hidden > 0 ? ' pc-tbtn--warn-on' : ''}`}
+                title={t.columns}
+                aria-label={hidden > 0 ? `${t.columns} (${fill(t.hiddenCount, { count: hidden })})` : t.columns}
+                aria-haspopup="true"
+                aria-expanded={open}
+                onClick={() => setOpen(!open)}
+            >
+                <Icon name="columns" />
+                <span className="pc-tbtn-label">{t.columns}</span>
+                {hidden > 0 && <span className="pc-count pc-count--warn">{hidden}</span>}
+                <Icon name="chevronDown" size={12} />
             </button>
             {open && (
-                <div className="pc-menu-list" role="group" aria-label={t.columns} aria-busy={busy} style={{ minWidth: 260, maxHeight: 360, overflowY: 'auto' }}>
-                    <div style={{ ...ROW, padding: '4px 8px 8px', borderBottom: '1px solid var(--pc-line)' }}>
-                        <button type="button" className="pc-btn" disabled={busy || list.length === 0} onClick={() => all(true)}>
+                <div className="pc-dd pc-cols-dd" role="group" aria-label={t.columns} aria-busy={busy}>
+                    <div className="pc-cols-quick">
+                        <button type="button" className="pc-cols-qbtn" disabled={busy || list.length === 0} onClick={() => all(true)}>
                             {t.showAll}
                         </button>
-                        <button type="button" className="pc-btn" disabled={busy || list.length === 0} onClick={() => all(false)}>
+                        <button type="button" className="pc-cols-qbtn" disabled={busy || list.length === 0} onClick={() => all(false)}>
                             {t.hideAll}
                         </button>
-                        <button type="button" className="pc-btn" disabled={busy} onClick={() => setConfirming(true)}>
+                        <button type="button" className="pc-cols-qbtn" disabled={busy} onClick={() => setConfirming(true)}>
                             {t.resetColumns}
                         </button>
                     </div>
@@ -349,7 +358,7 @@ export function PtahCrudColumnsMenu({ crud, locale }: PieceProps) {
                     )}
                     {items !== null && list.length === 0 && <p style={{ ...MUTED, padding: 8 }}>{t.noColumns}</p>}
                     {list.length > 0 && (
-                        <ul style={{ listStyle: 'none', margin: 0, padding: '4px 0' }} aria-label={t.dragHint}>
+                        <ul className="pc-cols-list" aria-label={t.dragHint}>
                             {list.map((item, index) => (
                                 <li
                                     key={item.field}
@@ -368,20 +377,22 @@ export function PtahCrudColumnsMenu({ crud, locale }: PieceProps) {
                                         setDragging(null);
                                         setOver(null);
                                     }}
-                                    style={{ ...ROW, flexWrap: 'nowrap', padding: '2px 8px', opacity: dragging === item.field ? 0.5 : 1, boxShadow: over === item.field && dragging !== item.field ? 'inset 0 2px 0 var(--pc-primary)' : undefined }}
+                                    className="pc-cols-item"
+                                    data-dragging={dragging === item.field || undefined}
+                                    data-over={(over === item.field && dragging !== item.field) || undefined}
                                 >
-                                    <span aria-hidden="true" title={t.dragHint} style={{ cursor: 'grab', color: 'var(--pc-text-muted)' }}>
+                                    <span className="pc-cols-grip" aria-hidden="true" title={t.dragHint}>
                                         ⠿
                                     </span>
-                                    <label className="pc-menu-item" style={{ flex: 1 }}>
+                                    <label className="pc-cols-label">
                                         <input type="checkbox" checked={item.visible} disabled={busy} onChange={(event) => void act(() => crud.setColumnVisible(item.field, event.target.checked))} />
                                         {item.label}
                                     </label>
-                                    <button type="button" className="pc-icon-btn" aria-label={fill(t.moveUp, { label: item.label })} disabled={busy || index === 0} onClick={() => move(item.field, index - 1)}>
-                                        ↑
+                                    <button type="button" className="pc-cols-move" aria-label={fill(t.moveUp, { label: item.label })} title={fill(t.moveUp, { label: item.label })} disabled={busy || index === 0} onClick={() => move(item.field, index - 1)}>
+                                        <Icon name="chevronUp" size={12} />
                                     </button>
-                                    <button type="button" className="pc-icon-btn" aria-label={fill(t.moveDown, { label: item.label })} disabled={busy || index === list.length - 1} onClick={() => move(item.field, index + 1)}>
-                                        ↓
+                                    <button type="button" className="pc-cols-move" aria-label={fill(t.moveDown, { label: item.label })} title={fill(t.moveDown, { label: item.label })} disabled={busy || index === list.length - 1} onClick={() => move(item.field, index + 1)}>
+                                        <Icon name="chevronDown" size={12} />
                                     </button>
                                 </li>
                             ))}

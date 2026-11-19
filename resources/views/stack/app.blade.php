@@ -45,6 +45,10 @@
         file_exists(resource_path('css/app.css')) ? 'resources/css/app.css' : null,
         config('ptah.crud_api.entry', 'resources/js/ptah-app.jsx'),
     ])))
+    {{-- The brand palette of config('ptah.theme.colors') (PTAH_COLOR_PRIMARY…),
+         after the app's CSS as in the Livewire layouts: without it the accent
+         of these screens stayed the app.css default, not the host's colour. --}}
+    @include('ptah::partials.theme-colors')
 </head>
 <body style="margin:0">
     <div id="ptah-app"

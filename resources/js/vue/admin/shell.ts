@@ -21,6 +21,7 @@ import {
 } from '../../core/admin/shell';
 import type { BellState, ExportRow, ExportsListing, ShellMessage, ShellNotification } from '../../core/admin/shell';
 import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal, ForgePagination, ForgeSpinner } from '../forge';
+import { icon } from '../icons';
 
 const shellProps = {
     api: { type: Object as PropType<PtahApi>, default: undefined },
@@ -29,22 +30,7 @@ const shellProps = {
     pollInterval: { type: [Number, null] as PropType<number | null>, default: undefined },
 };
 
-const panelStyle: CSSProperties = { width: 'min(20rem, 90vw)', maxHeight: 'none', overflow: 'visible' };
-const scrollStyle: CSSProperties = { maxHeight: 'min(24rem, 60vh)', overflowY: 'auto', overscrollBehavior: 'contain' };
-const itemStyle: CSSProperties = { flexDirection: 'column', alignItems: 'flex-start', gap: '2px' };
-const footStyle: CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '4px', paddingTop: '6px', borderTop: '1px solid var(--pc-line)' };
 const statusStyle: CSSProperties = { display: 'inline-block', padding: '2px 8px', borderRadius: '999px', background: 'var(--pf-c)', color: 'var(--pf-on)', fontSize: '12px', fontWeight: 500 };
-const muted: CSSProperties = { fontSize: '12px', opacity: 0.75 };
-
-const bellIcon = () =>
-    h('svg', { width: 20, height: 20, fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', 'aria-hidden': 'true' }, [
-        h('path', {
-            'stroke-linecap': 'round',
-            'stroke-linejoin': 'round',
-            'stroke-width': '2',
-            d: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9',
-        }),
-    ]);
 
 /** Polls with the given interval while it is set; the timer is cleared on unmount. */
 function usePolling(task: () => void, interval: () => number | null | undefined) {
@@ -157,11 +143,13 @@ export const PtahNotificationBell = defineComponent({
         };
 
         const itemText = (item: ShellNotification) => [
-            h('strong', item.title),
-            item.body ? h('span', { style: muted }, item.body) : null,
-            item.created_at_human ? h('span', { style: muted }, item.created_at_human) : null,
+            h('span', { class: 'pl-bell-title' }, item.title),
+            item.body ? h('span', { class: 'pl-bell-body' }, item.body) : null,
+            item.created_at_human ? h('span', { class: 'pl-bell-time' }, item.created_at_human) : null,
         ];
 
+        // The markup and classes of notification-bell.blade.php: a navbar icon
+        // button with the count, and a panel of the admin dropdown's look.
         return () => {
             const current = state.value;
             if (!current || !current.enabled) {
@@ -171,61 +159,53 @@ export const PtahNotificationBell = defineComponent({
             const items = current.items;
             const label = current.unread > 0 ? `${words.bellTitle} (${words.unreadBadge(current.unread)})` : words.bellTitle;
 
-            return h('div', { class: 'pf pc-menu', ref: root }, [
-                h('button', { type: 'button', class: 'pc-icon-btn', 'aria-haspopup': 'menu', 'aria-expanded': open.value ? 'true' : 'false', 'aria-label': label, title: words.bellTitle, onClick: toggle }, [
-                    h('span', { class: 'pf-badge', 'data-position': 'top-right' }, [
-                        bellIcon(),
-                        current.unread > 0 ? h('span', { class: 'pf pf-badge-mark', 'data-color': 'danger', 'aria-hidden': 'true' }, badgeText(current.unread)) : null,
-                    ]),
+            return h('div', { class: 'pl-dropdown-root pl-bell', ref: root }, [
+                h('button', { type: 'button', class: 'pl-icon-btn', 'aria-haspopup': 'menu', 'aria-expanded': open.value ? 'true' : 'false', 'aria-label': label, title: words.bellTitle, onClick: toggle }, [
+                    icon('bell', 20, undefined, 'pl-svg'),
+                    current.unread > 0 ? h('span', { class: 'pl-badge', 'aria-hidden': 'true' }, badgeText(current.unread)) : null,
                 ]),
 
                 open.value
-                    ? h('div', { class: 'pc-menu-list', role: 'menu', 'aria-label': words.bellTitle, 'aria-busy': busy.value || items === null ? 'true' : 'false', style: panelStyle }, [
+                    ? h('div', { class: 'pl-dropdown pl-dropdown--bell', role: 'menu', 'aria-label': words.bellTitle, 'aria-busy': busy.value || items === null ? 'true' : 'false' }, [
                           // Only the items scroll: the footer stays reachable however long the list is.
                           h(
                               'div',
-                              { role: 'none', style: scrollStyle },
+                              { role: 'none', class: 'pl-bell-scroll' },
                               items === null
-                                  ? [h('div', { role: 'none', style: { padding: '12px', textAlign: 'center' } }, [h(ForgeSpinner, { size: 'sm', label: words.loading })])]
+                                  ? [h('div', { role: 'none', class: 'pl-bell-empty' }, [h(ForgeSpinner, { size: 'sm', label: words.loading })])]
                                   : items.length === 0
-                                    ? [h('p', { role: 'none', class: 'pf-empty', style: { padding: '16px', margin: 0 } }, words.empty)]
+                                    ? [h('p', { role: 'none', class: 'pl-bell-empty' }, words.empty)]
                                     : items.map((item) =>
-                                          h('div', { role: 'none', key: item.id, style: { borderBottom: '1px solid var(--pc-line)', paddingBottom: '4px', marginBottom: '4px' } }, [
+                                          h('div', { role: 'none', key: item.id, class: 'pl-bell-row' }, [
                                               item.url
-                                                  ? h('a', { role: 'menuitem', class: 'pc-menu-item', href: item.url, style: itemStyle, onClick: (event: Event) => void openItem(event, item) }, [
+                                                  ? h('a', { role: 'menuitem', class: 'pl-bell-item', href: item.url, onClick: (event: Event) => void openItem(event, item) }, [
                                                         ...itemText(item),
-                                                        h('span', { style: { fontSize: '12px', fontWeight: 600 } }, item.action_label || words.actionDefault),
+                                                        h('span', { class: 'pl-bell-action' }, item.action_label || words.actionDefault),
                                                     ])
-                                                  : h('button', { type: 'button', role: 'menuitem', class: 'pc-menu-item', disabled: true, 'aria-disabled': 'true', style: { ...itemStyle, cursor: 'default' } }, itemText(item)),
+                                                  : h('button', { type: 'button', role: 'menuitem', class: 'pl-bell-item', disabled: true, 'aria-disabled': 'true' }, itemText(item)),
                                               h(
                                                   'button',
                                                   {
                                                       type: 'button',
                                                       role: 'menuitem',
-                                                      class: 'pc-menu-item',
-                                                      style: { fontSize: '12px' },
+                                                      class: 'pl-bell-dismiss',
                                                       'aria-label': `${words.dismiss}: ${item.title}`,
+                                                      title: words.dismiss,
                                                       disabled: busy.value,
                                                       onClick: () => void act(() => dismissNotification(client, item.id)),
                                                   },
-                                                  `✕ ${words.dismiss}`,
+                                                  [icon('x', 14), words.dismiss],
                                               ),
                                           ]),
                                       ),
                           ),
 
-                          error.value ? h('p', { role: 'alert', class: 'pf-field-error', style: { margin: '6px 9px' } }, error.value) : null,
-                          notice.value ? h('p', { role: 'status', style: { ...muted, margin: '6px 9px' } }, notice.value.text) : null,
+                          error.value ? h('p', { role: 'alert', class: 'pl-bell-note pl-bell-note--error' }, error.value) : null,
+                          notice.value ? h('p', { role: 'status', class: 'pl-bell-note' }, notice.value.text) : null,
 
-                          h('div', { role: 'none', style: footStyle }, [
-                              h(
-                                  'button',
-                                  { type: 'button', role: 'menuitem', class: 'pc-menu-item', style: { width: 'auto', fontWeight: 600, fontSize: '12px' }, disabled: busy.value, onClick: () => void markAll() },
-                                  words.markAllRead,
-                              ),
-                              current.view_all_url
-                                  ? h('a', { role: 'menuitem', class: 'pc-menu-item', style: { width: 'auto', fontWeight: 600, fontSize: '12px' }, href: current.view_all_url }, words.viewAll)
-                                  : null,
+                          h('div', { role: 'none', class: 'pl-bell-foot' }, [
+                              h('button', { type: 'button', role: 'menuitem', class: 'pl-bell-link', disabled: busy.value, onClick: () => void markAll() }, words.markAllRead),
+                              current.view_all_url ? h('a', { role: 'menuitem', class: 'pl-bell-link', href: current.view_all_url }, words.viewAll) : null,
                           ]),
                       ])
                     : null,

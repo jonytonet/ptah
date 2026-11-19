@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\PaginationState;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Ptah\Crud\Concerns\FiltersRuntime;
 use Ptah\Livewire\BaseCrud\BaseCrud;
 use Ptah\Models\Attachment;
@@ -535,7 +537,9 @@ final class CrudRuntime extends BaseCrud
             'selectable' => $this->canSelectRows($this->permissions()),
             'export' => [
                 'enabled' => ! empty($this->crudConfig['exportConfig']['enabled']) && $this->permissions()['canExport'],
-                'formats' => ['excel', 'pdf'],
+                // The formats the config offers, as the Livewire menu lists them
+                // (`exportConfig.formats`, default excel); only the two the export knows.
+                'formats' => array_values(array_intersect(['excel', 'pdf'], (array) ($this->crudConfig['exportConfig']['formats'] ?? ['excel']))),
             ],
             'trash' => $this->crudConfigAllows('restore') && $this->modelSoftDeletes(),
             'defaults' => [
@@ -635,7 +639,8 @@ final class CrudRuntime extends BaseCrud
                 'trashed' => $this->showTrashed,
             ],
             'state' => $this->state(),
-            'totals' => $this->totalizadoresItems(),
+            'totals' => $this->formattedTotals(),
+            'breaks' => $this->groupBreaks($rows->items()),
             'messages' => $this->toastMessages(),
         ];
     }
@@ -952,6 +957,120 @@ final class CrudRuntime extends BaseCrud
         $link = SafeUrl::sanitize(str_replace('%id%', (string) $id, $template), '');
 
         return $link !== '' ? $link : null;
+    }
+
+    /**
+     * The totals, each with `text`: the value as the footer of _table.blade.php
+     * prints it — a money column in its currency, a `currencyFormat` column
+     * with the locale's prefix, a count never as money. Plain text (the Blade
+     * escapes it with {{ }}).
+     *
+     * @return list<array{field: string, aggregate: string, value: mixed, text: string|null}>
+     */
+    private function formattedTotals(): array
+    {
+        $cols = array_column($this->crudConfig['cols'] ?? [], null, 'colsNomeFisico');
+        $out = [];
+        foreach ($this->totalizadoresItems() as $total) {
+            $total['text'] = $total['value'] === null ? null : $this->totalText($cols[$total['field']] ?? [], $total['value'], $total['aggregate'] !== 'count');
+            $out[] = $total;
+        }
+
+        return $out;
+    }
+
+    /**
+     * One total or subtotal, formatted like _table / _break-subtotal.
+     *
+     * @param  array<string, mixed>  $col
+     */
+    private function totalText(array $col, mixed $value, bool $asMoney, bool $subtotal = false): string
+    {
+        if ($asMoney && ($col['colsRenderer'] ?? '') === 'money') {
+            return $this->renderMoney($col, (float) $value);
+        }
+        if ($asMoney && ($col['colsHelper'] ?? '') === 'currencyFormat') {
+            return __('ptah::ui.currency_prefix').number_format((float) $value, 2, (string) __('ptah::ui.number_dec_point'), (string) __('ptah::ui.number_thousands'));
+        }
+        if ($subtotal) {
+            $dec = (string) __('ptah::ui.number_dec_point');
+
+            return rtrim(rtrim(number_format((float) $value, 2, $dec, (string) __('ptah::ui.number_thousands')), '0'), $dec);
+        }
+
+        return is_scalar($value) ? (string) $value : '';
+    }
+
+    /**
+     * The group breaks of this page (`groupBreak`, `groupBreakPeriod`), as
+     * _table.blade.php draws them: a header row before the first row of each
+     * group (`start` is that row's index in `data`), and a subtotal row after
+     * its last one with the sum of each totalled column over the group's rows
+     * of this page. Empty when the screen has no break.
+     *
+     * @param  array<int, mixed>  $rows
+     * @return list<array{start: int, count: int, label: string, title: string, subtotals: array<string, string>}>
+     */
+    private function groupBreaks(array $rows): array
+    {
+        $field = $this->crudConfig['groupBreak'] ?? null;
+        if (! is_string($field) || $field === '' || $rows === []) {
+            return [];
+        }
+
+        $period = in_array($this->crudConfig['groupBreakPeriod'] ?? null, ['day', 'month', 'year'], true) ? $this->crudConfig['groupBreakPeriod'] : null;
+        $cols = array_column($this->crudConfig['cols'] ?? [], null, 'colsNomeFisico');
+        $breakCol = $cols[$field] ?? null;
+        $label = (string) ($breakCol['colsNomeLogico'] ?? $field);
+        $totalled = array_keys(self::totalsByField($this->totalizadoresItems()));
+
+        $groups = [];
+        $previous = null;
+        $first = true;
+        foreach (array_values($rows) as $index => $row) {
+            $current = data_get($row, $field);
+            $title = null;
+            if ($period !== null && $current !== null && $current !== '') {
+                try {
+                    $date = Carbon::parse($current)->locale(app()->getLocale());
+                    $current = $date->format(['day' => 'Y-m-d', 'month' => 'Y-m', 'year' => 'Y'][$period]);
+                    $title = match ($period) {
+                        'day' => $date->isoFormat('L'),
+                        'month' => $date->translatedFormat('F Y'),
+                        default => $date->format('Y'),
+                    };
+                } catch (\Throwable) {
+                    $title = null;
+                }
+            }
+
+            if ($first || $current !== $previous) {
+                $groups[] = [
+                    'start' => $index,
+                    'count' => 0,
+                    'label' => $label,
+                    'title' => $title !== null ? e(Str::ucfirst($title)) : ($breakCol ? $this->formatCell($breakCol, $row) : e((string) Scalar::of($current))),
+                    'sums' => [],
+                ];
+                $first = false;
+            }
+            $previous = $current;
+            $last = count($groups) - 1;
+            $groups[$last]['count']++;
+            foreach ($totalled as $total) {
+                $groups[$last]['sums'][$total] = ($groups[$last]['sums'][$total] ?? 0) + (float) data_get($row, $total);
+            }
+        }
+
+        return array_map(function (array $group) use ($cols) {
+            $subtotals = [];
+            foreach ($group['sums'] as $total => $sum) {
+                $subtotals[$total] = $this->totalText($cols[$total] ?? [], $sum, true, true);
+            }
+            unset($group['sums']);
+
+            return $group + ['subtotals' => $subtotals];
+        }, $groups);
     }
 
     /**

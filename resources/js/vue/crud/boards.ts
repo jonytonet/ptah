@@ -4,7 +4,7 @@
  * Each piece reads the screen through its CrudController; the board and the
  * calendar ask the boards API with the listing state the screen shows.
  */
-import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
+import { Comment, computed, defineComponent, Fragment, h, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 import type { PropType, Ref, VNode, VNodeChild } from 'vue';
 import { ApiError } from '../../core';
 import type { CrudController, CrudState, Row, RowAction } from '../../core';
@@ -25,24 +25,21 @@ import {
     moveCard,
     moveChoices,
     resolveView,
-    SR_ONLY,
     targetsOf,
-    VIEW_ICONS,
     viewLabel,
     viewModes,
     watchNarrow,
     withCardMoved,
 } from '../../core/crud/boards';
 import type { BoardsWords, CalendarGrid, KanbanBoard, KanbanColumn, ViewMode } from '../../core/crud/boards';
-import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal, ForgeSpinner } from '../forge';
+import { ForgeAlert, ForgeButton, ForgeModal, ForgeSpinner } from '../forge';
+import { icon } from '../icons';
 import { usePtahCrud } from '../usePtahCrud';
 
 const crudProp = { type: Object as PropType<CrudController>, required: true } as const;
 const localeProp = { type: String, default: undefined };
 
 const failure = (error: unknown, t: BoardsWords) => (error instanceof ApiError && (error.status === 403 || error.status === 404) && error.message ? error.message : t.loadError);
-
-const muted = { color: 'var(--pc-text-muted)', fontSize: '0.75rem' };
 
 /**
  * Which view to draw now: the saved mode, with 'auto' decided by the
@@ -107,33 +104,33 @@ export const PtahCrudViewSwitch = defineComponent({
             const mode = state.value.preferences?.view_mode ?? 'auto';
             const density = state.value.preferences?.view_density ?? 'global';
 
-            return h('div', { style: { display: 'inline-flex', alignItems: 'center', gap: '8px' } }, [
+            return [
                 h(
                     'div',
-                    { role: 'group', 'aria-label': words.viewMode, style: { display: 'inline-flex', gap: '2px' } },
+                    { class: 'pc-seg', role: 'group', 'aria-label': words.viewMode },
                     viewModes(props.crud.features).map((item) =>
                         h(
                             'button',
                             {
                                 key: item,
                                 type: 'button',
-                                class: `pc-btn${mode === item ? ' pc-btn--active' : ''}`,
+                                class: 'pc-seg-btn',
                                 'aria-pressed': mode === item ? 'true' : 'false',
                                 'aria-label': viewLabel(words, item),
                                 title: viewLabel(words, item),
                                 disabled: saving.value,
                                 onClick: () => mode !== item && void save({ view_mode: item }),
                             },
-                            [h('span', { 'aria-hidden': 'true' }, VIEW_ICONS[item])],
+                            [icon(VIEW_SVG[item])],
                         ),
                     ),
                 ),
-                h('div', { class: 'pc-menu', ref: menu }, [
+                h('div', { class: 'pc-dd-wrap pc-tb-secondary', ref: menu }, [
                     h(
                         'button',
                         {
                             type: 'button',
-                            class: 'pc-btn',
+                            class: 'pc-tbtn',
                             'aria-haspopup': 'true',
                             'aria-expanded': open.value ? 'true' : 'false',
                             'aria-label': words.density,
@@ -143,43 +140,44 @@ export const PtahCrudViewSwitch = defineComponent({
                                 open.value = !open.value;
                             },
                         },
-                        [h('span', { 'aria-hidden': 'true' }, DENSITY_ICONS[density as keyof typeof DENSITY_ICONS] ?? '☰'), h('span', words.density), ' ▾'],
+                        [
+                            h('span', { class: 'pc-density-glyph', 'aria-hidden': 'true' }, DENSITY_ICONS[density as keyof typeof DENSITY_ICONS] ?? '☰'),
+                            h('span', { class: 'pc-tbtn-label' }, words.density),
+                            icon('chevronDown', 12),
+                        ],
                     ),
                     open.value
                         ? h(
-                              'ul',
-                              { class: 'pc-menu-list' },
+                              'div',
+                              { class: 'pc-dd', style: { minWidth: '11.25rem' } },
                               DENSITIES.map((item) =>
-                                  h('li', { key: item }, [
-                                      h(
-                                          'button',
-                                          {
-                                              type: 'button',
-                                              class: 'pc-menu-item',
-                                              'aria-current': density === item ? 'true' : undefined,
-                                              style: density === item ? { fontWeight: 600, color: 'var(--pc-primary)' } : undefined,
-                                              onClick: () => {
-                                                  open.value = false;
-                                                  if (density !== item) {
-                                                      void save({ view_density: item });
-                                                  }
-                                              },
+                                  h(
+                                      'button',
+                                      {
+                                          key: item,
+                                          type: 'button',
+                                          class: `pc-dd-item pc-dd-item--between${density === item ? ' pc-dd-item--active' : ''}`,
+                                          'aria-current': density === item ? 'true' : undefined,
+                                          onClick: () => {
+                                              open.value = false;
+                                              if (density !== item) {
+                                                  void save({ view_density: item });
+                                              }
                                           },
-                                          [
-                                              h('span', { 'aria-hidden': 'true' }, DENSITY_ICONS[item]),
-                                              ` ${densityLabel(words, item)}`,
-                                              density === item ? h('span', { 'aria-hidden': 'true', style: { marginLeft: 'auto' } }, '✓') : null,
-                                          ],
-                                      ),
-                                  ]),
+                                      },
+                                      [h('span', `${DENSITY_ICONS[item]} ${densityLabel(words, item)}`), density === item ? icon('check') : null],
+                                  ),
                               ),
                           )
                         : null,
                 ]),
-            ]);
+            ];
         };
     },
 });
+
+/** The view buttons' icons: the very SVGs of _toolbar.blade.php. */
+const VIEW_SVG: Record<ViewMode, string> = { auto: 'viewAuto', table: 'viewTable', cards: 'viewCards', kanban: 'viewKanban', calendar: 'calendar' };
 
 // ── Shared loading state ────────────────────────────────────────────────────
 
@@ -191,7 +189,7 @@ function stateBox(error: string | null, t: BoardsWords, retry: () => void): VNod
 
 // ── Kanban ──────────────────────────────────────────────────────────────────
 
-/** The board: one column per option, drag and drop and a "Move to" select per card. */
+/** The board: one column per option, drag and drop and a "Move to" select per card (_kanban.blade.php). */
 export const PtahCrudKanban = defineComponent({
     name: 'PtahCrudKanban',
     props: { crud: crudProp, locale: localeProp },
@@ -269,7 +267,7 @@ export const PtahCrudKanban = defineComponent({
             const choices = moveChoices(current, col);
             const droppable = current.can_move && !col.other && !col.locked;
             const accepts = () => canDrop(current, drag.value, col.value);
-            const note = (text: string) => h('p', { style: { ...muted, margin: 0, padding: '0 12px 8px' } }, text);
+            const note = (text: string) => h('p', { class: 'pc-kanban-note' }, text);
 
             return h(
                 'section',
@@ -277,16 +275,7 @@ export const PtahCrudKanban = defineComponent({
                     key: col.value,
                     'aria-label': col.label,
                     'data-ptah-kanban-locked': col.locked ? 'true' : undefined,
-                    style: {
-                        display: 'flex',
-                        flexDirection: 'column',
-                        flex: '0 0 18rem',
-                        border: '1px solid var(--pc-line)',
-                        borderRadius: 'var(--pc-radius)',
-                        background: 'var(--pc-bg-soft)',
-                        outline: over.value === col.value ? '2px solid var(--pc-primary)' : undefined,
-                        outlineOffset: '-2px',
-                    },
+                    class: ['pc-kanban-col', { 'pc-kanban-col--locked': col.locked, 'pc-kanban-col--over': over.value === col.value }],
                     onDragover: droppable
                         ? (event: DragEvent) => {
                               if (accepts()) {
@@ -312,15 +301,15 @@ export const PtahCrudKanban = defineComponent({
                         : undefined,
                 },
                 [
-                    h('header', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderBottom: '1px solid var(--pc-line)', background: 'var(--pc-bg)' } }, [
-                        h('h3', { style: { margin: 0, fontSize: '0.875rem', fontWeight: 600, color: 'var(--pc-text-strong)' } }, [
-                            col.locked ? h('span', { title: words.locked, 'aria-label': words.locked, role: 'img', style: { marginRight: '4px' } }, '🔒') : null,
+                    h('header', { class: 'pc-kanban-head' }, [
+                        h('h3', { class: 'pc-kanban-ttl' }, [
+                            col.locked ? h('i', { class: 'bx bx-lock-alt pc-kanban-lock', role: 'img', title: words.locked, 'aria-label': words.locked }) : null,
                             col.label,
                         ]),
-                        h('span', { style: { ...muted, fontVariantNumeric: 'tabular-nums' } }, String(col.total)),
+                        h('span', { class: 'pc-kanban-count' }, String(col.total)),
                     ]),
-                    h('ul', { style: { display: 'flex', flexDirection: 'column', gap: '8px', margin: 0, padding: '8px', listStyle: 'none', minHeight: '64px' } }, [
-                        col.cards.length === 0 ? h('li', { style: { ...muted, padding: '12px 4px', textAlign: 'center' } }, words.emptyColumn) : null,
+                    h('ul', { class: 'pc-kanban-list' }, [
+                        col.cards.length === 0 ? h('li', { class: 'pc-kanban-empty' }, words.emptyColumn) : null,
                         ...col.cards.map((card) => {
                             const id = String(card.id);
                             const movable = current.can_move && targets.length > 0;
@@ -330,6 +319,7 @@ export const PtahCrudKanban = defineComponent({
                                 'li',
                                 {
                                     key: id,
+                                    class: 'pc-kanban-card',
                                     draggable: movable ? 'true' : undefined,
                                     onDragstart: movable
                                         ? (event: DragEvent) => {
@@ -343,20 +333,18 @@ export const PtahCrudKanban = defineComponent({
                                               over.value = null;
                                           }
                                         : undefined,
-                                    style: { padding: '8px', border: '1px solid var(--pc-line)', borderRadius: 'var(--pc-radius)', background: 'var(--pc-bg)', fontSize: '0.875rem', opacity: col.locked ? 0.75 : 1 },
                                 },
                                 [
-                                    h('button', { type: 'button', class: 'pc-th-btn', style: { display: 'block', width: '100%', fontWeight: 500, color: 'var(--pc-text)' }, onClick: () => void props.crud.openEdit(card.id) }, card.title),
-                                    card.subtitle !== '' ? h('p', { style: { ...muted, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, card.subtitle) : null,
+                                    h('button', { type: 'button', class: 'pc-kanban-open', onClick: () => void props.crud.openEdit(card.id) }, card.title),
+                                    card.subtitle !== '' ? h('p', { class: 'pc-kanban-sub' }, card.subtitle) : null,
                                     ...(movable
                                         ? [
-                                              h('label', { for: selectId, style: SR_ONLY }, words.moveTo),
+                                              h('label', { for: selectId, class: 'pc-sr-only' }, words.moveTo),
                                               h(
                                                   'select',
                                                   {
                                                       id: selectId,
-                                                      class: 'pc-input',
-                                                      style: { marginTop: '8px', padding: '4px 6px', fontSize: '0.75rem' },
+                                                      class: 'pc-kanban-move',
                                                       value: col.other ? '' : col.value,
                                                       onChange: (event: Event) => {
                                                           const target = event.target as HTMLSelectElement;
@@ -394,8 +382,8 @@ export const PtahCrudKanban = defineComponent({
                 return stateBox(error.value, words, () => void load());
             }
 
-            return h('div', { 'aria-busy': loading.value ? 'true' : 'false', style: { display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px', opacity: loading.value ? 0.7 : 1 } }, [
-                error.value ? h('div', { style: { flex: '0 0 100%' } }, [h(ForgeAlert, { color: 'danger' }, () => error.value)]) : null,
+            return h('div', { class: 'pc-kanban', 'aria-busy': loading.value ? 'true' : 'false' }, [
+                error.value ? h('div', { class: 'pc-kanban-error' }, [h(ForgeAlert, { color: 'danger' }, () => error.value)]) : null,
                 ...current.columns.map((col) => column(current, col, words)),
             ]);
         };
@@ -404,7 +392,7 @@ export const PtahCrudKanban = defineComponent({
 
 // ── Calendar ────────────────────────────────────────────────────────────────
 
-/** The month grid: each record on its days (start to end), opened by a click. */
+/** The month grid: each record on its days (start to end), opened by a click (_calendar.blade.php). */
 export const PtahCrudCalendar = defineComponent({
     name: 'PtahCrudCalendar',
     props: { crud: crudProp, locale: localeProp },
@@ -450,7 +438,7 @@ export const PtahCrudCalendar = defineComponent({
             { immediate: true },
         );
 
-        const nav = (label: string, text: string, onClick: () => void) => h(ForgeButton, { color: 'dark', flat: true, size: 'sm', 'aria-label': label, title: label, onClick }, () => text);
+        const nav = (label: string, text: string, onClick: () => void) => h('button', { type: 'button', class: 'pc-cal-btn', 'aria-label': label, title: label, onClick }, text);
 
         return () => {
             if (!on.value) {
@@ -462,32 +450,31 @@ export const PtahCrudCalendar = defineComponent({
                 return stateBox(error.value, words, () => void load());
             }
 
-            return h('div', { 'aria-busy': loading.value ? 'true' : 'false', style: { border: '1px solid var(--pc-line)', borderRadius: 'var(--pc-radius)', background: 'var(--pc-bg)', opacity: loading.value ? 0.7 : 1 } }, [
-                h('header', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '8px 12px', borderBottom: '1px solid var(--pc-line)', background: 'var(--pc-bg-soft)' } }, [
+            return h('div', { class: 'pc-cal', 'aria-busy': loading.value ? 'true' : 'false' }, [
+                h('header', { class: 'pc-cal-head' }, [
                     nav(words.calendarPrev, '‹', () => void load(-1)),
-                    h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } }, [
-                        h('h3', { style: { margin: 0, fontSize: '0.875rem', fontWeight: 600, textTransform: 'capitalize', color: 'var(--pc-text-strong)' } }, monthTitle(current.month, props.locale)),
+                    h('div', { class: 'pc-cal-center' }, [
+                        h('h3', { class: 'pc-cal-ttl' }, monthTitle(current.month, props.locale)),
                         h(
-                            ForgeButton,
+                            'button',
                             {
-                                color: 'dark',
-                                flat: true,
-                                size: 'sm',
+                                type: 'button',
+                                class: 'pc-cal-btn',
                                 onClick: () => {
                                     month = '';
                                     void load();
                                 },
                             },
-                            () => words.calendarToday,
+                            words.calendarToday,
                         ),
                     ]),
                     nav(words.calendarNext, '›', () => void load(1)),
                 ]),
                 error.value ? h(ForgeAlert, { color: 'danger' }, () => error.value) : null,
-                current.overflow ? h('div', { style: { padding: '8px 12px 0' } }, [h(ForgeAlert, { color: 'warn' }, () => words.calendarOverflow)]) : null,
-                h('div', { style: { overflowX: 'auto' } }, [
-                    h('table', { style: { width: '100%', minWidth: '640px', tableLayout: 'fixed', borderCollapse: 'collapse', fontSize: '0.875rem' } }, [
-                        h('thead', [h('tr', words.weekdays.map((weekday) => h('th', { key: weekday, scope: 'col', style: { ...muted, padding: '6px 8px', fontWeight: 600, textAlign: 'left' } }, weekday)))]),
+                current.overflow ? h('div', { class: 'pc-cal-alert' }, [h(ForgeAlert, { color: 'warn' }, () => words.calendarOverflow)]) : null,
+                h('div', { class: 'pc-cal-scroll' }, [
+                    h('table', { class: 'pc-cal-table' }, [
+                        h('thead', [h('tr', words.weekdays.map((weekday) => h('th', { key: weekday, scope: 'col' }, weekday)))]),
                         h(
                             'tbody',
                             current.weeks.map((week) =>
@@ -495,38 +482,15 @@ export const PtahCrudCalendar = defineComponent({
                                     'tr',
                                     { key: week[0]?.date },
                                     week.map((day) =>
-                                        h('td', { key: day.date, 'data-date': day.date, style: { verticalAlign: 'top', height: '96px', padding: '4px', borderTop: '1px solid var(--pc-line)', background: day.in_month ? undefined : 'var(--pc-bg-soft)' } }, [
-                                            h(
-                                                'div',
-                                                {
-                                                    'aria-current': day.today ? 'date' : undefined,
-                                                    style: {
-                                                        marginBottom: '4px',
-                                                        fontSize: '0.75rem',
-                                                        fontVariantNumeric: 'tabular-nums',
-                                                        color: day.today ? 'var(--pc-primary)' : day.in_month ? 'var(--pc-text)' : 'var(--pc-text-muted)',
-                                                        fontWeight: day.today ? 700 : undefined,
-                                                    },
-                                                },
-                                                String(day.day),
-                                            ),
-                                            h('ul', { style: { display: 'flex', flexDirection: 'column', gap: '2px', margin: 0, padding: 0, listStyle: 'none' } }, [
+                                        h('td', { key: day.date, 'data-date': day.date, class: day.in_month ? undefined : 'pc-cal-out' }, [
+                                            h('div', { class: 'pc-cal-day', 'aria-current': day.today ? 'date' : undefined }, String(day.day)),
+                                            h('ul', { class: 'pc-cal-items' }, [
                                                 ...day.items.slice(0, CALENDAR_DAY_LIMIT).map((item) =>
                                                     h('li', { key: String(item.id) }, [
-                                                        h(
-                                                            'button',
-                                                            {
-                                                                type: 'button',
-                                                                class: 'pc-th-btn',
-                                                                title: eventTitle(item),
-                                                                style: { display: 'block', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 4px', borderRadius: '4px', fontSize: '0.75rem', background: 'var(--pc-primary-soft)', color: 'var(--pc-text-strong)' },
-                                                                onClick: () => void props.crud.openEdit(item.id),
-                                                            },
-                                                            item.title,
-                                                        ),
+                                                        h('button', { type: 'button', class: 'pc-cal-event', title: eventTitle(item), onClick: () => void props.crud.openEdit(item.id) }, item.title),
                                                     ]),
                                                 ),
-                                                day.items.length > CALENDAR_DAY_LIMIT ? h('li', { style: muted }, `+${day.items.length - CALENDAR_DAY_LIMIT}`) : null,
+                                                day.items.length > CALENDAR_DAY_LIMIT ? h('li', { class: 'pc-cal-more' }, `+${day.items.length - CALENDAR_DAY_LIMIT}`) : null,
                                             ]),
                                         ]),
                                     ),
@@ -542,12 +506,32 @@ export const PtahCrudCalendar = defineComponent({
 
 // ── Cards ───────────────────────────────────────────────────────────────────
 
+/** True when a slot rendered nothing but comments / empty fragments. */
+function isEmptySlot(nodes: VNodeChild): boolean {
+    if (nodes === null || nodes === undefined || nodes === false || nodes === '') {
+        return true;
+    }
+    if (Array.isArray(nodes)) {
+        return nodes.every((node) => isEmptySlot(node as VNodeChild));
+    }
+    if (typeof nodes === 'object' && 'type' in nodes) {
+        if (nodes.type === Comment) {
+            return true;
+        }
+        if (nodes.type === Fragment) {
+            return isEmptySlot(nodes.children as VNodeChild);
+        }
+    }
+
+    return false;
+}
+
 /**
  * The rows of the current page as cards — the same cells and actions as the
- * table. The footer's buttons come from the `actions` slot (`{ row }`) or the
- * `renderActions` prop — pass the table's own row actions; without either
- * the cards draw the configured row actions and edit / duplicate / delete /
- * restore.
+ * table (_cards.blade.php). The footer's buttons come from the `actions` slot
+ * (`{ row }`) or the `renderActions` prop — pass the table's own row actions;
+ * without either the cards draw the configured row actions and edit /
+ * duplicate / delete / restore.
  */
 export const PtahCrudCards = defineComponent({
     name: 'PtahCrudCards',
@@ -569,11 +553,28 @@ export const PtahCrudCards = defineComponent({
             }
         };
 
+        // The card's own link must not fire under a footer button (@click.stop).
+        const act = (cls: string, label: string, name: string, onClick: () => void) =>
+            h(
+                'button',
+                {
+                    type: 'button',
+                    class: `pc-act ${cls}`,
+                    title: label,
+                    'aria-label': label,
+                    onClick: (event: MouseEvent) => {
+                        event.stopPropagation();
+                        onClick();
+                    },
+                },
+                [icon(name)],
+            );
+
         const footer = (current: CrudState, row: Row, words: BoardsWords): VNode | null => {
-            const style = { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '4px', paddingTop: '12px', marginTop: '12px', borderTop: '1px solid var(--pc-line)' };
             const custom = slots.actions ? slots.actions({ row }) : props.renderActions ? props.renderActions(row) : undefined;
-            if (custom !== undefined) {
-                return h('div', { style }, [custom as VNode]);
+            if (slots.actions || props.renderActions) {
+                // A footer only when the parent gives it something to hold.
+                return isEmptySlot(custom as VNodeChild) ? null : h('div', { class: 'pc-card-foot' }, [custom as VNode]);
             }
 
             const { permissions } = current.schema!;
@@ -585,7 +586,7 @@ export const PtahCrudCards = defineComponent({
                 return null;
             }
 
-            return h('div', { style }, [
+            return h('div', { class: 'pc-card-foot' }, [
                 ...row.actions.map((action, index) => {
                     const content = action.icon ? h('i', { class: action.icon, 'aria-hidden': 'true' }) : action.label || '→';
 
@@ -594,11 +595,13 @@ export const PtahCrudCards = defineComponent({
                               'a',
                               {
                                   key: index,
-                                  class: 'pc-icon-btn',
+                                  class: 'pc-act pc-act--custom',
+                                  'data-color': action.color || undefined,
                                   href: action.value,
                                   title: action.label,
                                   'aria-label': action.label,
                                   onClick: (event: MouseEvent) => {
+                                      event.stopPropagation();
                                       if (action.confirm) {
                                           event.preventDefault();
                                           pending.value = { row, action };
@@ -609,19 +612,67 @@ export const PtahCrudCards = defineComponent({
                           )
                         : h(
                               'button',
-                              { key: index, type: 'button', class: 'pc-icon-btn', title: action.label, 'aria-label': action.label, onClick: () => (action.confirm ? (pending.value = { row, action }) : props.crud.runAction(row, action)) },
+                              {
+                                  key: index,
+                                  type: 'button',
+                                  class: 'pc-act pc-act--custom',
+                                  'data-color': action.color || undefined,
+                                  title: action.label,
+                                  'aria-label': action.label,
+                                  onClick: (event: MouseEvent) => {
+                                      event.stopPropagation();
+                                      if (action.confirm) {
+                                          pending.value = { row, action };
+                                      } else {
+                                          props.crud.runAction(row, action);
+                                      }
+                                  },
+                              },
                               [content],
                           );
                 }),
-                permissions.canUpdate && !inTrash ? h('button', { type: 'button', class: 'pc-icon-btn', title: words.edit, onClick: () => void props.crud.openEdit(row.id) }, words.edit) : null,
-                permissions.canCreate && !inTrash ? h('button', { type: 'button', class: 'pc-icon-btn', title: words.duplicate, onClick: () => void props.crud.duplicate(row.id) }, words.duplicate) : null,
+                permissions.canUpdate && !inTrash ? act('pc-act--edit', words.edit, 'edit', () => void props.crud.openEdit(row.id)) : null,
+                permissions.canCreate && !inTrash ? act('pc-act--dup', words.duplicate, 'duplicate', () => void props.crud.duplicate(row.id)) : null,
                 restorable
                     ? permissions.canRestore
-                        ? h('button', { type: 'button', class: 'pc-icon-btn', title: words.restore, onClick: () => void props.crud.restore(row.id) }, words.restore)
+                        ? act('pc-act--restore', words.restore, 'refresh', () => void props.crud.restore(row.id))
                         : null
                     : permissions.canDelete
-                      ? h('button', { type: 'button', class: 'pc-icon-btn pc-icon-btn--danger', title: words.delete, onClick: () => props.crud.askDelete(row.id) }, words.delete)
+                      ? act('pc-act--del', words.delete, 'trash', () => props.crud.askDelete(row.id))
                       : null,
+            ]);
+        };
+
+        /** The ordering of the cards: a column select and a direction button (_sort-bar.blade.php). */
+        const sortBar = (current: CrudState, words: BoardsWords): VNode | null => {
+            const sortable = current.schema!.columns.filter((column) => column.sortBy !== null);
+            if (sortable.length === 0) {
+                return null;
+            }
+            const ascending = current.list.direction.toUpperCase() === 'ASC';
+            const sortId = `pc-cards-sort-${props.crud.screen}`;
+
+            return h('div', { class: 'pc-sortbar', role: 'group', 'aria-label': words.sortGroup }, [
+                h('label', { for: sortId, class: 'pc-sr-only' }, words.sortBy),
+                icon('sortBar', 16, undefined, 'pc-sortbar-icon'),
+                h(
+                    'select',
+                    { id: sortId, class: 'pc-sortbar-select', title: words.sortBy, value: current.list.sort, onChange: (event: Event) => void props.crud.patchList({ sort: (event.target as HTMLSelectElement).value }) },
+                    sortable.map((column) => h('option', { key: column.field, value: column.sortBy! }, column.label)),
+                ),
+                h(
+                    'button',
+                    {
+                        type: 'button',
+                        class: 'pc-sortbar-dir',
+                        'aria-pressed': ascending ? 'true' : 'false',
+                        'aria-label': ascending ? words.sortAsc : words.sortDesc,
+                        title: ascending ? words.sortAsc : words.sortDesc,
+                        disabled: current.busy,
+                        onClick: () => void props.crud.patchList({ direction: ascending ? 'DESC' : 'ASC' }),
+                    },
+                    [icon(ascending ? 'sortAsc' : 'sortDesc')],
+                ),
             ]);
         };
 
@@ -634,81 +685,71 @@ export const PtahCrudCards = defineComponent({
             const words = t.value;
             // The title is the first column that is not the id; the rest are the body.
             const [titleColumn, ...bodyColumns] = schema.columns.filter((column) => column.field !== 'id');
-            const sortable = schema.columns.filter((column) => column.sortBy !== null);
-            const ascending = current.list.direction.toUpperCase() === 'ASC';
-            const sortId = `pc-cards-sort-${props.crud.screen}`;
             const confirming = pending.value;
 
             return h('div', [
-                sortable.length > 0
-                    ? h('div', { role: 'group', 'aria-label': words.sortGroup, style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' } }, [
-                          h('label', { for: sortId, style: SR_ONLY }, words.sortBy),
-                          h(
-                              'select',
-                              { id: sortId, class: 'pc-input', style: { flex: 1, minWidth: 0 }, title: words.sortBy, value: current.list.sort, onChange: (event: Event) => void props.crud.patchList({ sort: (event.target as HTMLSelectElement).value }) },
-                              sortable.map((column) => h('option', { key: column.field, value: column.sortBy! }, column.label)),
-                          ),
-                          h(
-                              'button',
-                              {
-                                  type: 'button',
-                                  class: 'pc-btn',
-                                  'aria-pressed': ascending ? 'true' : 'false',
-                                  'aria-label': ascending ? words.sortAsc : words.sortDesc,
-                                  title: ascending ? words.sortAsc : words.sortDesc,
-                                  disabled: current.busy,
-                                  onClick: () => void props.crud.patchList({ direction: ascending ? 'DESC' : 'ASC' }),
-                              },
-                              [h('span', { 'aria-hidden': 'true' }, ascending ? '▲' : '▼')],
-                          ),
-                      ])
-                    : null,
-                current.rows.length === 0
-                    ? h('div', { class: 'pc-state' }, [h(ForgeEmpty, { title: words.emptyTitle, description: words.emptySubtitle })])
-                    : h(
-                          'div',
-                          { 'aria-busy': current.busy ? 'true' : 'false', style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px', opacity: current.busy ? 0.6 : 1 } },
-                          current.rows.map((row) => {
+                sortBar(current, words),
+                h(
+                    'div',
+                    { class: 'pc-cards', 'aria-busy': current.busy ? 'true' : 'false' },
+                    current.rows.length === 0
+                        ? [
+                              h('div', { class: 'pc-cards-empty' }, [
+                                  h('div', { class: 'pc-empty-state' }, [
+                                      h('div', { class: 'pc-empty-box' }, [icon('inbox', 32, 1.5)]),
+                                      h('div', [h('p', { class: 'pc-empty-ttl' }, words.emptyTitle), h('p', { class: 'pc-empty-sub' }, words.emptySubtitle)]),
+                                  ]),
+                              ]),
+                          ]
+                        : current.rows.map((row) => {
                               const selected = current.selection.includes(String(row.id));
-                              const base = {
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  padding: '16px',
-                                  border: '1px solid var(--pc-line)',
-                                  borderRadius: 'var(--pc-radius)',
-                                  background: selected ? 'var(--pc-primary-soft)' : 'var(--pc-bg)',
-                                  outline: selected ? '2px solid var(--pc-primary)' : undefined,
-                              };
-
                               const link = row.link ?? null;
                               const follow = link ? (event: MouseEvent | KeyboardEvent) => followRowLink(event, link) : undefined;
 
                               // configLinkLinha: the card opens its record (Enter when focused).
-                              return h('article', { key: row.id, 'aria-label': `#${row.id}`, tabindex: link ? 0 : undefined, 'data-link': link ?? undefined, onClick: follow, onAuxclick: follow, onKeydown: follow, style: [base, link ? { cursor: 'pointer' } : {}, row.style ?? ''] }, [
-                                  h('div', { style: { display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' } }, [
-                                      schema.selectable ? h('input', { type: 'checkbox', 'aria-label': words.selectRow.replace(':id', String(row.id)), checked: selected, onChange: () => props.crud.toggleRow(row.id) }) : null,
-                                      h('div', { style: { minWidth: 0, flex: 1 } }, [
-                                          // Rendered and escaped by the server — the table's own cell.
-                                          titleColumn
-                                              ? h('p', { style: { margin: 0, fontWeight: 600, fontSize: '0.875rem', color: 'var(--pc-text-strong)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }, innerHTML: row.cells[titleColumn.field]?.html ?? '' })
+                              // The row style of the config (a coloured stripe, a tint) — as the table row.
+                              return h(
+                                  'article',
+                                  {
+                                      key: row.id,
+                                      'aria-label': `#${row.id}`,
+                                      class: ['pc-card', { 'pc-card--link': link, 'pc-card--selected': selected }],
+                                      tabindex: link ? 0 : undefined,
+                                      'data-link': link ?? undefined,
+                                      onClick: follow,
+                                      onAuxclick: follow,
+                                      onKeydown: follow,
+                                      style: row.style ?? undefined,
+                                  },
+                                  [
+                                      h('div', { class: 'pc-card-head' }, [
+                                          schema.selectable
+                                              ? h('input', {
+                                                    type: 'checkbox',
+                                                    'aria-label': words.selectRow.replace(':id', String(row.id)),
+                                                    checked: selected,
+                                                    onClick: (event: MouseEvent) => event.stopPropagation(),
+                                                    onChange: () => props.crud.toggleRow(row.id),
+                                                })
                                               : null,
-                                          h('p', { style: { ...muted, margin: 0, fontSize: '0.6875rem' } }, `#${row.id}`),
-                                      ]),
-                                  ]),
-                                  h(
-                                      'dl',
-                                      { style: { flex: 1, margin: 0 } },
-                                      bodyColumns.map((column) =>
-                                          h('div', { key: column.field, style: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '12px', fontSize: '0.75rem', marginBottom: '6px' } }, [
-                                              h('dt', { style: { ...muted, flexShrink: 0, fontSize: '0.625rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' } }, column.label),
-                                              h('dd', { style: { margin: 0, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--pc-text)' }, innerHTML: row.cells[column.field]?.html ?? '' }),
+                                          h('div', { class: 'pc-card-heading' }, [
+                                              // Rendered and escaped by the server — the table's own cell.
+                                              titleColumn ? h('p', { class: 'pc-card-ttl', innerHTML: row.cells[titleColumn.field]?.html ?? '' }) : null,
+                                              h('p', { class: 'pc-card-id' }, `#${row.id}`),
                                           ]),
+                                      ]),
+                                      h(
+                                          'dl',
+                                          { class: 'pc-card-body' },
+                                          bodyColumns.map((column) =>
+                                              h('div', { key: column.field, class: 'pc-card-row' }, [h('dt', column.label), h('dd', { innerHTML: row.cells[column.field]?.html ?? '' })]),
+                                          ),
                                       ),
-                                  ),
-                                  footer(current, row, words),
-                              ]);
+                                      footer(current, row, words),
+                                  ],
+                              );
                           }),
-                      ),
+                ),
                 h(
                     ForgeModal,
                     {

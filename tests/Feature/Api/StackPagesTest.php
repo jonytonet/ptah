@@ -78,5 +78,21 @@ class StackPagesTest extends TestCase
         $this->assertArrayHasKey('value', $widgets[0]);
         // A widget that cannot be computed says so instead of breaking the page.
         $this->assertNotNull($widgets[1]['error']);
+        // With widgets, no fallback cards.
+        $this->assertNull($this->getJson('/ptah/api/dashboard')->json('fallback'));
+    }
+
+    #[Test]
+    public function without_widgets_the_dashboard_gets_the_four_cards_of_the_livewire_page(): void
+    {
+        $this->actingAs(new GenericUser(['id' => 9, 'name' => 'Ana']));
+        config(['ptah-dashboard.widgets' => [], 'app.name' => 'ERP', 'app.env' => 'local']);
+
+        $this->getJson('/ptah/api/dashboard')
+            ->assertOk()
+            ->assertJsonPath('data', [])
+            ->assertJsonPath('fallback.app', 'ERP')
+            ->assertJsonPath('fallback.environment', 'Local')
+            ->assertJsonPath('fallback.laravel', app()->version());
     }
 }

@@ -22,3 +22,4 @@ export { PtahCrudFilterBadges, PtahCrudFilterPanel, PtahCrudSearchHistory, PtahC
 export { PtahCrudImport, PtahCrudImportButton } from './crud/import';
 export { PtahCrudAttachments, PtahCrudHistory, PtahCrudRecordButtons } from './crud/records';
 export { mountPtah, PtahApp } from './app';
+export { PtahPageHead } from './page-head';

@@ -189,6 +189,18 @@ export interface Total {
     field: string;
     aggregate: string;
     value: number | string | null;
+    /** The total as the Livewire footer prints it (money in its currency…). */
+    text?: string | null;
+}
+
+/** One group break of the page (`groupBreak`): header before `start`, subtotal after its last row. */
+export interface GroupBreak {
+    start: number;
+    count: number;
+    label: string;
+    /** The group's header, HTML already escaped by the server. */
+    title: string;
+    subtotals: Record<string, string>;
 }
 
 export interface Message {
@@ -201,6 +213,7 @@ export interface Listing {
     meta: Meta;
     state: ListState;
     totals: Total[];
+    breaks?: GroupBreak[];
     messages: Message[];
 }
 
@@ -278,6 +291,8 @@ export interface Shell {
 export interface ShellExtras {
     company_switcher: boolean;
     notifications: boolean;
+    /** The navbar's plain bell (no notifications module, `ptah.navbar.notifications` unset). */
+    static_bell?: boolean;
     /** The floating AI assistant (ai_agent module). */
     ai_chat?: boolean;
     /** The administration links this user may open. */
@@ -295,6 +310,9 @@ export interface Me {
 
 export interface AuthConfig {
     app: string;
+    /** The brand logo above the card (ptah.brand), and its dark variant. */
+    logo?: string | null;
+    logo_dark?: string | null;
     locale: string;
     remember_me: boolean;
     home: string;
@@ -329,6 +347,10 @@ export interface Appearance {
     fontsize: string;
     mode: string | null;
     choices: Record<'light' | 'dark' | 'accent' | 'text' | 'density' | 'fontsize', string[]>;
+    /** Each option's name, and `_axis` with each axis' title (ptah::ui.profile_appearance_*). */
+    labels?: Record<string, Record<string, string>>;
+    /** The colour dot of each accent option. */
+    swatches?: Record<string, string>;
 }
 
 export interface Profile {
@@ -350,6 +372,12 @@ export interface SessionInfo {
 }
 
 // ── Dashboard ───────────────────────────────────────────────────────────────
+
+/** GET /dashboard: the widgets, or (none configured) what the four default cards show. */
+export interface DashboardPage {
+    data: Widget[];
+    fallback: { app: string; environment: string; laravel: string } | null;
+}
 
 /** A widget of config/ptah-dashboard.php, already computed by the server. */
 export interface Widget {

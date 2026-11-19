@@ -400,7 +400,7 @@ const en: BoardsWords = {
     calendarOverflow: 'Too many records this month to show them all — refine the filters.',
     weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     emptyTitle: 'No records found',
-    emptySubtitle: 'Adjust the filters or add a new item',
+    emptySubtitle: 'Adjust filters or add a new item',
     sortGroup: 'Card ordering',
     sortBy: 'Sort by',
     sortAsc: 'Ascending order — tap to reverse',

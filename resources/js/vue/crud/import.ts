@@ -8,7 +8,9 @@ import type { PropType, VNode } from 'vue';
 import type { CrudController } from '../../core/controller';
 import { acceptOf, canRun, fill, importWords, ImportWizard } from '../../core/crud/import';
 import type { ImportState, ImportWords } from '../../core/crud/import';
-import { ForgeAlert, ForgeButton, ForgeModal, ForgeSpinner, ForgeStepper } from '../forge';
+import { modalButton } from '../../core/crud/form';
+import { icon } from '../icons';
+import { PtahCrudModal, PtahModalAlert } from './modal';
 import { usePtahCrud } from '../usePtahCrud';
 
 const props = {
@@ -18,7 +20,30 @@ const props = {
 };
 
 let ids = 0;
-const help = (text: string, extra: Record<string, unknown> = {}) => h('p', { class: 'pc-help', style: { margin: 0 }, ...extra }, text);
+const help = (text: string, extra: Record<string, unknown> = {}) => h('p', { class: 'pc-imp-small', ...extra }, text);
+const spinner = (busy: boolean) => (busy ? h('span', { class: 'pc-fm-spin', 'aria-hidden': 'true' }) : null);
+const button = (kind: 'primary' | 'flat', label: string, onClick: () => void, busy = false, disabled = false) =>
+    h('button', { type: 'button', class: modalButton(kind), disabled: busy || disabled, 'aria-busy': busy || undefined, onClick }, [spinner(busy), label]);
+
+/** forge-stepper: numbered circles joined by lines; a done step is a green check. */
+const stepper = (steps: string[], current: number) =>
+    h(
+        'ol',
+        { class: 'pc-imp-steps' },
+        steps.map((label, index) => {
+            const number = index + 1;
+            const state = number < current ? 'done' : number === current ? 'current' : 'todo';
+
+            return h('li', { key: index, 'data-state': state, 'aria-current': state === 'current' ? 'step' : undefined }, [
+                h('span', { class: 'pc-imp-st-row' }, [
+                    index > 0 ? h('span', { class: 'pc-imp-line', 'aria-hidden': 'true' }) : null,
+                    h('span', { class: 'pc-imp-dot' }, state === 'done' ? [icon('check')] : String(number)),
+                    index < steps.length - 1 ? h('span', { class: 'pc-imp-line', 'aria-hidden': 'true' }) : null,
+                ]),
+                h('span', { class: 'pc-imp-step-lbl' }, label),
+            ]);
+        }),
+    );
 
 /** The toolbar button: opens the wizard. Nothing when the screen or the user has no import. */
 export const PtahCrudImportButton = defineComponent({
@@ -30,7 +55,10 @@ export const PtahCrudImportButton = defineComponent({
 
         return () =>
             state.value.schema?.features.import
-                ? h('button', { type: 'button', class: 'pc-btn', title: t.value.button, onClick: () => p.crud.openPanel('import') }, t.value.button)
+                ? h('button', { type: 'button', class: 'pc-tbtn pc-tb-secondary', title: t.value.button, 'aria-label': t.value.button, onClick: () => p.crud.openPanel('import') }, [
+                      icon('upload'),
+                      h('span', { class: 'pc-tbtn-label' }, t.value.button),
+                  ])
                 : null;
     },
 });
@@ -60,35 +88,35 @@ const Wizard = defineComponent({
         onBeforeUnmount(stop);
         void wizard.start();
 
-        const back = () => h(ForgeButton, { color: 'dark', flat: true, disabled: s.value.busy, onClick: () => wizard.back() }, () => t.back);
+        const back = () => button('flat', t.back, () => wizard.back(), false, s.value.busy);
         const footer = (): VNode[] => {
             const st = s.value;
             if (st.step === 2) {
-                return [back(), h(ForgeButton, { loading: st.busy, onClick: () => void wizard.next() }, () => t.next)];
+                return [back(), button('primary', t.next, () => void wizard.next(), st.busy)];
             }
             if (st.step === 3) {
-                return [back(), ...(canRun(st.preview) ? [h(ForgeButton, { loading: st.busy, onClick: () => void wizard.run() }, () => fill(t.run, { count: st.preview?.valid ?? 0 }))] : [])];
+                return [back(), ...(canRun(st.preview) ? [button('primary', fill(t.run, { count: st.preview?.valid ?? 0 }), () => void wizard.run(), st.busy)] : [])];
             }
 
-            return [h(ForgeButton, { color: 'dark', flat: true, onClick: () => wizard.close() }, () => t.close)];
+            return [button('flat', t.close, () => wizard.close())];
         };
 
         return () => {
             const st = s.value;
 
             return h(
-                ForgeModal,
-                { modelValue: true, title: t.title, size: 'lg', 'onUpdate:modelValue': (open: boolean) => !open && wizard.close() },
+                PtahCrudModal,
+                { title: t.title, size: 'lg', closeLabel: t.close, onClose: () => wizard.close() },
                 {
                     default: () =>
-                        h('div', { style: { display: 'grid', gap: '1.25rem' } }, [
-                            h(ForgeStepper, { currentStep: st.step, steps: [t.stepUpload, t.stepMap, t.stepPreview, t.stepDone] }),
-                            st.error && st.status !== 'loading' ? h('p', { class: 'pc-error', role: 'alert' }, st.error) : null,
+                        h('div', { class: 'pc-imp' }, [
+                            stepper([t.stepUpload, t.stepMap, t.stepPreview, t.stepDone], st.step),
+                            st.error && st.status !== 'loading' ? h('p', { class: 'pc-fm-err', role: 'alert' }, st.error) : null,
                             st.step === 1 ? h(UploadStep, { s: st, t, onFile: (file: File | null) => void wizard.choose(file) }) : null,
                             st.step === 2 ? h(MapStep, { s: st, t, onMap: (index: number, field: string) => wizard.setMapping(index, field) }) : null,
                             st.step === 3 ? h(PreviewStep, { s: st, t }) : null,
                             st.step === 4 && st.result
-                                ? h(ForgeAlert, { color: st.result.error ? 'danger' : 'success' }, () => st.result?.error ?? fill(t.done, { created: st.result?.created ?? 0, updated: st.result?.updated ?? 0 }))
+                                ? h(PtahModalAlert, { color: st.result.error ? 'danger' : 'success' }, () => st.result?.error ?? fill(t.done, { created: st.result?.created ?? 0, updated: st.result?.updated ?? 0 }))
                                 : null,
                         ]),
                     footer,
@@ -114,31 +142,35 @@ const UploadStep = defineComponent({
         return () => {
             const { s, t } = p;
             if (s.status === 'loading') {
-                return h(ForgeSpinner, { label: t.loading });
+                return h('div', { class: 'pc-fm-loading', role: 'status' }, [spinner(true), ` ${t.loading}`]);
             }
             if (s.status === 'error' || !s.info) {
                 return null;
             }
 
-            return h('div', { style: { display: 'grid', gap: '0.5rem' } }, [
-                help(fill(t.uploadHint, { max: s.info.max_rows })),
-                h('label', { class: 'pc-label', for: id }, t.chooseFile),
-                h('input', {
-                    key: round.value,
-                    id,
-                    type: 'file',
-                    class: s.fileError ? 'pc-input pc-input--error' : 'pc-input',
-                    accept: acceptOf(s.info.extensions),
-                    disabled: s.busy,
-                    'aria-invalid': s.fileError ? 'true' : undefined,
-                    'aria-describedby': s.fileError ? `${id}-error` : undefined,
-                    onChange: (event: Event) => {
-                        p.onFile((event.target as HTMLInputElement).files?.[0] ?? null);
-                        round.value++;
-                    },
-                }),
+            return h('div', { class: 'pc-imp-step' }, [
+                h('p', { class: 'pc-imp-hint' }, fill(t.uploadHint, { max: s.info.max_rows })),
+                h('label', { class: 'pc-fm-pick', for: id }, [
+                    icon('upload'),
+                    t.button,
+                    h('input', {
+                        key: round.value,
+                        id,
+                        type: 'file',
+                        class: 'pc-visually-hidden',
+                        'aria-label': t.chooseFile,
+                        accept: acceptOf(s.info.extensions),
+                        disabled: s.busy,
+                        'aria-invalid': s.fileError ? 'true' : undefined,
+                        'aria-describedby': s.fileError ? `${id}-error` : undefined,
+                        onChange: (event: Event) => {
+                            p.onFile((event.target as HTMLInputElement).files?.[0] ?? null);
+                            round.value++;
+                        },
+                    }),
+                ]),
                 s.busy ? help(t.reading, { role: 'status' }) : null,
-                s.fileError ? h('p', { class: 'pc-error', role: 'alert', id: `${id}-error` }, s.fileError) : null,
+                s.fileError ? h('p', { class: 'pc-fm-err', role: 'alert', id: `${id}-error` }, s.fileError) : null,
             ]);
         };
     },
@@ -154,19 +186,17 @@ const MapStep = defineComponent({
             const { s, t } = p;
 
             return [
-                help(t.mapHint),
+                h('p', { class: 'pc-imp-hint' }, t.mapHint),
                 h(
                     'div',
-                    { style: { display: 'grid', gap: '0.75rem', gridTemplateColumns: 'repeat(auto-fill, minmax(14rem, 1fr))' } },
+                    { class: 'pc-imp-map' },
                     (s.upload?.headers ?? []).map((header, index) =>
                         h('div', { key: index }, [
-                            h('label', { class: 'pc-label', for: `${id}-${index}` }, header !== '' ? header : `#${index + 1}`),
+                            h('label', { for: `${id}-${index}` }, header !== '' ? header : `#${index + 1}`),
                             h(
                                 'select',
                                 {
                                     id: `${id}-${index}`,
-                                    class: 'pc-input',
-                                    style: { width: '100%' },
                                     value: s.mapping[index] ?? '',
                                     disabled: s.busy,
                                     onChange: (event: Event) => p.onMap(index, (event.target as HTMLSelectElement).value),
@@ -200,21 +230,21 @@ const PreviewStep = defineComponent({
             const labels = new Map((s.upload?.fields ?? []).map((field) => [field.field, field.label]));
 
             return [
-                pv.unmapped_required.length > 0 ? h(ForgeAlert, { color: 'danger' }, () => fill(t.unmappedRequired, { fields: pv.unmapped_required.join(', ') })) : null,
-                h(ForgeAlert, { color: clean ? 'success' : 'warn' }, () => fill(t.previewSummary, { valid: pv.valid, total: pv.total })),
+                pv.unmapped_required.length > 0 ? h(PtahModalAlert, { color: 'danger' }, () => fill(t.unmappedRequired, { fields: pv.unmapped_required.join(', ') })) : null,
+                h(PtahModalAlert, { color: clean ? 'success' : 'warn' }, () => fill(t.previewSummary, { valid: pv.valid, total: pv.total })),
                 pv.errors.length > 0
-                    ? h('div', { style: { display: 'grid', gap: '0.5rem' } }, [
-                          h('p', { class: 'pc-label', id: titleId, style: { margin: 0 } }, t.errorsTitle),
-                          h('div', { class: 'pc-table-wrap' }, [
-                              h('table', { class: 'pc-table', 'aria-labelledby': titleId }, [
+                    ? h('div', { class: 'pc-imp-errs' }, [
+                          h('p', { class: 'pc-imp-errs-ttl', id: titleId }, t.errorsTitle),
+                          h('div', { class: 'pc-imp-table-wrap' }, [
+                              h('table', { class: 'pc-imp-table', 'aria-labelledby': titleId }, [
                                   h('thead', [h('tr', [h('th', { scope: 'col' }, t.line), h('th', { scope: 'col' }, t.field), h('th', { scope: 'col' }, t.problem)])]),
                                   h(
                                       'tbody',
                                       pv.errors.map((error, index) =>
                                           h('tr', { key: `${error.line}-${error.field}-${index}` }, [
-                                              h('td', { style: { fontVariantNumeric: 'tabular-nums' } }, String(error.line)),
+                                              h('td', { class: 'pc-imp-num' }, String(error.line)),
                                               h('td', labels.get(error.field) ?? error.field),
-                                              h('td', { style: { color: 'var(--pc-danger)' } }, error.message),
+                                              h('td', { class: 'pc-imp-bad' }, error.message),
                                           ]),
                                       ),
                                   ),

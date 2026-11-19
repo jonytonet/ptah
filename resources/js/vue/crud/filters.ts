@@ -1,9 +1,11 @@
 /**
  * The filter panel of a CRUD screen for Vue — the pieces of
- * _filter-panel.blade.php, the filter chips and the link-filters banner of
- * the Livewire screen, and the recent searches. Line for line the React
- * pieces (react/crud/filters.tsx); the rules are in core/crud/filters.ts and
- * the filtering itself is the server's (the BaseCrud engine).
+ * _filter-panel.blade.php, the filter chips (_toolbar.blade.php) and the
+ * link-filters banner (_url-filters-banner.blade.php) of the Livewire
+ * screen, and the recent searches. Line for line the React pieces
+ * (react/crud/filters.tsx); the rules are in core/crud/filters.ts and the
+ * filtering itself is the server's (the BaseCrud engine). The look is the
+ * `pc-fp*`, `pc-chip*` and `pc-urlbanner*` rules of ptah-ui.css.
  */
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 import type { PropType, ShallowRef, VNodeChild } from 'vue';
@@ -24,7 +26,6 @@ import {
     fetchSearchHistory,
     fetchUrlFilters,
     filterSession,
-    filterStyles as s,
     filtersWords,
     FilterLookup,
     isNullOperator,
@@ -42,6 +43,7 @@ import {
 } from '../../core/crud/filters';
 import type { AdvancedRow, FilterListState, FilterLookupState, FilterMetaItem, FilterSession, FilterSessionState, FiltersMeta, FiltersWords, UrlFilter } from '../../core/crud/filters';
 import { ForgeModal } from '../forge';
+import { icon } from '../icons';
 import { usePtahCrud } from '../usePtahCrud';
 
 export { applyUrlFilters, filterByCell, isCellFilterable } from '../../core/crud/filters';
@@ -90,7 +92,8 @@ function useOutside(root: ShallowRef<HTMLElement | null>, onOutside: () => void)
     onBeforeUnmount(() => document.removeEventListener('mousedown', close));
 }
 
-const removeButton = (label: string, onClick: () => void) => h('button', { type: 'button', style: s.chipButton, 'aria-label': label, title: label, onClick }, [h('span', { 'aria-hidden': 'true' }, '×')]);
+/** The ✕ of a chip: its own name for assistive tech, the Livewire tooltip ("Limpar filtros") on hover. */
+const removeButton = (label: string, onClick: () => void, title?: string) => h('button', { type: 'button', 'aria-label': label, title: title ?? label, onClick }, [icon('x', 12, 2.5)]);
 
 const option = (value: string, label: string) => h('option', { key: value, value }, label);
 
@@ -119,13 +122,14 @@ const controlProps = {
 /**
  * The complete filter panel: every filterable column with its operator,
  * the date ranges, the quick dates, the searchdropdown filters with their
- * cascade, the custom filters, the advanced search and the saved filters.
+ * cascade, the custom filters, the advanced search, the saved filters and
+ * the recent searches.
  */
 export const PtahCrudFilterPanel = defineComponent({
     name: 'PtahCrudFilterPanel',
     props: {
         ...pieceProps,
-        /** Shows a close button in the panel's header. */
+        /** Shows a close button in the panel's header (the Livewire panel has none: the toolbar's Filtros toggles it). */
         onClose: { type: Function as PropType<() => void>, default: undefined },
     },
     setup(props) {
@@ -143,18 +147,18 @@ export const PtahCrudFilterPanel = defineComponent({
             }
 
             if (filters.value.status === 'error') {
-                return h('section', { style: s.panel, 'aria-labelledby': titleId }, [
-                    h('div', { style: s.body }, [
-                        h('h3', { style: s.title, id: titleId }, words.title),
-                        h('p', { role: 'alert', style: s.error }, `${words.loadError} ${filters.value.error ?? ''}`),
-                        h('div', [h('button', { type: 'button', class: 'pc-btn', onClick: () => void session.ensure() }, words.retry)]),
+                return h('section', { class: 'pc-fp', 'aria-labelledby': titleId }, [
+                    h('div', { class: 'pc-fp-body' }, [
+                        h('h3', { class: 'pc-fp-ttl', id: titleId }, words.title),
+                        h('p', { role: 'alert', class: 'pc-fp-error' }, `${words.loadError} ${filters.value.error ?? ''}`),
+                        h('div', [h('button', { type: 'button', class: 'pc-tbtn', onClick: () => void session.ensure() }, words.retry)]),
                     ]),
                 ]);
             }
 
             const meta = filters.value.meta;
             if (!meta) {
-                return h('div', { style: s.panel }, [h('p', { role: 'status', style: s.note }, words.loading)]);
+                return h('div', { class: 'pc-fp' }, [h('p', { role: 'status', class: 'pc-fp-note' }, words.loading)]);
             }
 
             const list = state.value.list as FilterListState;
@@ -166,25 +170,30 @@ export const PtahCrudFilterPanel = defineComponent({
 
             const count = buildBadges(list, meta, filters.value.labels, words).length;
 
-            return h('section', { style: s.panel, 'aria-labelledby': titleId }, [
-                h('div', { style: s.head }, [
-                    h('div', { style: s.headSide }, [h('h3', { style: s.title, id: titleId }, words.title), count > 0 ? h('span', { style: s.count }, words.active(count)) : null]),
-                    h('div', { style: s.headSide }, [
-                        h('button', { type: 'button', class: 'pc-btn', onClick: () => void clearAllFilters(crud, session) }, words.clearAll),
-                        props.onClose ? h('button', { type: 'button', class: 'pc-icon-btn', 'aria-label': words.close, title: words.close, onClick: () => props.onClose?.() }, '✕') : null,
+            return h('section', { class: 'pc-fp', 'aria-labelledby': titleId }, [
+                h('div', { class: 'pc-fp-hd' }, [
+                    h('div', { class: 'pc-fp-hd-side' }, [
+                        icon('funnel', 16, undefined, 'pc-fp-icon'),
+                        h('h3', { class: 'pc-fp-ttl', id: titleId }, words.title),
+                        count > 0 ? h('span', { class: 'pc-fp-count' }, words.active(count)) : null,
+                    ]),
+                    h('div', { class: 'pc-fp-hd-side' }, [
+                        h('button', { type: 'button', class: 'pc-fp-clear', onClick: () => void clearAllFilters(crud, session) }, [icon('x', 14), words.clearAll]),
+                        props.onClose ? h('button', { type: 'button', class: 'pc-x', 'aria-label': words.close, title: words.close, onClick: () => props.onClose?.() }, [icon('x', 18)]) : null,
                     ]),
                 ]),
-                h('div', { style: s.body }, [
+                h('div', { class: 'pc-fp-body' }, [
                     meta.quick_dates.enabled ? quickDates(quickId, crud, meta, list, words) : null,
                     meta.filters.length > 0
                         ? h(
                               'div',
-                              { style: s.grid },
+                              { class: 'pc-fp-grid' },
                               meta.filters.map((item) => h(FilterControl, { key: `${item.custom ? 'c' : 'f'}-${item.field}`, crud, session, item, list, labels: filters.value.labels, meta, t: words })),
                           )
                         : null,
                     advanced ? h(AdvancedSearch, { crud, meta, list, t: words }) : null,
                     h(SavedFilters, { crud, state: state.value, t: words }),
+                    h(RecentSearches, { crud, t: words }),
                 ]),
                 h(SaveFooter, { crud, t: words }),
             ]);
@@ -215,12 +224,12 @@ const FilterControl = defineComponent({
 
 function quickDates(id: string, crud: CrudController, meta: FiltersMeta, list: FilterListState, t: FiltersWords) {
     return h('div', { role: 'group', 'aria-labelledby': id }, [
-        h('p', { id, style: s.section }, t.dateShortcuts),
+        h('p', { id, class: 'pc-fp-section' }, t.dateShortcuts),
         h(
             'div',
-            { style: s.wrap },
+            { class: 'pc-fp-chips' },
             meta.quick_dates.periods.map((period) =>
-                h('button', { key: period, type: 'button', class: `pc-btn${list.quick_date === period ? ' pc-btn--active' : ''}`, 'aria-pressed': list.quick_date === period ? 'true' : 'false', onClick: () => void toggleQuickDate(crud, period) }, t.quick[period] ?? period),
+                h('button', { key: period, type: 'button', class: 'pc-fp-ql', 'aria-pressed': list.quick_date === period ? 'true' : 'false', onClick: () => void toggleQuickDate(crud, period) }, t.quick[period] ?? period),
             ),
         ),
     ]);
@@ -250,23 +259,22 @@ const ValueFilter = defineComponent({
             const nullOp = isNullOperator(op);
 
             return h('div', [
-                h('label', { class: 'pc-label', for: id }, item.label),
-                h('div', { style: s.row }, [
+                h('label', { class: 'pc-fp-label', for: id }, item.label),
+                h('div', { class: 'pc-fp-row' }, [
                     item.operators.length > 0
                         ? h(
                               'select',
-                              { class: 'pc-input', style: s.op, 'aria-label': `${item.label} — ${t.operator}`, value: op || item.operators[0], onChange: (event: Event) => void setFilterOperator(crud, item.field, valueOf(event)) },
+                              { class: 'pc-fp-in pc-fp-op', 'aria-label': `${item.label} — ${t.operator}`, value: op || item.operators[0], onChange: (event: Event) => void setFilterOperator(crud, item.field, valueOf(event)) },
                               item.operators.map((o) => option(o, operatorLabel(t, o, numeric))),
                           )
                         : null,
                     item.kind === 'date'
-                        ? h('input', { id, type: 'date', class: 'pc-input', style: s.grow, value: text(list.filters[item.field]), onInput: (event: Event) => void setFilterValue(crud, item.field, valueOf(event)) })
+                        ? h('input', { id, type: 'date', class: 'pc-fp-in pc-fp-grow', value: text(list.filters[item.field]), onInput: (event: Event) => void setFilterValue(crud, item.field, valueOf(event)) })
                         : h('input', {
                               id,
                               type: numeric ? 'number' : 'text',
                               step: numeric ? 'any' : undefined,
-                              class: 'pc-input',
-                              style: s.grow,
+                              class: 'pc-fp-in pc-fp-grow',
                               placeholder: nullOp ? '—' : `${item.label}...`,
                               disabled: nullOp,
                               value: typed.value,
@@ -291,8 +299,8 @@ const SelectFilter = defineComponent({
             const { item, list, meta, t, crud } = props;
 
             return h('div', [
-                h('label', { class: 'pc-label', for: id }, item.label),
-                h('select', { id, class: 'pc-input', value: text(list.filters[item.field]), onChange: (event: Event) => void setFilterValue(crud, item.field, valueOf(event)) }, [
+                h('label', { class: 'pc-fp-label', for: id }, item.label),
+                h('select', { id, class: 'pc-fp-in pc-fp-select', value: text(list.filters[item.field]), onChange: (event: Event) => void setFilterValue(crud, item.field, valueOf(event)) }, [
                     option('', t.all),
                     ...(item.options ?? []).map((o) => option(o.value, o.label)),
                     ...(item.custom ? [] : [option(meta.sentinels.empty, `(${t.isNull})`), option(meta.sentinels.filled, `(${t.isNotNull})`)]),
@@ -308,23 +316,23 @@ function dateRange({ crud, item, list, t }: ControlProps) {
         { edge: 'end', title: t.to, ops: item.date_operators?.end ?? ['<=', '<', '='] },
     ];
 
-    return h('fieldset', { style: { ...s.fieldset, ...s.wide } }, [
-        h('legend', { class: 'pc-label' }, item.label),
+    return h('fieldset', { class: 'pc-fp-fieldset pc-fp-wide' }, [
+        h('legend', { class: 'pc-fp-label' }, item.label),
         h(
             'div',
-            { style: s.pair },
+            { class: 'pc-fp-pair' },
             edges.map(({ edge, title, ops }) => {
                 const key = `${item.field}_${edge}`;
 
                 return h('div', { key: edge }, [
-                    h('p', { style: s.muted, 'aria-hidden': 'true' }, title),
-                    h('div', { style: s.row }, [
+                    h('p', { class: 'pc-fp-muted', 'aria-hidden': 'true' }, title),
+                    h('div', { class: 'pc-fp-row' }, [
                         h(
                             'select',
-                            { class: 'pc-input', style: s.opNarrow, 'aria-label': `${item.label} — ${title} — ${t.operator}`, value: list.date_operators[key] || ops[0], onChange: (event: Event) => void setDateOperator(crud, key, valueOf(event)) },
+                            { class: 'pc-fp-in pc-fp-op pc-fp-op--narrow', 'aria-label': `${item.label} — ${title} — ${t.operator}`, value: list.date_operators[key] || ops[0], onChange: (event: Event) => void setDateOperator(crud, key, valueOf(event)) },
                             ops.map((o) => option(o, operatorLabel(t, o, true))),
                         ),
-                        h('input', { type: 'date', class: 'pc-input', style: s.grow, 'aria-label': `${item.label} — ${title}`, value: list.date_ranges[key] ?? '', onInput: (event: Event) => void setDateValue(crud, key, valueOf(event)) }),
+                        h('input', { type: 'date', class: 'pc-fp-in pc-fp-grow', 'aria-label': `${item.label} — ${title}`, value: list.date_ranges[key] ?? '', onInput: (event: Event) => void setDateValue(crud, key, valueOf(event)) }),
                     ]),
                 ]);
             }),
@@ -384,50 +392,50 @@ const DropdownFilter = defineComponent({
             const listId = `${id}-list`;
 
             return h('div', [
-                h('label', { class: 'pc-label', for: id }, item.label),
+                h('label', { class: 'pc-fp-label', for: id }, item.label),
                 h(
                     'select',
-                    { class: 'pc-input', style: s.spaced, 'aria-label': `${item.label} — ${t.operator}`, value: op || item.operators[0] || '=', onChange: (event: Event) => void setFilterOperator(crud, item.field, valueOf(event)) },
+                    { class: 'pc-fp-in pc-fp-spaced', 'aria-label': `${item.label} — ${t.operator}`, value: op || item.operators[0] || '=', onChange: (event: Event) => void setFilterOperator(crud, item.field, valueOf(event)) },
                     item.operators.map((o) => option(o, operatorLabel(t, o))),
                 ),
-                selected !== null ? h('div', { style: s.spaced }, [h('span', { style: s.chip }, [selected, removeButton(t.removeFilter(item.label), () => void clearDropdown(crud, session, item.field))])]) : null,
-                h('div', { class: 'pc-combo', ref: root }, [
-                    h('div', { style: s.comboBox }, [
-                        h('input', {
-                            id,
-                            type: 'text',
-                            role: 'combobox',
-                            'aria-expanded': state.open ? 'true' : 'false',
-                            'aria-controls': listId,
-                            'aria-autocomplete': 'list',
-                            'aria-activedescendant': state.open && state.active >= 0 ? `${id}-opt-${state.active}` : undefined,
-                            autocomplete: 'off',
-                            class: 'pc-input',
-                            style: s.comboInput,
-                            placeholder: selected !== null ? t.change : (item.placeholder ?? t.searchLabel(item.label)),
-                            value: state.text,
-                            onFocus: () => lookup.focus(),
-                            onInput: (event: Event) => lookup.type(valueOf(event)),
-                            onKeydown: keys,
-                        }),
-                        h(
-                            'button',
-                            {
-                                type: 'button',
-                                tabindex: -1,
-                                style: s.chevron,
-                                'aria-label': t.showOptions,
-                                onMousedown: (event: MouseEvent) => {
-                                    event.preventDefault();
-                                    lookup.toggle();
-                                },
+                selected !== null
+                    ? h('div', { class: 'pc-fp-spaced' }, [h('span', { class: 'pc-chip' }, [selected, removeButton(t.removeFilter(item.label), () => void clearDropdown(crud, session, item.field), t.clearFilters)])])
+                    : null,
+                h('div', { class: 'pc-fp-combo', ref: root }, [
+                    h('input', {
+                        id,
+                        type: 'text',
+                        role: 'combobox',
+                        'aria-expanded': state.open ? 'true' : 'false',
+                        'aria-controls': listId,
+                        'aria-autocomplete': 'list',
+                        'aria-activedescendant': state.open && state.active >= 0 ? `${id}-opt-${state.active}` : undefined,
+                        autocomplete: 'off',
+                        class: 'pc-fp-in pc-fp-combo-in',
+                        placeholder: selected !== null ? t.change : (item.placeholder ?? t.searchLabel(item.label)),
+                        value: state.text,
+                        onFocus: () => lookup.focus(),
+                        onInput: (event: Event) => lookup.type(valueOf(event)),
+                        onKeydown: keys,
+                    }),
+                    h(
+                        'button',
+                        {
+                            type: 'button',
+                            tabindex: -1,
+                            class: 'pc-fp-chev',
+                            'data-open': state.open ? 'true' : 'false',
+                            'aria-label': t.showOptions,
+                            onMousedown: (event: MouseEvent) => {
+                                event.preventDefault();
+                                lookup.toggle();
                             },
-                            [h('span', { 'aria-hidden': 'true' }, state.open ? '▴' : '▾')],
-                        ),
-                    ]),
+                        },
+                        [icon('chevronDown')],
+                    ),
                     state.open
-                        ? h('ul', { class: 'pc-combo-list', id: listId, role: 'listbox', 'aria-label': item.label, 'aria-busy': state.loading ? 'true' : 'false', style: item.start_list === 'top' ? s.listTop : undefined }, [
-                              state.items.length === 0 ? h('li', { class: 'pc-combo-note', role: state.loading ? 'status' : undefined }, state.loading ? t.loading : t.noResults) : null,
+                        ? h('ul', { class: `pc-fp-list${item.start_list === 'top' ? ' pc-fp-list--top' : ''}`, id: listId, role: 'listbox', 'aria-label': item.label, 'aria-busy': state.loading ? 'true' : 'false' }, [
+                              state.items.length === 0 ? h('li', { class: 'pc-fp-note', role: state.loading ? 'status' : undefined }, state.loading ? t.loading : t.noResults) : null,
                               ...state.items.map((item2, index) =>
                                   h(
                                       'li',
@@ -436,14 +444,14 @@ const DropdownFilter = defineComponent({
                                           id: `${id}-opt-${index}`,
                                           role: 'option',
                                           'aria-selected': index === state.active ? 'true' : 'false',
-                                          class: 'pc-combo-item',
+                                          class: 'pc-fp-opt',
                                           onMousedown: (event: MouseEvent) => event.preventDefault(),
                                           onClick: () => void lookup.choose(index),
                                       },
                                       [
                                           text(item2.label),
-                                          'labelTwo' in item2 ? h('span', { style: s.sub }, text(item2.labelTwo)) : null,
-                                          'labelThree' in item2 ? h('span', { style: s.sub }, text(item2.labelThree)) : null,
+                                          'labelTwo' in item2 ? h('span', { class: 'pc-fp-sub' }, text(item2.labelTwo)) : null,
+                                          'labelThree' in item2 ? h('span', { class: 'pc-fp-sub' }, text(item2.labelThree)) : null,
                                       ],
                                   ),
                               ),
@@ -501,8 +509,8 @@ const AdvancedSearch = defineComponent({
             const rows = advancedRows(list);
             const kind = advancedKind(meta, draft.value.field);
 
-            return h('div', [
-                h('label', { class: 'pc-switch', for: switchId }, [
+            return h('div', { class: 'pc-fp-adv' }, [
+                h('label', { class: 'pc-switch pc-fp-adv-switch', for: switchId }, [
                     h('input', { id: switchId, type: 'checkbox', role: 'switch', checked: on.value, onChange: toggle }),
                     h('span', { class: 'pc-switch-track' }),
                     h('span', t.advanced),
@@ -510,15 +518,15 @@ const AdvancedSearch = defineComponent({
                 on.value
                     ? h('div', [
                           rows.length === 0
-                              ? h('p', { style: { ...s.muted, marginTop: '8px' } }, t.advancedEmpty)
+                              ? h('p', { class: 'pc-fp-muted pc-fp-adv-empty' }, t.advancedEmpty)
                               : h(
                                     'ul',
-                                    { style: { ...s.plainList, marginTop: '8px' } },
+                                    { class: 'pc-fp-adv-rows' },
                                     rows.map((row, index) => {
                                         const label = advancedText(t, meta, row, index);
 
                                         return h('li', { key: `${row.field}-${index}` }, [
-                                            h('span', { style: s.chip }, [
+                                            h('span', { class: 'pc-chip' }, [
                                                 label,
                                                 removeButton(t.removeRow(label), () => void setAdvancedRows(crud, rows.filter((_, other) => other !== index))),
                                             ]),
@@ -528,7 +536,7 @@ const AdvancedSearch = defineComponent({
                           h(
                               'form',
                               {
-                                  style: s.advancedRow,
+                                  class: 'pc-fp-adv-form',
                                   onSubmit: (event: Event) => {
                                       event.preventDefault();
                                       add();
@@ -539,8 +547,7 @@ const AdvancedSearch = defineComponent({
                                       ? h(
                                             'select',
                                             {
-                                                class: 'pc-input',
-                                                style: s.advancedControl,
+                                                class: 'pc-fp-in pc-fp-adv-ctl',
                                                 'aria-label': t.advancedLogic,
                                                 value: draft.value.logic,
                                                 onChange: (event: Event) => (draft.value = { ...draft.value, logic: valueOf(event) === 'OR' ? 'OR' : 'AND' }),
@@ -551,8 +558,7 @@ const AdvancedSearch = defineComponent({
                                   h(
                                       'select',
                                       {
-                                          class: 'pc-input',
-                                          style: s.advancedControl,
+                                          class: 'pc-fp-in pc-fp-adv-ctl',
                                           'aria-label': t.advancedField,
                                           value: draft.value.field,
                                           onChange: (event: Event) => {
@@ -564,19 +570,18 @@ const AdvancedSearch = defineComponent({
                                   ),
                                   h(
                                       'select',
-                                      { class: 'pc-input', style: s.advancedControl, 'aria-label': t.operator, value: draft.value.operator, onChange: (event: Event) => (draft.value = { ...draft.value, operator: valueOf(event) }) },
+                                      { class: 'pc-fp-in pc-fp-adv-ctl', 'aria-label': t.operator, value: draft.value.operator, onChange: (event: Event) => (draft.value = { ...draft.value, operator: valueOf(event) }) },
                                       advancedOperators(meta, draft.value.field).map((o) => option(o, operatorLabel(t, o))),
                                   ),
                                   h('input', {
                                       type: kind === 'number' ? 'number' : kind === 'date' ? 'date' : 'text',
                                       step: kind === 'number' ? 'any' : undefined,
-                                      class: 'pc-input',
-                                      style: s.advancedControl,
+                                      class: 'pc-fp-in pc-fp-adv-ctl',
                                       'aria-label': t.advancedValue,
                                       value: draft.value.value,
                                       onInput: (event: Event) => (draft.value = { ...draft.value, value: valueOf(event) }),
                                   }),
-                                  h('button', { type: 'submit', class: 'pc-btn', disabled: draft.value.value.trim() === '' }, t.add),
+                                  h('button', { type: 'submit', class: 'pc-tbtn', disabled: draft.value.value.trim() === '' }, t.add),
                               ],
                           ),
                       ])
@@ -614,12 +619,12 @@ const SavedFilters = defineComponent({
                 return null;
             }
 
-            return h('div', { style: s.wrap }, [
-                h('span', { class: 'pc-label', style: { margin: 0 } }, t.saved),
+            return h('div', { class: 'pc-fp-saved' }, [
+                h('span', { class: 'pc-fp-saved-lbl' }, t.saved),
                 ...names.map((name) =>
-                    h('span', { key: name, style: { display: 'inline-flex' } }, [
-                        h('button', { type: 'button', class: 'pc-btn', style: s.savedLoad, onClick: () => void loadSavedFilter(crud, name) }, name),
-                        h('button', { type: 'button', class: 'pc-btn', style: s.savedDelete, 'aria-label': t.deleteSaved(name), title: t.deleteSaved(name), onClick: () => (deleting.value = name) }, [h('span', { 'aria-hidden': 'true' }, '×')]),
+                    h('span', { key: name, class: 'pc-fp-saved-item' }, [
+                        h('button', { type: 'button', class: 'pc-fp-sv-load', onClick: () => void loadSavedFilter(crud, name) }, name),
+                        h('button', { type: 'button', class: 'pc-fp-sv-del', 'aria-label': t.deleteSaved(name), title: t.deleteSaved(name), onClick: () => (deleting.value = name) }, [h('span', { 'aria-hidden': 'true' }, '×')]),
                     ]),
                 ),
                 h(
@@ -628,8 +633,8 @@ const SavedFilters = defineComponent({
                     {
                         default: () => [h('p', deleting.value !== null ? t.deleteSavedText(deleting.value) : '')],
                         footer: () => [
-                            h('button', { type: 'button', class: 'pc-btn', onClick: () => (deleting.value = null) }, t.cancel),
-                            h('button', { type: 'button', class: 'pc-btn pc-btn--danger', onClick: confirm }, t.delete),
+                            h('button', { type: 'button', class: 'pc-dbtn', onClick: () => (deleting.value = null) }, t.cancel),
+                            h('button', { type: 'button', class: 'pc-dbtn pc-dbtn--danger', onClick: confirm }, t.delete),
                         ],
                     },
                 ),
@@ -672,12 +677,12 @@ const SaveFooter = defineComponent({
         return () => {
             const { t } = props;
 
-            return h('div', { style: s.foot }, [
+            return h('div', { class: 'pc-fp-ft' }, [
                 saving.value
                     ? h(
                           'form',
                           {
-                              style: s.saveForm,
+                              class: 'pc-fp-save-form',
                               onSubmit: (event: Event) => {
                                   event.preventDefault();
                                   submit();
@@ -687,8 +692,7 @@ const SaveFooter = defineComponent({
                               h('input', {
                                   ref: input,
                                   type: 'text',
-                                  class: 'pc-input',
-                                  style: s.grow,
+                                  class: 'pc-fp-save-in',
                                   'aria-label': t.saveName,
                                   placeholder: t.savePlaceholder,
                                   maxlength: 80,
@@ -701,11 +705,11 @@ const SaveFooter = defineComponent({
                                       }
                                   },
                               }),
-                              h('button', { type: 'submit', class: 'pc-btn pc-btn--primary' }, t.save),
-                              h('button', { type: 'button', class: 'pc-btn', onClick: cancel }, t.cancel),
+                              h('button', { type: 'submit', class: 'pc-fp-save-ok' }, t.save),
+                              h('button', { type: 'button', class: 'pc-fp-save-cancel', onClick: cancel }, t.cancel),
                           ],
                       )
-                    : h('button', { type: 'button', class: 'pc-btn', onClick: () => (saving.value = true) }, t.saveAction),
+                    : h('button', { type: 'button', class: 'pc-fp-save', onClick: () => (saving.value = true) }, [icon('bookmark', 14), t.saveAction]),
             ]);
         };
     },
@@ -713,7 +717,11 @@ const SaveFooter = defineComponent({
 
 // ── Chips ───────────────────────────────────────────────────────────────────
 
-/** The active search and filters as chips, each with its remove button (the toolbar's chips). */
+/**
+ * The active search and filters as chips, each with its remove button — the
+ * row at the bottom of the Livewire toolbar card (`.pc-chips`): mount it
+ * inside the toolbar card, after its control row.
+ */
 export const PtahCrudFilterBadges = defineComponent({
     name: 'PtahCrudFilterBadges',
     props: pieceProps,
@@ -738,26 +746,26 @@ export const PtahCrudFilterBadges = defineComponent({
 
             const chips: VNodeChild[] = [];
             if (list.search !== '') {
-                chips.push(h('span', { style: s.chip }, [h('span', { style: s.chipLabel }, `${words.search}:`), limitText(list.search, 30), removeButton(words.clearSearch, () => void crud.setSearch(''))]));
+                chips.push(h('span', { class: 'pc-chip' }, [icon('search', 12, undefined, 'pc-chip-ico'), limitText(list.search, 30), removeButton(words.clearSearch, () => void crud.setSearch(''), words.clearFilters)]));
             }
             for (const badge of badges) {
                 chips.push(
-                    h('span', { key: `${badge.key}|${badge.label}`, style: s.chip }, [
-                        h('span', { style: s.chipLabel }, `${badge.label}:`),
+                    h('span', { key: `${badge.key}|${badge.label}`, class: 'pc-chip' }, [
+                        h('span', { class: 'pc-chip-key' }, `${badge.label}:`),
                         limitText(badge.value, 20),
-                        removeButton(words.removeFilter(badge.label), () => void removeBadge(crud, badge.key)),
+                        removeButton(words.removeFilter(badge.label), () => void removeBadge(crud, badge.key), words.clearFilters),
                     ]),
                 );
             }
 
-            return h('div', { style: s.badges, role: 'group', 'aria-label': words.title }, chips);
+            return h('div', { class: 'pc-chips', role: 'group', 'aria-label': words.title }, chips);
         };
     },
 });
 
 // ── Link filters ────────────────────────────────────────────────────────────
 
-/** The banner of the link filters (`?f[...]`), with "clear link filters". */
+/** The banner of the link filters (`?f[...]`), with "clear link filters" — a forge-alert warn. */
 export const PtahCrudUrlFilters = defineComponent({
     name: 'PtahCrudUrlFilters',
     props: {
@@ -805,14 +813,17 @@ export const PtahCrudUrlFilters = defineComponent({
                 return null;
             }
 
-            return h('div', { role: 'status', style: s.banner }, [
-                h('strong', words.urlActive),
-                h(
-                    'span',
-                    { style: s.wrap },
-                    items.value.map((item) => h('span', { key: item.field, style: s.chip }, [h('span', { style: s.chipLabel }, `${item.label}:`), limitText(item.value, 30)])),
-                ),
-                h('button', { type: 'button', class: 'pc-btn', style: s.pushRight, onClick: () => void clearLinkFilters(crud) }, words.urlClear),
+            return h('div', { role: 'status', class: 'pc-urlbanner' }, [
+                h('span', { class: 'pc-urlbanner-icon' }, [icon('alertTriangle', 20)]),
+                h('div', { class: 'pc-urlbanner-body' }, [
+                    h('span', { class: 'pc-urlbanner-ttl' }, words.urlActive),
+                    h(
+                        'span',
+                        { class: 'pc-urlbanner-chips' },
+                        items.value.map((item) => h('span', { key: item.field, class: 'pc-chip' }, [h('span', { class: 'pc-chip-key' }, `${item.label}:`), limitText(item.value, 30)])),
+                    ),
+                    h('button', { type: 'button', class: 'pc-urlbanner-btn', onClick: () => void clearLinkFilters(crud) }, words.urlClear),
+                ]),
             ]);
         };
     },
@@ -820,7 +831,79 @@ export const PtahCrudUrlFilters = defineComponent({
 
 // ── Recent searches ─────────────────────────────────────────────────────────
 
-/** A toolbar button with the recent searches of this screen: pick one to search it again, or clear them. */
+/** The "clear history" confirmation, shared by the panel row and the button. */
+const clearHistoryModal = (open: boolean, t: FiltersWords, onCancel: () => void, onConfirm: () => void) =>
+    h(
+        ForgeModal,
+        { modelValue: open, 'onUpdate:modelValue': (value: boolean) => !value && onCancel(), title: t.historyClearTitle, size: 'sm' },
+        {
+            default: () => [h('p', t.historyClearText)],
+            footer: () => [h('button', { type: 'button', class: 'pc-dbtn', onClick: onCancel }, t.cancel), h('button', { type: 'button', class: 'pc-dbtn pc-dbtn--danger', onClick: onConfirm }, t.historyClear)],
+        },
+    );
+
+/**
+ * The recent searches inside the panel, laid out as the saved filters row.
+ * The Livewire screen keeps the history (HasCrudPreferences) without drawing
+ * it anywhere; the panel is where it sits next to its siblings.
+ */
+const RecentSearches = defineComponent({
+    name: 'PtahCrudRecentSearches',
+    props: {
+        crud: { type: Object as PropType<CrudController>, required: true as const },
+        t: { type: Object as PropType<FiltersWords>, required: true as const },
+    },
+    setup(props) {
+        const items = shallowRef<string[]>([]);
+        const confirming = ref(false);
+        let live = true;
+
+        onMounted(() => {
+            fetchSearchHistory(props.crud)
+                .then((found) => live && (items.value = found))
+                .catch(() => live && (items.value = []));
+        });
+        onBeforeUnmount(() => {
+            live = false;
+        });
+
+        const clear = async () => {
+            confirming.value = false;
+            try {
+                await clearSearchHistory(props.crud);
+                items.value = [];
+            } catch (failure) {
+                props.crud.toast(failure instanceof Error ? failure.message : props.t.historyError, 'danger');
+            }
+        };
+
+        return () => {
+            const { crud, t } = props;
+            if (items.value.length === 0) {
+                return null;
+            }
+
+            return h('div', { class: 'pc-fp-saved', role: 'group', 'aria-label': t.history }, [
+                h('span', { class: 'pc-fp-saved-lbl' }, t.historyLabel),
+                ...items.value.map((term) => h('button', { key: term, type: 'button', class: 'pc-fp-hist', title: t.search, onClick: () => void crud.setSearch(term) }, [icon('search', 12), term])),
+                h('button', { type: 'button', class: 'pc-fp-save pc-fp-hist-clear', onClick: () => (confirming.value = true) }, t.historyClear),
+                clearHistoryModal(
+                    confirming.value,
+                    t,
+                    () => (confirming.value = false),
+                    () => void clear(),
+                ),
+            ]);
+        };
+    },
+});
+
+/**
+ * The recent searches of this screen as a toolbar dropdown: pick one to
+ * search it again, or clear them. <PtahCrud> shows them in the filter panel
+ * instead (the Livewire toolbar has no such button); this stays for hosts
+ * that place it on a toolbar of their own.
+ */
 export const PtahCrudSearchHistory = defineComponent({
     name: 'PtahCrudSearchHistory',
     props: pieceProps,
@@ -875,12 +958,12 @@ export const PtahCrudSearchHistory = defineComponent({
             }
             const found = items.value;
 
-            return h('div', { class: 'pc-menu', ref: root }, [
+            return h('div', { class: 'pc-dd-wrap', ref: root }, [
                 h(
                     'button',
                     {
                         type: 'button',
-                        class: 'pc-btn',
+                        class: `pc-tbtn${open.value ? ' pc-tbtn--on' : ''}`,
                         'aria-haspopup': 'true',
                         'aria-expanded': open.value ? 'true' : 'false',
                         'aria-controls': open.value ? listId : undefined,
@@ -891,25 +974,25 @@ export const PtahCrudSearchHistory = defineComponent({
                             }
                         },
                     },
-                    words.history,
+                    [words.history, icon('chevronDown', 12)],
                 ),
                 open.value
-                    ? h('div', { class: 'pc-menu-list', id: listId, role: 'region', 'aria-label': words.history }, [
-                          found === null && !error.value ? h('p', { role: 'status', style: s.note }, words.loading) : null,
-                          error.value ? h('p', { role: 'alert', style: s.note }, words.historyError) : null,
-                          found !== null && found.length === 0 ? h('p', { style: s.note }, words.historyEmpty) : null,
+                    ? h('div', { class: 'pc-dd', id: listId, role: 'region', 'aria-label': words.history }, [
+                          found === null && !error.value ? h('p', { role: 'status', class: 'pc-fp-note' }, words.loading) : null,
+                          error.value ? h('p', { role: 'alert', class: 'pc-fp-note' }, words.historyError) : null,
+                          found !== null && found.length === 0 ? h('p', { class: 'pc-fp-note' }, words.historyEmpty) : null,
                           ...(found !== null && found.length > 0
                               ? [
                                     h(
                                         'ul',
-                                        { style: s.menuList },
+                                        { class: 'pc-fp-plain' },
                                         found.map((term) =>
                                             h('li', { key: term }, [
                                                 h(
                                                     'button',
                                                     {
                                                         type: 'button',
-                                                        class: 'pc-menu-item',
+                                                        class: 'pc-dd-item',
                                                         onClick: () => {
                                                             open.value = false;
                                                             void crud.setSearch(term);
@@ -920,21 +1003,17 @@ export const PtahCrudSearchHistory = defineComponent({
                                             ]),
                                         ),
                                     ),
-                                    h('button', { type: 'button', class: 'pc-menu-item', style: s.danger, onClick: () => (confirming.value = true) }, words.historyClear),
+                                    h('div', { class: 'pc-dd-sep' }),
+                                    h('button', { type: 'button', class: 'pc-dd-item pc-fp-danger', onClick: () => (confirming.value = true) }, words.historyClear),
                                 ]
                               : []),
                       ])
                     : null,
-                h(
-                    ForgeModal,
-                    { modelValue: confirming.value, 'onUpdate:modelValue': (value: boolean) => (confirming.value = value), title: words.historyClearTitle, size: 'sm' },
-                    {
-                        default: () => [h('p', words.historyClearText)],
-                        footer: () => [
-                            h('button', { type: 'button', class: 'pc-btn', onClick: () => (confirming.value = false) }, words.cancel),
-                            h('button', { type: 'button', class: 'pc-btn pc-btn--danger', onClick: () => void clear() }, words.historyClear),
-                        ],
-                    },
+                clearHistoryModal(
+                    confirming.value,
+                    words,
+                    () => (confirming.value = false),
+                    () => void clear(),
                 ),
             ]);
         };

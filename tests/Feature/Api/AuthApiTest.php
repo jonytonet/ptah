@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Models\UserPreference;
+use Ptah\Support\AppearancePresets;
 use Ptah\Tests\TestCase;
 
 class AuthApiUser extends Authenticatable
@@ -60,7 +61,19 @@ class AuthApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('signed_in', false)
             ->assertJsonPath('remember_me', true)
-            ->assertJsonStructure(['app', 'locale', 'home', 'urls' => ['login', 'forgot']]);
+            ->assertJsonStructure(['app', 'locale', 'home', 'urls' => ['login', 'forgot']])
+            ->assertJsonPath('logo', null);
+    }
+
+    #[Test]
+    public function the_sign_in_pages_get_the_brand_logo_of_forge_auth(): void
+    {
+        config(['ptah.brand.logo' => 'img/logo.svg', 'ptah.brand.logo_dark' => 'img/logo-dark.svg']);
+
+        $json = $this->getJson('/ptah/api/auth/config')->assertOk()->json();
+
+        $this->assertStringEndsWith('/img/logo.svg', $json['logo']);
+        $this->assertStringEndsWith('/img/logo-dark.svg', $json['logo_dark']);
     }
 
     #[Test]
@@ -175,7 +188,11 @@ class AuthApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('name', 'Ana')
             ->assertJsonPath('two_factor.enabled', false)
-            ->assertJsonStructure(['appearance' => ['light', 'dark', 'accent', 'choices' => ['accent']]]);
+            ->assertJsonStructure(['appearance' => ['light', 'dark', 'accent', 'choices' => ['accent']]])
+            // The names and colour dots the "Aparência" tab of the Livewire profile prints.
+            ->assertJsonPath('appearance.labels._axis.accent', trans('ptah::ui.profile_appearance_accent_label'))
+            ->assertJsonPath('appearance.labels.density.compacta', trans('ptah::ui.profile_appearance_density_compacta'))
+            ->assertJsonPath('appearance.swatches.verde', AppearancePresets::ACCENT_HEX['verde']);
 
         $this->putJson('/ptah/api/auth/profile', ['name' => 'Ana Maria', 'email' => 'ana@example.test'])
             ->assertOk()

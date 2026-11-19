@@ -33,7 +33,7 @@ async function mount(options: Parameters<typeof fakeForm>[0] = {}) {
 }
 
 async function openNew() {
-    await fireEvent.click(screen.getByRole('button', { name: '+ Novo' }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Novo' }));
 
     return readyDialog();
 }

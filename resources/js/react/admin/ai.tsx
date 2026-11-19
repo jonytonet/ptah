@@ -746,6 +746,7 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
                     role="dialog"
                     aria-modal="false"
                     aria-label={t.chatTitle}
+                    className="pl-ai-panel ptah-c-chat_panel"
                     style={panelStyle}
                     onPaste={(event) => {
                         // A pasted screenshot arrives as a file; text pastes go on as usual.
@@ -953,13 +954,15 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
             )}
 
             {!launcherHidden && !(expanded && open) && (
-                <div style={{ position: 'relative' }}>
-                    <button type="button" style={chatStyles.launcher} title={open ? t.chatClose : t.chatOpen} aria-label={open ? t.chatClose : t.chatOpen} aria-expanded={open} onClick={() => setOpen(!open)}>
-                        {open ? '✕' : '✦'}
+                // The round button of ai-chat-widget.blade.php (w-14, bg-primary, bx-bot / bx-x), and the
+                // "hide" corner that shows on hover or keyboard focus.
+                <div className="pl-ai-corner">
+                    <button type="button" className={`pl-ai-launcher${open ? ' pl-ai-launcher--open' : ''}`} title={open ? t.chatClose : t.chatOpen} aria-label={open ? t.chatClose : t.chatOpen} aria-expanded={open} onClick={() => setOpen(!open)}>
+                        <i className={open ? 'bx bx-x' : 'bx bx-bot'} aria-hidden="true" />
                     </button>
                     {!open && (
-                        <button type="button" style={chatStyles.dismiss} title={t.chatHide} aria-label={t.chatHide} onClick={() => setLauncherHidden(true)}>
-                            ✕
+                        <button type="button" className="pl-ai-dismiss ptah-c-chat_dismiss" title={t.chatHide} aria-label={t.chatHide} onClick={() => setLauncherHidden(true)}>
+                            <i className="bx bx-x" aria-hidden="true" />
                         </button>
                     )}
                 </div>
@@ -968,7 +971,7 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
             {launcherHidden && (
                 <button
                     type="button"
-                    style={chatStyles.handle}
+                    className="pl-ai-handle ptah-c-chat_handle"
                     title={t.chatShow}
                     aria-label={t.chatShow}
                     onClick={() => {

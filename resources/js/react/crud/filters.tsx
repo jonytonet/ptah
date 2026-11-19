@@ -1,9 +1,11 @@
 /**
  * The filter panel of a CRUD screen for React — the pieces of
- * _filter-panel.blade.php, the filter chips and the link-filters banner of
- * the Livewire screen, and the recent searches. Each piece reads the screen
- * through its CrudController; the rules are in core/crud/filters.ts and the
- * filtering itself is the server's (the BaseCrud engine).
+ * _filter-panel.blade.php, the filter chips (_toolbar.blade.php) and the
+ * link-filters banner (_url-filters-banner.blade.php) of the Livewire
+ * screen, and the recent searches. Each piece reads the screen through its
+ * CrudController; the rules are in core/crud/filters.ts and the filtering
+ * itself is the server's (the BaseCrud engine). The look is the `pc-fp*`,
+ * `pc-chip*` and `pc-urlbanner*` rules of ptah-ui.css.
  */
 import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, RefObject } from 'react';
@@ -24,7 +26,6 @@ import {
     fetchSearchHistory,
     fetchUrlFilters,
     filterSession,
-    filterStyles as s,
     filtersWords,
     FilterLookup,
     isNullOperator,
@@ -42,6 +43,7 @@ import {
 } from '../../core/crud/filters';
 import type { AdvancedRow, FilterListState, FilterMetaItem, FilterSession, FilterSessionState, FiltersMeta, FiltersWords, UrlFilter } from '../../core/crud/filters';
 import { ForgeModal } from '../forge';
+import { Icon } from '../icons';
 
 export { applyUrlFilters, filterByCell, isCellFilterable } from '../../core/crud/filters';
 
@@ -52,7 +54,7 @@ export interface FilterPieceProps {
 }
 
 export interface PtahCrudFilterPanelProps extends FilterPieceProps {
-    /** Shows a close button in the panel's header. */
+    /** Shows a close button in the panel's header (the Livewire panel has none: the toolbar's Filtros toggles it). */
     onClose?: () => void;
 }
 
@@ -93,9 +95,10 @@ function useOutside(ref: RefObject<HTMLElement | null>, onOutside: () => void, a
     }, [ref, onOutside, active]);
 }
 
-const RemoveButton = ({ label, onClick }: { label: string; onClick: () => void }) => (
-    <button type="button" style={s.chipButton} aria-label={label} title={label} onClick={onClick}>
-        <span aria-hidden="true">×</span>
+/** The ✕ of a chip: its own name for assistive tech, the Livewire tooltip ("Limpar filtros") on hover. */
+const RemoveButton = ({ label, title, onClick }: { label: string; title?: string; onClick: () => void }) => (
+    <button type="button" aria-label={label} title={title ?? label} onClick={onClick}>
+        <Icon name="x" size={12} strokeWidth={2.5} />
     </button>
 );
 
@@ -104,7 +107,8 @@ const RemoveButton = ({ label, onClick }: { label: string; onClick: () => void }
 /**
  * The complete filter panel: every filterable column with its operator,
  * the date ranges, the quick dates, the searchdropdown filters with their
- * cascade, the custom filters, the advanced search and the saved filters.
+ * cascade, the custom filters, the advanced search, the saved filters and
+ * the recent searches.
  */
 export function PtahCrudFilterPanel({ crud, locale, onClose }: PtahCrudFilterPanelProps) {
     const state = useCrud(crud);
@@ -119,16 +123,16 @@ export function PtahCrudFilterPanel({ crud, locale, onClose }: PtahCrudFilterPan
 
     if (filters.status === 'error') {
         return (
-            <section style={s.panel} aria-labelledby={titleId}>
-                <div style={s.body}>
-                    <h3 style={s.title} id={titleId}>
+            <section className="pc-fp" aria-labelledby={titleId}>
+                <div className="pc-fp-body">
+                    <h3 className="pc-fp-ttl" id={titleId}>
                         {t.title}
                     </h3>
-                    <p role="alert" style={s.error}>
+                    <p role="alert" className="pc-fp-error">
                         {t.loadError} {filters.error}
                     </p>
                     <div>
-                        <button type="button" className="pc-btn" onClick={() => void session.ensure()}>
+                        <button type="button" className="pc-tbtn" onClick={() => void session.ensure()}>
                             {t.retry}
                         </button>
                     </div>
@@ -139,8 +143,8 @@ export function PtahCrudFilterPanel({ crud, locale, onClose }: PtahCrudFilterPan
 
     if (!filters.meta) {
         return (
-            <div style={s.panel}>
-                <p role="status" style={s.note}>
+            <div className="pc-fp">
+                <p role="status" className="pc-fp-note">
                     {t.loading}
                 </p>
             </div>
@@ -158,31 +162,33 @@ export function PtahCrudFilterPanel({ crud, locale, onClose }: PtahCrudFilterPan
     const count = buildBadges(list, meta, filters.labels, t).length;
 
     return (
-        <section style={s.panel} aria-labelledby={titleId}>
-            <div style={s.head}>
-                <div style={s.headSide}>
-                    <h3 style={s.title} id={titleId}>
+        <section className="pc-fp" aria-labelledby={titleId}>
+            <div className="pc-fp-hd">
+                <div className="pc-fp-hd-side">
+                    <Icon name="funnel" className="pc-fp-icon" />
+                    <h3 className="pc-fp-ttl" id={titleId}>
                         {t.title}
                     </h3>
-                    {count > 0 && <span style={s.count}>{t.active(count)}</span>}
+                    {count > 0 && <span className="pc-fp-count">{t.active(count)}</span>}
                 </div>
-                <div style={s.headSide}>
-                    <button type="button" className="pc-btn" onClick={() => void clearAllFilters(crud, session)}>
+                <div className="pc-fp-hd-side">
+                    <button type="button" className="pc-fp-clear" onClick={() => void clearAllFilters(crud, session)}>
+                        <Icon name="x" size={14} />
                         {t.clearAll}
                     </button>
                     {onClose && (
-                        <button type="button" className="pc-icon-btn" aria-label={t.close} title={t.close} onClick={onClose}>
-                            ✕
+                        <button type="button" className="pc-x" aria-label={t.close} title={t.close} onClick={onClose}>
+                            <Icon name="x" size={18} />
                         </button>
                     )}
                 </div>
             </div>
 
-            <div style={s.body}>
+            <div className="pc-fp-body">
                 {meta.quick_dates.enabled && <QuickDates crud={crud} meta={meta} list={list} t={t} />}
 
                 {meta.filters.length > 0 && (
-                    <div style={s.grid}>
+                    <div className="pc-fp-grid">
                         {meta.filters.map((item) => (
                             <FilterControl key={`${item.custom ? 'c' : 'f'}-${item.field}`} crud={crud} session={session} item={item} list={list} labels={filters.labels} meta={meta} t={t} />
                         ))}
@@ -192,6 +198,7 @@ export function PtahCrudFilterPanel({ crud, locale, onClose }: PtahCrudFilterPan
                 {advanced && <AdvancedSearch crud={crud} meta={meta} list={list} t={t} />}
 
                 <SavedFilters crud={crud} state={state} t={t} />
+                <RecentSearches crud={crud} t={t} />
             </div>
 
             <SaveFooter crud={crud} t={t} />
@@ -230,12 +237,12 @@ function QuickDates({ crud, meta, list, t }: { crud: CrudController; meta: Filte
 
     return (
         <div role="group" aria-labelledby={id}>
-            <p id={id} style={s.section}>
+            <p id={id} className="pc-fp-section">
                 {t.dateShortcuts}
             </p>
-            <div style={s.wrap}>
+            <div className="pc-fp-chips">
                 {meta.quick_dates.periods.map((period) => (
-                    <button key={period} type="button" className={`pc-btn${list.quick_date === period ? ' pc-btn--active' : ''}`} aria-pressed={list.quick_date === period} onClick={() => void toggleQuickDate(crud, period)}>
+                    <button key={period} type="button" className="pc-fp-ql" aria-pressed={list.quick_date === period} onClick={() => void toggleQuickDate(crud, period)}>
                         {t.quick[period] ?? period}
                     </button>
                 ))}
@@ -259,12 +266,12 @@ function ValueFilter({ crud, item, list, t }: ControlProps) {
 
     return (
         <div>
-            <label className="pc-label" htmlFor={id}>
+            <label className="pc-fp-label" htmlFor={id}>
                 {item.label}
             </label>
-            <div style={s.row}>
+            <div className="pc-fp-row">
                 {item.operators.length > 0 && (
-                    <select className="pc-input" style={s.op} aria-label={`${item.label} — ${t.operator}`} value={op || item.operators[0]} onChange={(event) => void setFilterOperator(crud, item.field, event.target.value)}>
+                    <select className="pc-fp-in pc-fp-op" aria-label={`${item.label} — ${t.operator}`} value={op || item.operators[0]} onChange={(event) => void setFilterOperator(crud, item.field, event.target.value)}>
                         {item.operators.map((option) => (
                             <option key={option} value={option}>
                                 {operatorLabel(t, option, numeric)}
@@ -273,14 +280,13 @@ function ValueFilter({ crud, item, list, t }: ControlProps) {
                     </select>
                 )}
                 {item.kind === 'date' ? (
-                    <input id={id} type="date" className="pc-input" style={s.grow} value={text(value)} onChange={(event) => void setFilterValue(crud, item.field, event.target.value)} />
+                    <input id={id} type="date" className="pc-fp-in pc-fp-grow" value={text(value)} onChange={(event) => void setFilterValue(crud, item.field, event.target.value)} />
                 ) : (
                     <input
                         id={id}
                         type={numeric ? 'number' : 'text'}
                         step={numeric ? 'any' : undefined}
-                        className="pc-input"
-                        style={s.grow}
+                        className="pc-fp-in pc-fp-grow"
                         placeholder={nullOp ? '—' : `${item.label}...`}
                         disabled={nullOp}
                         value={typed}
@@ -301,10 +307,10 @@ function SelectFilter({ crud, item, list, meta, t }: ControlProps) {
 
     return (
         <div>
-            <label className="pc-label" htmlFor={id}>
+            <label className="pc-fp-label" htmlFor={id}>
                 {item.label}
             </label>
-            <select id={id} className="pc-input" value={value} onChange={(event) => void setFilterValue(crud, item.field, event.target.value)}>
+            <select id={id} className="pc-fp-in pc-fp-select" value={value} onChange={(event) => void setFilterValue(crud, item.field, event.target.value)}>
                 <option value="">{t.all}</option>
                 {(item.options ?? []).map((option) => (
                     <option key={option.value} value={option.value}>
@@ -329,26 +335,26 @@ function DateRangeFilter({ crud, item, list, t }: ControlProps) {
     ];
 
     return (
-        <fieldset style={{ ...s.fieldset, ...s.wide }}>
-            <legend className="pc-label">{item.label}</legend>
-            <div style={s.pair}>
+        <fieldset className="pc-fp-fieldset pc-fp-wide">
+            <legend className="pc-fp-label">{item.label}</legend>
+            <div className="pc-fp-pair">
                 {edges.map(({ edge, title, ops }) => {
                     const key = `${item.field}_${edge}`;
 
                     return (
                         <div key={edge}>
-                            <p style={s.muted} aria-hidden="true">
+                            <p className="pc-fp-muted" aria-hidden="true">
                                 {title}
                             </p>
-                            <div style={s.row}>
-                                <select className="pc-input" style={s.opNarrow} aria-label={`${item.label} — ${title} — ${t.operator}`} value={list.date_operators[key] || ops[0]} onChange={(event) => void setDateOperator(crud, key, event.target.value)}>
+                            <div className="pc-fp-row">
+                                <select className="pc-fp-in pc-fp-op pc-fp-op--narrow" aria-label={`${item.label} — ${title} — ${t.operator}`} value={list.date_operators[key] || ops[0]} onChange={(event) => void setDateOperator(crud, key, event.target.value)}>
                                     {ops.map((option) => (
                                         <option key={option} value={option}>
                                             {operatorLabel(t, option, true)}
                                         </option>
                                     ))}
                                 </select>
-                                <input type="date" className="pc-input" style={s.grow} aria-label={`${item.label} — ${title}`} value={list.date_ranges[key] ?? ''} onChange={(event) => void setDateValue(crud, key, event.target.value)} />
+                                <input type="date" className="pc-fp-in pc-fp-grow" aria-label={`${item.label} — ${title}`} value={list.date_ranges[key] ?? ''} onChange={(event) => void setDateValue(crud, key, event.target.value)} />
                             </div>
                         </div>
                     );
@@ -400,10 +406,10 @@ function DropdownFilter({ crud, session, item, list, labels, t }: ControlProps) 
 
     return (
         <div>
-            <label className="pc-label" htmlFor={id}>
+            <label className="pc-fp-label" htmlFor={id}>
                 {item.label}
             </label>
-            <select className="pc-input" style={s.spaced} aria-label={`${item.label} — ${t.operator}`} value={op || item.operators[0] || '='} onChange={(event) => void setFilterOperator(crud, item.field, event.target.value)}>
+            <select className="pc-fp-in pc-fp-spaced" aria-label={`${item.label} — ${t.operator}`} value={op || item.operators[0] || '='} onChange={(event) => void setFilterOperator(crud, item.field, event.target.value)}>
                 {item.operators.map((option) => (
                     <option key={option} value={option}>
                         {operatorLabel(t, option)}
@@ -411,49 +417,47 @@ function DropdownFilter({ crud, session, item, list, labels, t }: ControlProps) 
                 ))}
             </select>
             {selected !== null && (
-                <div style={s.spaced}>
-                    <span style={s.chip}>
+                <div className="pc-fp-spaced">
+                    <span className="pc-chip">
                         {selected}
-                        <RemoveButton label={t.removeFilter(item.label)} onClick={() => void clearDropdown(crud, session, item.field)} />
+                        <RemoveButton label={t.removeFilter(item.label)} title={t.clearFilters} onClick={() => void clearDropdown(crud, session, item.field)} />
                     </span>
                 </div>
             )}
-            <div className="pc-combo" ref={ref}>
-                <div style={s.comboBox}>
-                    <input
-                        id={id}
-                        type="text"
-                        role="combobox"
-                        aria-expanded={box.open}
-                        aria-controls={listId}
-                        aria-autocomplete="list"
-                        aria-activedescendant={box.open && box.active >= 0 ? `${id}-opt-${box.active}` : undefined}
-                        autoComplete="off"
-                        className="pc-input"
-                        style={s.comboInput}
-                        placeholder={selected !== null ? t.change : (item.placeholder ?? t.searchLabel(item.label))}
-                        value={box.text}
-                        onFocus={() => lookup.focus()}
-                        onChange={(event) => lookup.type(event.target.value)}
-                        onKeyDown={keys}
-                    />
-                    <button
-                        type="button"
-                        tabIndex={-1}
-                        style={s.chevron}
-                        aria-label={t.showOptions}
-                        onMouseDown={(event) => {
-                            event.preventDefault();
-                            lookup.toggle();
-                        }}
-                    >
-                        <span aria-hidden="true">{box.open ? '▴' : '▾'}</span>
-                    </button>
-                </div>
+            <div className="pc-fp-combo" ref={ref}>
+                <input
+                    id={id}
+                    type="text"
+                    role="combobox"
+                    aria-expanded={box.open}
+                    aria-controls={listId}
+                    aria-autocomplete="list"
+                    aria-activedescendant={box.open && box.active >= 0 ? `${id}-opt-${box.active}` : undefined}
+                    autoComplete="off"
+                    className="pc-fp-in pc-fp-combo-in"
+                    placeholder={selected !== null ? t.change : (item.placeholder ?? t.searchLabel(item.label))}
+                    value={box.text}
+                    onFocus={() => lookup.focus()}
+                    onChange={(event) => lookup.type(event.target.value)}
+                    onKeyDown={keys}
+                />
+                <button
+                    type="button"
+                    tabIndex={-1}
+                    className="pc-fp-chev"
+                    data-open={box.open}
+                    aria-label={t.showOptions}
+                    onMouseDown={(event) => {
+                        event.preventDefault();
+                        lookup.toggle();
+                    }}
+                >
+                    <Icon name="chevronDown" />
+                </button>
                 {box.open && (
-                    <ul className="pc-combo-list" id={listId} role="listbox" aria-label={item.label} aria-busy={box.loading} style={item.start_list === 'top' ? s.listTop : undefined}>
+                    <ul className={`pc-fp-list${item.start_list === 'top' ? ' pc-fp-list--top' : ''}`} id={listId} role="listbox" aria-label={item.label} aria-busy={box.loading}>
                         {box.items.length === 0 && (
-                            <li className="pc-combo-note" role={box.loading ? 'status' : undefined}>
+                            <li className="pc-fp-note" role={box.loading ? 'status' : undefined}>
                                 {box.loading ? t.loading : t.noResults}
                             </li>
                         )}
@@ -463,13 +467,13 @@ function DropdownFilter({ crud, session, item, list, labels, t }: ControlProps) 
                                 id={`${id}-opt-${index}`}
                                 role="option"
                                 aria-selected={index === box.active}
-                                className="pc-combo-item"
+                                className="pc-fp-opt"
                                 onMouseDown={(event) => event.preventDefault()}
                                 onClick={() => void lookup.choose(index)}
                             >
                                 {text(option.label)}
-                                {'labelTwo' in option && <span style={s.sub}>{text(option.labelTwo)}</span>}
-                                {'labelThree' in option && <span style={s.sub}>{text(option.labelThree)}</span>}
+                                {'labelTwo' in option && <span className="pc-fp-sub">{text(option.labelTwo)}</span>}
+                                {'labelThree' in option && <span className="pc-fp-sub">{text(option.labelThree)}</span>}
                             </li>
                         ))}
                     </ul>
@@ -513,8 +517,8 @@ function AdvancedSearch({ crud, meta, list, t }: { crud: CrudController; meta: F
     const kind = advancedKind(meta, draft.field);
 
     return (
-        <div>
-            <label className="pc-switch" htmlFor={switchId}>
+        <div className="pc-fp-adv">
+            <label className="pc-switch pc-fp-adv-switch" htmlFor={switchId}>
                 <input id={switchId} type="checkbox" role="switch" checked={on} onChange={toggle} />
                 <span className="pc-switch-track" />
                 <span>{t.advanced}</span>
@@ -522,15 +526,15 @@ function AdvancedSearch({ crud, meta, list, t }: { crud: CrudController; meta: F
             {on && (
                 <div>
                     {rows.length === 0 ? (
-                        <p style={{ ...s.muted, marginTop: '8px' }}>{t.advancedEmpty}</p>
+                        <p className="pc-fp-muted pc-fp-adv-empty">{t.advancedEmpty}</p>
                     ) : (
-                        <ul style={{ ...s.plainList, marginTop: '8px' }}>
+                        <ul className="pc-fp-adv-rows">
                             {rows.map((row, index) => {
                                 const label = advancedText(t, meta, row, index);
 
                                 return (
                                     <li key={`${row.field}-${index}`}>
-                                        <span style={s.chip}>
+                                        <span className="pc-chip">
                                             {label}
                                             <RemoveButton label={t.removeRow(label)} onClick={() => void setAdvancedRows(crud, rows.filter((_, other) => other !== index))} />
                                         </span>
@@ -540,21 +544,20 @@ function AdvancedSearch({ crud, meta, list, t }: { crud: CrudController; meta: F
                         </ul>
                     )}
                     <form
-                        style={s.advancedRow}
+                        className="pc-fp-adv-form"
                         onSubmit={(event) => {
                             event.preventDefault();
                             add();
                         }}
                     >
                         {rows.length > 0 && (
-                            <select className="pc-input" style={s.advancedControl} aria-label={t.advancedLogic} value={draft.logic} onChange={(event) => setDraft({ ...draft, logic: event.target.value === 'OR' ? 'OR' : 'AND' })}>
+                            <select className="pc-fp-in pc-fp-adv-ctl" aria-label={t.advancedLogic} value={draft.logic} onChange={(event) => setDraft({ ...draft, logic: event.target.value === 'OR' ? 'OR' : 'AND' })}>
                                 <option value="AND">{t.and}</option>
                                 <option value="OR">{t.or}</option>
                             </select>
                         )}
                         <select
-                            className="pc-input"
-                            style={s.advancedControl}
+                            className="pc-fp-in pc-fp-adv-ctl"
                             aria-label={t.advancedField}
                             value={draft.field}
                             onChange={(event) => setDraft({ ...draft, field: event.target.value, operator: advancedOperators(meta, event.target.value)[0] ?? '=', value: '' })}
@@ -565,7 +568,7 @@ function AdvancedSearch({ crud, meta, list, t }: { crud: CrudController; meta: F
                                 </option>
                             ))}
                         </select>
-                        <select className="pc-input" style={s.advancedControl} aria-label={t.operator} value={draft.operator} onChange={(event) => setDraft({ ...draft, operator: event.target.value })}>
+                        <select className="pc-fp-in pc-fp-adv-ctl" aria-label={t.operator} value={draft.operator} onChange={(event) => setDraft({ ...draft, operator: event.target.value })}>
                             {advancedOperators(meta, draft.field).map((option) => (
                                 <option key={option} value={option}>
                                     {operatorLabel(t, option)}
@@ -575,13 +578,12 @@ function AdvancedSearch({ crud, meta, list, t }: { crud: CrudController; meta: F
                         <input
                             type={kind === 'number' ? 'number' : kind === 'date' ? 'date' : 'text'}
                             step={kind === 'number' ? 'any' : undefined}
-                            className="pc-input"
-                            style={s.advancedControl}
+                            className="pc-fp-in pc-fp-adv-ctl"
                             aria-label={t.advancedValue}
                             value={draft.value}
                             onChange={(event) => setDraft({ ...draft, value: event.target.value })}
                         />
-                        <button type="submit" className="pc-btn" disabled={draft.value.trim() === ''}>
+                        <button type="submit" className="pc-tbtn" disabled={draft.value.trim() === ''}>
                             {t.add}
                         </button>
                     </form>
@@ -610,16 +612,14 @@ function SavedFilters({ crud, state, t }: { crud: CrudController; state: CrudSta
     };
 
     return (
-        <div style={s.wrap}>
-            <span className="pc-label" style={{ margin: 0 }}>
-                {t.saved}
-            </span>
+        <div className="pc-fp-saved">
+            <span className="pc-fp-saved-lbl">{t.saved}</span>
             {names.map((name) => (
-                <span key={name} style={{ display: 'inline-flex' }}>
-                    <button type="button" className="pc-btn" style={s.savedLoad} onClick={() => void loadSavedFilter(crud, name)}>
+                <span key={name} className="pc-fp-saved-item">
+                    <button type="button" className="pc-fp-sv-load" onClick={() => void loadSavedFilter(crud, name)}>
                         {name}
                     </button>
-                    <button type="button" className="pc-btn" style={s.savedDelete} aria-label={t.deleteSaved(name)} title={t.deleteSaved(name)} onClick={() => setDeleting(name)}>
+                    <button type="button" className="pc-fp-sv-del" aria-label={t.deleteSaved(name)} title={t.deleteSaved(name)} onClick={() => setDeleting(name)}>
                         <span aria-hidden="true">×</span>
                     </button>
                 </span>
@@ -631,10 +631,10 @@ function SavedFilters({ crud, state, t }: { crud: CrudController; state: CrudSta
                 size="sm"
                 footer={
                     <>
-                        <button type="button" className="pc-btn" onClick={() => setDeleting(null)}>
+                        <button type="button" className="pc-dbtn" onClick={() => setDeleting(null)}>
                             {t.cancel}
                         </button>
-                        <button type="button" className="pc-btn pc-btn--danger" onClick={confirm}>
+                        <button type="button" className="pc-dbtn pc-dbtn--danger" onClick={confirm}>
                             {t.delete}
                         </button>
                     </>
@@ -665,10 +665,10 @@ function SaveFooter({ crud, t }: { crud: CrudController; t: FiltersWords }) {
     };
 
     return (
-        <div style={s.foot}>
+        <div className="pc-fp-ft">
             {saving ? (
                 <form
-                    style={s.saveForm}
+                    className="pc-fp-save-form"
                     onSubmit={(event) => {
                         event.preventDefault();
                         submit();
@@ -676,8 +676,7 @@ function SaveFooter({ crud, t }: { crud: CrudController; t: FiltersWords }) {
                 >
                     <input
                         type="text"
-                        className="pc-input"
-                        style={s.grow}
+                        className="pc-fp-save-in"
                         aria-label={t.saveName}
                         placeholder={t.savePlaceholder}
                         maxLength={80}
@@ -691,15 +690,16 @@ function SaveFooter({ crud, t }: { crud: CrudController; t: FiltersWords }) {
                             }
                         }}
                     />
-                    <button type="submit" className="pc-btn pc-btn--primary">
+                    <button type="submit" className="pc-fp-save-ok">
                         {t.save}
                     </button>
-                    <button type="button" className="pc-btn" onClick={cancel}>
+                    <button type="button" className="pc-fp-save-cancel" onClick={cancel}>
                         {t.cancel}
                     </button>
                 </form>
             ) : (
-                <button type="button" className="pc-btn" onClick={() => setSaving(true)}>
+                <button type="button" className="pc-fp-save" onClick={() => setSaving(true)}>
+                    <Icon name="bookmark" size={14} />
                     {t.saveAction}
                 </button>
             )}
@@ -709,7 +709,11 @@ function SaveFooter({ crud, t }: { crud: CrudController; t: FiltersWords }) {
 
 // ── Chips ───────────────────────────────────────────────────────────────────
 
-/** The active search and filters as chips, each with its remove button (the toolbar's chips). */
+/**
+ * The active search and filters as chips, each with its remove button — the
+ * row at the bottom of the Livewire toolbar card (`.pc-chips`): mount it
+ * inside the toolbar card, after its control row.
+ */
 export function PtahCrudFilterBadges({ crud, locale }: FilterPieceProps) {
     const state = useCrud(crud);
     const ready = state.status === 'ready';
@@ -728,19 +732,19 @@ export function PtahCrudFilterBadges({ crud, locale }: FilterPieceProps) {
     }
 
     return (
-        <div style={s.badges} role="group" aria-label={t.title}>
+        <div className="pc-chips" role="group" aria-label={t.title}>
             {list.search !== '' && (
-                <span style={s.chip}>
-                    <span style={s.chipLabel}>{t.search}:</span>
+                <span className="pc-chip">
+                    <Icon name="search" size={12} className="pc-chip-ico" />
                     {limitText(list.search, 30)}
-                    <RemoveButton label={t.clearSearch} onClick={() => void crud.setSearch('')} />
+                    <RemoveButton label={t.clearSearch} title={t.clearFilters} onClick={() => void crud.setSearch('')} />
                 </span>
             )}
             {badges.map((badge) => (
-                <span key={`${badge.key}|${badge.label}`} style={s.chip}>
-                    <span style={s.chipLabel}>{badge.label}:</span>
+                <span key={`${badge.key}|${badge.label}`} className="pc-chip">
+                    <span className="pc-chip-key">{badge.label}:</span>
                     {limitText(badge.value, 20)}
-                    <RemoveButton label={t.removeFilter(badge.label)} onClick={() => void removeBadge(crud, badge.key)} />
+                    <RemoveButton label={t.removeFilter(badge.label)} title={t.clearFilters} onClick={() => void removeBadge(crud, badge.key)} />
                 </span>
             ))}
         </div>
@@ -754,7 +758,7 @@ export interface PtahCrudUrlFiltersProps extends FilterPieceProps {
     readLocation?: boolean;
 }
 
-/** The banner of the link filters (`?f[...]`), with "clear link filters". */
+/** The banner of the link filters (`?f[...]`), with "clear link filters" — a forge-alert warn. */
 export function PtahCrudUrlFilters({ crud, locale, readLocation = true }: PtahCrudUrlFiltersProps) {
     const state = useCrud(crud);
     const ready = state.status === 'ready';
@@ -790,26 +794,111 @@ export function PtahCrudUrlFilters({ crud, locale, readLocation = true }: PtahCr
     }
 
     return (
-        <div role="status" style={s.banner}>
-            <strong>{t.urlActive}</strong>
-            <span style={s.wrap}>
-                {items.map((item) => (
-                    <span key={item.field} style={s.chip}>
-                        <span style={s.chipLabel}>{item.label}:</span>
-                        {limitText(item.value, 30)}
-                    </span>
-                ))}
+        <div role="status" className="pc-urlbanner">
+            <span className="pc-urlbanner-icon">
+                <Icon name="alertTriangle" size={20} />
             </span>
-            <button type="button" className="pc-btn" style={s.pushRight} onClick={() => void clearLinkFilters(crud)}>
-                {t.urlClear}
-            </button>
+            <div className="pc-urlbanner-body">
+                <span className="pc-urlbanner-ttl">{t.urlActive}</span>
+                <span className="pc-urlbanner-chips">
+                    {items.map((item) => (
+                        <span key={item.field} className="pc-chip">
+                            <span className="pc-chip-key">{item.label}:</span>
+                            {limitText(item.value, 30)}
+                        </span>
+                    ))}
+                </span>
+                <button type="button" className="pc-urlbanner-btn" onClick={() => void clearLinkFilters(crud)}>
+                    {t.urlClear}
+                </button>
+            </div>
         </div>
     );
 }
 
 // ── Recent searches ─────────────────────────────────────────────────────────
 
-/** A toolbar button with the recent searches of this screen: pick one to search it again, or clear them. */
+/** The "clear history" confirmation, shared by the panel row and the button. */
+function ClearHistoryModal({ open, t, onCancel, onConfirm }: { open: boolean; t: FiltersWords; onCancel: () => void; onConfirm: () => void }) {
+    return (
+        <ForgeModal
+            open={open}
+            onClose={onCancel}
+            title={t.historyClearTitle}
+            size="sm"
+            footer={
+                <>
+                    <button type="button" className="pc-dbtn" onClick={onCancel}>
+                        {t.cancel}
+                    </button>
+                    <button type="button" className="pc-dbtn pc-dbtn--danger" onClick={onConfirm}>
+                        {t.historyClear}
+                    </button>
+                </>
+            }
+        >
+            <p>{t.historyClearText}</p>
+        </ForgeModal>
+    );
+}
+
+/**
+ * The recent searches inside the panel, laid out as the saved filters row.
+ * The Livewire screen keeps the history (HasCrudPreferences) without drawing
+ * it anywhere; the panel is where it sits next to its siblings.
+ */
+function RecentSearches({ crud, t }: { crud: CrudController; t: FiltersWords }) {
+    const [items, setItems] = useState<string[]>([]);
+    const [confirming, setConfirming] = useState(false);
+
+    useEffect(() => {
+        let live = true;
+        fetchSearchHistory(crud)
+            .then((found) => live && setItems(found))
+            .catch(() => live && setItems([]));
+
+        return () => {
+            live = false;
+        };
+    }, [crud]);
+
+    if (items.length === 0) {
+        return null;
+    }
+
+    const clear = async () => {
+        setConfirming(false);
+        try {
+            await clearSearchHistory(crud);
+            setItems([]);
+        } catch (failure) {
+            crud.toast(failure instanceof Error ? failure.message : t.historyError, 'danger');
+        }
+    };
+
+    return (
+        <div className="pc-fp-saved" role="group" aria-label={t.history}>
+            <span className="pc-fp-saved-lbl">{t.historyLabel}</span>
+            {items.map((term) => (
+                <button key={term} type="button" className="pc-fp-hist" title={t.search} onClick={() => void crud.setSearch(term)}>
+                    <Icon name="search" size={12} />
+                    {term}
+                </button>
+            ))}
+            <button type="button" className="pc-fp-save pc-fp-hist-clear" onClick={() => setConfirming(true)}>
+                {t.historyClear}
+            </button>
+            <ClearHistoryModal open={confirming} t={t} onCancel={() => setConfirming(false)} onConfirm={() => void clear()} />
+        </div>
+    );
+}
+
+/**
+ * The recent searches of this screen as a toolbar dropdown: pick one to
+ * search it again, or clear them. <PtahCrud> shows them in the filter panel
+ * instead (the Livewire toolbar has no such button); this stays for hosts
+ * that place it on a toolbar of their own.
+ */
 export function PtahCrudSearchHistory({ crud, locale }: FilterPieceProps) {
     const state = useCrud(crud);
     const t = useMemo(() => filtersWords(locale), [locale]);
@@ -861,10 +950,10 @@ export function PtahCrudSearchHistory({ crud, locale }: FilterPieceProps) {
     };
 
     return (
-        <div className="pc-menu" ref={ref}>
+        <div className="pc-dd-wrap" ref={ref}>
             <button
                 type="button"
-                className="pc-btn"
+                className={`pc-tbtn${open ? ' pc-tbtn--on' : ''}`}
                 aria-haspopup="true"
                 aria-expanded={open}
                 aria-controls={open ? listId : undefined}
@@ -877,28 +966,29 @@ export function PtahCrudSearchHistory({ crud, locale }: FilterPieceProps) {
                 }}
             >
                 {t.history}
+                <Icon name="chevronDown" size={12} />
             </button>
             {open && (
-                <div className="pc-menu-list" id={listId} role="region" aria-label={t.history}>
+                <div className="pc-dd" id={listId} role="region" aria-label={t.history}>
                     {items === null && !error && (
-                        <p role="status" style={s.note}>
+                        <p role="status" className="pc-fp-note">
                             {t.loading}
                         </p>
                     )}
                     {error && (
-                        <p role="alert" style={s.note}>
+                        <p role="alert" className="pc-fp-note">
                             {t.historyError}
                         </p>
                     )}
-                    {items !== null && items.length === 0 && <p style={s.note}>{t.historyEmpty}</p>}
+                    {items !== null && items.length === 0 && <p className="pc-fp-note">{t.historyEmpty}</p>}
                     {items !== null && items.length > 0 && (
                         <>
-                            <ul style={s.menuList}>
+                            <ul className="pc-fp-plain">
                                 {items.map((term) => (
                                     <li key={term}>
                                         <button
                                             type="button"
-                                            className="pc-menu-item"
+                                            className="pc-dd-item"
                                             onClick={() => {
                                                 setOpen(false);
                                                 void crud.setSearch(term);
@@ -909,31 +999,15 @@ export function PtahCrudSearchHistory({ crud, locale }: FilterPieceProps) {
                                     </li>
                                 ))}
                             </ul>
-                            <button type="button" className="pc-menu-item" style={s.danger} onClick={() => setConfirming(true)}>
+                            <div className="pc-dd-sep" />
+                            <button type="button" className="pc-dd-item pc-fp-danger" onClick={() => setConfirming(true)}>
                                 {t.historyClear}
                             </button>
                         </>
                     )}
                 </div>
             )}
-            <ForgeModal
-                open={confirming}
-                onClose={() => setConfirming(false)}
-                title={t.historyClearTitle}
-                size="sm"
-                footer={
-                    <>
-                        <button type="button" className="pc-btn" onClick={() => setConfirming(false)}>
-                            {t.cancel}
-                        </button>
-                        <button type="button" className="pc-btn pc-btn--danger" onClick={() => void clear()}>
-                            {t.historyClear}
-                        </button>
-                    </>
-                }
-            >
-                <p>{t.historyClearText}</p>
-            </ForgeModal>
+            <ClearHistoryModal open={confirming} t={t} onCancel={() => setConfirming(false)} onConfirm={() => void clear()} />
         </div>
     );
 }

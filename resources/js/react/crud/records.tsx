@@ -21,7 +21,9 @@ import {
     uploadAttachments,
 } from '../../core/crud/records';
 import type { AttachmentItem, HistoryEntry, RecordsWords } from '../../core/crud/records';
-import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal } from '../forge';
+import { modalButton } from '../../core/crud/form';
+import { Icon } from '../icons';
+import { PtahConfirmDialog, PtahCrudModal, PtahModalAlert, PtahModalEmpty } from './modal';
 
 export interface RecordsPanelProps {
     crud: CrudController;
@@ -45,12 +47,10 @@ function usePanel(crud: CrudController, name: string): RowId | null {
 }
 
 const Loading = ({ t }: { t: RecordsWords }) => (
-    <div className="pc-state" role="status" aria-live="polite">
-        <span className="pf-spinner" aria-hidden="true" /> {t.loading}
+    <div className="pc-fm-loading" role="status" aria-live="polite">
+        <span className="pc-fm-spin" aria-hidden="true" /> {t.loading}
     </div>
 );
-
-const MUTED = { color: 'var(--pc-text-muted)' } as const;
 
 // ── Row buttons ─────────────────────────────────────────────────────────────
 
@@ -77,13 +77,13 @@ export function PtahCrudRecordButtons({ crud, row, locale }: RecordButtonsProps)
     return (
         <>
             {features.attachments && (
-                <button type="button" className="pc-icon-btn" onClick={() => crud.openPanel(PANEL_ATTACHMENTS, row.id)}>
+                <button type="button" className={modalButton('flat')} onClick={() => crud.openPanel(PANEL_ATTACHMENTS, row.id)}>
                     {t.attachments}
                     {count !== null && count >= 0 ? ` (${count})` : ''}
                 </button>
             )}
             {features.history && (
-                <button type="button" className="pc-icon-btn" onClick={() => crud.openPanel(PANEL_HISTORY, row.id)}>
+                <button type="button" className={modalButton('flat')} onClick={() => crud.openPanel(PANEL_HISTORY, row.id)}>
                     {t.history}
                 </button>
             )}
@@ -125,59 +125,62 @@ export function PtahCrudHistory({ crud, locale }: RecordsPanelProps) {
     }
 
     return (
-        <ForgeModal
-            open
+        <PtahCrudModal
             onClose={close}
+            closeLabel={t.close}
             title={t.historyTitle}
             size="lg"
             footer={
-                <ForgeButton color="dark" flat onClick={close}>
+                <button type="button" className={modalButton('flat')} onClick={close}>
                     {t.close}
-                </ForgeButton>
+                </button>
             }
         >
             {error ? (
-                <ForgeAlert color="danger">{error}</ForgeAlert>
+                <PtahModalAlert>{error}</PtahModalAlert>
             ) : items === null ? (
                 <Loading t={t} />
             ) : items.length === 0 ? (
-                <ForgeEmpty title={t.historyEmpty} />
+                <PtahModalEmpty title={t.historyEmpty} />
             ) : (
-                <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 16 }}>
+                <ol className="pc-hist">
                     {items.map((item, index) => (
-                        <li key={index} style={{ border: '1px solid var(--pc-line)', borderRadius: 'var(--pc-radius)', background: 'var(--pc-bg)', padding: 12 }}>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-                                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--pc-text-strong)' }}>
-                                    {t.events[item.event] ?? item.event} <span style={{ ...MUTED, fontWeight: 400 }}>· {item.who}</span>
+                        <li key={index} className="pc-hist-item">
+                            <div className="pc-hist-top">
+                                <p className="pc-hist-event">
+                                    {t.events[item.event] ?? item.event} <span className="pc-hist-who">· {item.who}</span>
                                 </p>
-                                <time style={{ ...MUTED, fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>{item.when}</time>
+                                <time className="pc-hist-when">{item.when}</time>
                             </div>
                             {item.changes.length > 0 && (
-                                <dl style={{ margin: '8px 0 0', display: 'grid', gridTemplateColumns: 'minmax(8rem, auto) 1fr', columnGap: 12, rowGap: 4, fontSize: 14 }}>
+                                <dl className="pc-hist-changes">
                                     {item.changes.map((change, i) => (
                                         <Change key={i} change={change} updated={item.event === 'updated'} t={t} />
                                     ))}
                                 </dl>
                             )}
-                            {item.hidden > 0 && <p style={{ ...MUTED, margin: '4px 0 0', fontSize: 12 }}>{plural(t.hiddenFields, item.hidden)}</p>}
+                            {item.hidden > 0 && <p className="pc-hist-hidden">{plural(t.hiddenFields, item.hidden)}</p>}
                         </li>
                     ))}
                 </ol>
             )}
-        </ForgeModal>
+        </PtahCrudModal>
     );
 }
 
 function Change({ change, updated, t }: { change: HistoryEntry['changes'][number]; updated: boolean; t: RecordsWords }) {
     return (
         <>
-            <dt className="pc-label" style={{ margin: 0 }}>
-                {change.label}
-            </dt>
-            <dd style={{ margin: 0, color: 'var(--pc-text)', overflowWrap: 'anywhere' }}>
+            <dt>{change.label}</dt>
+            <dd>
                 {updated && (
                     <>
-                        <span style={{ ...MUTED, textDecoration: 'line-through' }}>{change.old}</span> <span aria-hidden="true" style={MUTED}>→</span>
+                        <span className="pc-hist-old" style={{ textDecoration: 'line-through' }}>
+                            {change.old}
+                        </span>{' '}
+                        <span aria-hidden="true" className="pc-fm-muted">
+                            →
+                        </span>
                         <span style={SR_ONLY}>{t.became}</span>{' '}
                     </>
                 )}
@@ -285,119 +288,113 @@ export function PtahCrudAttachments({ crud, locale }: RecordsPanelProps) {
 
     return (
         <>
-            <ForgeModal
-                open={removing === null}
-                onClose={close}
-                title={t.attachmentsTitle}
-                size="lg"
-                footer={
-                    <ForgeButton color="dark" flat onClick={close}>
-                        {t.close}
-                    </ForgeButton>
-                }
-            >
-                {error ? (
-                    <ForgeAlert color="danger">{error}</ForgeAlert>
-                ) : (
-                    <div style={{ display: 'grid', gap: 16 }}>
-                        {canWrite && (
-                            <div style={{ display: 'grid', gap: 8, justifyItems: 'start' }}>
-                                <label htmlFor={inputId} className="pc-btn" style={{ cursor: 'pointer', position: 'relative' }}>
-                                    📎 {t.pick}
-                                    <input
-                                        id={inputId}
-                                        type="file"
-                                        multiple
-                                        style={SR_ONLY}
-                                        disabled={busy}
-                                        onChange={(event) => {
-                                            setFiles(Array.from(event.target.files ?? []));
-                                            setErrors([]);
-                                            event.target.value = '';
-                                        }}
-                                    />
-                                </label>
-                                {files.length > 0 && (
-                                    <>
-                                        <ul style={{ ...MUTED, margin: 0, paddingLeft: 18, fontSize: 12 }}>
-                                            {files.map((file, index) => (
-                                                <li key={index}>{file.name}</li>
-                                            ))}
-                                        </ul>
-                                        <ForgeButton color="primary" size="sm" loading={busy} onClick={() => void upload()}>
-                                            {busy ? t.uploading : plural(t.send, files.length)}
-                                        </ForgeButton>
-                                    </>
-                                )}
-                                {errors.map((message, index) => (
-                                    <p key={index} role="alert" style={{ margin: 0, fontSize: 12, color: 'var(--pc-danger)' }}>
+            {removing === null && (
+                <PtahCrudModal
+                    onClose={close}
+                    closeLabel={t.close}
+                    title={t.attachmentsTitle}
+                    size="lg"
+                    footer={
+                        <button type="button" className={modalButton('flat')} onClick={close}>
+                            {t.close}
+                        </button>
+                    }
+                >
+                    {error ? (
+                        <PtahModalAlert>{error}</PtahModalAlert>
+                    ) : (
+                        <div className="pc-att">
+                            {canWrite && (
+                                <div className="pc-att-up">
+                                    <label htmlFor={inputId} className="pc-fm-pick">
+                                        <Icon name="paperclip" />
+                                        {t.pick}
+                                        <input
+                                            id={inputId}
+                                            type="file"
+                                            multiple
+                                            style={SR_ONLY}
+                                            disabled={busy}
+                                            onChange={(event) => {
+                                                setFiles(Array.from(event.target.files ?? []));
+                                                setErrors([]);
+                                                event.target.value = '';
+                                            }}
+                                        />
+                                    </label>
+                                    {files.length > 0 && (
+                                        <>
+                                            <ul className="pc-att-files">
+                                                {files.map((file, index) => (
+                                                    <li key={index}>{file.name}</li>
+                                                ))}
+                                            </ul>
+                                            <button type="button" className={modalButton('primary', true)} disabled={busy} aria-busy={busy || undefined} onClick={() => void upload()}>
+                                                {busy && <span className="pc-fm-spin" aria-hidden="true" />}
+                                                {busy ? t.uploading : plural(t.send, files.length)}
+                                            </button>
+                                        </>
+                                    )}
+                                    {errors.map((message, index) => (
+                                        <p key={index} role="alert" className="pc-fm-err">
+                                            {message}
+                                        </p>
+                                    ))}
+                                </div>
+                            )}
+                            {!canWrite &&
+                                errors.map((message, index) => (
+                                    <p key={index} role="alert" className="pc-fm-err">
                                         {message}
                                     </p>
                                 ))}
-                            </div>
-                        )}
-                        {!canWrite &&
-                            errors.map((message, index) => (
-                                <p key={index} role="alert" style={{ margin: 0, fontSize: 12, color: 'var(--pc-danger)' }}>
-                                    {message}
-                                </p>
-                            ))}
 
-                        {items === null ? (
-                            <Loading t={t} />
-                        ) : items.length === 0 ? (
-                            <ForgeEmpty title={t.attachmentsEmpty} />
-                        ) : (
-                            <ul style={{ listStyle: 'none', margin: 0, padding: 0, border: '1px solid var(--pc-line)', borderRadius: 'var(--pc-radius)' }}>
-                                {items.map((item, index) => (
-                                    <li
-                                        key={item.id}
-                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderTop: index === 0 ? undefined : '1px solid var(--pc-line)' }}
-                                    >
-                                        <div style={{ minWidth: 0 }}>
-                                            <a
-                                                href={item.url}
-                                                download={item.name}
-                                                aria-label={t.download.replace(':name', item.name)}
-                                                className="pc-link"
-                                                style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 14, fontWeight: 500, color: 'var(--pc-primary)' }}
-                                            >
-                                                {item.name}
-                                            </a>
-                                            <p style={{ ...MUTED, margin: 0, fontSize: 12 }}>
-                                                {item.size} · {item.when}
-                                            </p>
-                                        </div>
-                                        {canWrite && (
-                                            <ForgeButton color="danger" flat size="sm" disabled={busy} aria-label={`${t.delete} ${item.name}`} onClick={() => setRemoving(item)}>
-                                                {t.delete}
-                                            </ForgeButton>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-                )}
-            </ForgeModal>
-            <ForgeModal
-                open={removing !== null}
-                onClose={() => setRemoving(null)}
-                title={t.deleteTitle}
-                size="sm"
-                footer={
-                    <>
-                        <ForgeButton color="light" onClick={() => setRemoving(null)}>
-                            {t.cancel}
-                        </ForgeButton>
-                        <ForgeButton color="danger" onClick={() => removing && void remove(removing)}>
-                            {t.delete}
-                        </ForgeButton>
-                    </>
-                }
-            >
-                <p>{removing ? t.deleteConfirm.replace(':name', removing.name) : ''}</p>
-            </ForgeModal>
+                            {items === null ? (
+                                <Loading t={t} />
+                            ) : items.length === 0 ? (
+                                <PtahModalEmpty title={t.attachmentsEmpty} />
+                            ) : (
+                                <ul className="pc-att-list">
+                                    {items.map((item) => (
+                                        <li key={item.id} className="pc-att-row">
+                                            <div className="pc-att-info">
+                                                <a
+                                                    href={item.url}
+                                                    download={item.name}
+                                                    aria-label={t.download.replace(':name', item.name)}
+                                                    className="pc-att-name"
+                                                >
+                                                    {item.name}
+                                                </a>
+                                                <p className="pc-att-meta">
+                                                    {item.size} · {item.when}
+                                                </p>
+                                            </div>
+                                            {canWrite && (
+                                                <button type="button" className={modalButton('flat-danger', true)} disabled={busy} aria-label={`${t.delete} ${item.name}`} onClick={() => setRemoving(item)}>
+                                                    {t.delete}
+                                                </button>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
+                </PtahCrudModal>
+            )}
+            {removing !== null && (
+                <PtahConfirmDialog
+                    title={t.deleteTitle}
+                    text={t.deleteConfirm.replace(':name', removing.name)}
+                    confirm={t.delete}
+                    cancel={t.cancel}
+                    closeLabel={t.close}
+                    danger
+                    onCancel={() => setRemoving(null)}
+                    onConfirm={() => void remove(removing)}
+                />
+            )}
         </>
     );
 }
