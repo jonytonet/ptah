@@ -88,6 +88,7 @@ a company-bound role on any request that named no company.
 
 ## Next steps
 
+- **Prefer React or Vue?** `php artisan ptah:install --stack=react` (or `vue`) draws these same screens with that stack, over the same back end — [Stacks.md](Stacks.md)
 - **Add fields or relations:** see the `--fields` syntax in [Commands.md](Commands.md) (FK auto-detection with `*_id`, `surname=` labels, `--no-soft-deletes`, `--api`)
 - **Tune the CRUD without code:** column renderers, filters, hooks and permissions in [BaseCrud.md](BaseCrud.md) and [Configuration.md](Configuration.md)
 - **Post-scaffold checklist:** relationships left as TODOs and validation review in [KnownLimitations.md](KnownLimitations.md)

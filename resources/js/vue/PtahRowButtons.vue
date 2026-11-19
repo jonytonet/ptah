@@ -28,7 +28,7 @@ const emit = defineEmits<{ run: [action: RowAction] }>();
         <template v-if="card">
             <PtahRowAction v-for="(action, index) in row.actions" :key="index" :action="action" @run="emit('run', action)" />
         </template>
-        <button v-if="permissions.canUpdate && !trashed" type="button" class="pc-act pc-act--edit" :title="w.edit" :aria-label="w.edit" @click.stop="crud.openEdit(row.id)">
+        <button v-if="permissions.canUpdate && !trashed" type="button" class="pc-act pc-act--edit" :title="w.edit" :aria-label="w.edit" @pointerenter="crud.intendEdit(row.id)" @pointerleave="crud.leaveEdit()" @focus="crud.intendEdit(row.id)" @blur="crud.leaveEdit()" @click.stop="crud.openEdit(row.id)">
             <Icon name="edit" />
         </button>
         <button v-if="permissions.canCreate && !trashed" type="button" class="pc-act pc-act--dup" :title="w.duplicate" :aria-label="w.duplicate" @click.stop="crud.duplicate(row.id)">

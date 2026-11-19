@@ -269,6 +269,7 @@ device/browser; it never leaks credentials or any other account data.
 | `crud_api.entry` | — | `resources/js/ptah-app.jsx` (`.js` for Vue) | The front-end entry the page of a screen loads (React/Vue stack) |
 | `crud_api.enabled` | `PTAH_CRUD_API` | `false` | Turns on the headless CRUD API (the BaseCrud over JSON). Since 1.59.0. [HeadlessApi.md](HeadlessApi.md) |
 | `crud_api.prefix` | — | `ptah/api` | URL prefix of the API routes |
+| `crud_api.embed` | `PTAH_CRUD_API_EMBED` | `true` | The page of a screen carries the screen's first API answers, so opening it is one request. Only on a page whose route has every middleware of `crud_api.middleware`. [Stacks.md](Stacks.md#navigation) |
 | `crud_api.middleware` | — | `['web', 'auth']` | Middleware of the API routes — e.g. `['web', 'auth:admin']`, or `['api', 'auth:sanctum']` for tokens |
 | `crud.cache_enabled` | — | `true` | This document — [General Settings](#general-settings) |
 | `crud.cache_ttl` | — | `3600` | This document — [General Settings](#general-settings) |

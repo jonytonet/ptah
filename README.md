@@ -26,6 +26,7 @@
 | **Ptah Forge** | 31 Blade components (`<x-forge-*>`) with Tailwind v4 + Alpine.js — layout, sidebar, navbar, modal, table, forms and much more |
 | **ptah:forge** | SOLID scaffolding generator: an entire entity in seconds, with layered architecture and customisable stubs |
 | **BaseCrud** | Fully generated Livewire screen — filters, create/edit modal, soft delete, export and per-user preferences, all configurable via the database |
+| **Stacks** | The same screens in **Livewire** (default), **React** or **Vue** — chosen at install, over one engine: a screen configured once works in all three ([Stacks](docs/Stacks.md)) |
 
 ---
 
@@ -216,6 +217,24 @@ php artisan ptah:install
 php artisan ptah:install --boost
 ```
 
+### Choose your stack (since 1.59.0)
+
+```bash
+php artisan ptah:install                 # Livewire (default)
+php artisan ptah:install --stack=react   # React 19
+php artisan ptah:install --stack=vue     # Vue 3
+```
+
+The back end is the same in the three — models, services, screen configs,
+permissions, hooks. React and Vue draw the screens over the
+[headless CRUD API](docs/HeadlessApi.md), which runs the very engine of the
+Livewire screen, so nothing is lost: filters, views (table, cards, kanban,
+calendar), master/detail, import/export, attachments, history, the visual
+config editor, the administration screens, realtime and single-page
+navigation. `ptah:forge` generates each entity's screen for the stack you
+chose, and you can switch later by running the installer with the other
+`--stack`. See **[Stacks →](docs/Stacks.md)**.
+
 ### From GitHub (latest dev version)
 
 Add to your `composer.json` before requiring:
@@ -285,7 +304,7 @@ Ptah is designed to work with AI agents. When installed with `--boost`, the pack
 
 | Command | Description |
 |---|---|
-| `php artisan ptah:install` | Installs the package (config, stubs, migrations, default data). Flags: `--demo`, `--boost`, `--force`, `--skip-npm` |
+| `php artisan ptah:install` | Installs the package (config, stubs, migrations, default data). Flags: `--stack=livewire\|react\|vue`, `--demo`, `--boost`, `--force`, `--skip-npm` |
 | `php artisan ptah:forge {Entity}` | **Generates the complete structure for an entity** ⭐ |
 | `php artisan ptah:config {Model}` | Configures a BaseCrud screen (columns/filters/actions/styles) via CLI. Accepts the FQCN or the runtime key |
 | `php artisan ptah:config:doctor` | Audits all CRUD configs — orphan keys, malformed configs, empty screens, route ambiguity (`--fix` rewrites non-canonical model keys and migrates legacy shapes) |
@@ -385,6 +404,8 @@ To keep the UI always up to date, keep `resources/views/vendor/ptah/` empty.
 |---|---|
 | **[Quick Start](docs/QuickStart.md)** | Your first CRUD in 5 minutes — one entity, SQLite, zero decisions |
 | **[Installation Guide](docs/InstallationGuide.md)** | Step-by-step guide with real terminal output — Laravel 11/12, all modules and Boost |
+| **[Stacks](docs/Stacks.md)** | Livewire, React or Vue — installing each, the generated screens, `<PtahCrud>` and the other components, single-page navigation, realtime, what differs between them |
+| **[Headless API](docs/HeadlessApi.md)** | The BaseCrud over JSON (`ptah/api/crud/{screen}`) — the engine behind the React and Vue stacks, usable from any client |
 | **[BaseCrud](docs/BaseCrud.md)** | Complete reference — column schema, types, filters, renderers, export, preferences and UI configuration |
 | **[Configuration](docs/Configuration.md)** | Every `config/ptah.php` key, the CRUD JSON config shape and the per-user Appearance system |
 | **[Commands](docs/Commands.md)** | Every `artisan ptah:*` command, every flag and the full `ptah:config` CLI syntax |

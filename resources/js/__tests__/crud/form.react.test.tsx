@@ -270,3 +270,18 @@ describe('form parity (React)', () => {
         expect(await screen.findByRole('heading', { name: 'Nova Conta' })).toBeTruthy();
     });
 });
+
+describe('editing shows a loading at the click (React)', () => {
+    it('a loading covers the screen at once; the modal opens with the record in it', async () => {
+        await mount();
+        fireEvent.click(within(screen.getByText('Alfa').closest('tr')!).getByRole('button', { name: 'Editar' }));
+
+        // At the click: the loading, and no empty modal.
+        expect(document.querySelector('[data-ptah-opening="edit"]')).not.toBeNull();
+        expect(screen.queryByRole('dialog')).toBeNull();
+
+        const dialog = await screen.findByRole('dialog');
+        expect(dialog.getAttribute('aria-busy')).toBeNull();
+        expect(document.querySelector('[data-ptah-opening="edit"]')).toBeNull();
+    });
+});

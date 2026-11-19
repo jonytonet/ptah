@@ -7,7 +7,7 @@
 import { Fragment, useMemo, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { initialPage, PtahApi, PtahNavigator, readBoot, setNavigationHandler, setSnapshotScope, warmOptions, words } from '../core';
+import { embedsAnswers, initialPage, preloadAnswers, PtahApi, PtahNavigator, readAnswers, readBoot, setNavigationHandler, setSnapshotScope, warmOptions, words } from '../core';
 import type { ControllerOptions, NavigatorOptions, NavigatorState, PtahBoot, PtahPage } from '../core';
 import { PtahAudit, PtahUserPermissions } from './admin/access';
 import { PtahAiModels } from './admin/ai';
@@ -184,7 +184,9 @@ export function mountPtah(element: HTMLElement | null, extra: Partial<PtahAppPro
     const boot = readBoot(element);
     // The kept listings (instant) belong to this user and company.
     setSnapshotScope(boot?.me?.user?.id, boot?.me?.company_id);
-    const navigator = extra.onNavigate || options.navigate === false ? undefined : new PtahNavigator(first, { ...warmOptions(read.api, boot?.me?.screens), ...options });
+    // The first answers of the screen came with the page: it opens without asking again.
+    preloadAnswers(readAnswers(element));
+    const navigator = extra.onNavigate || options.navigate === false ? undefined : new PtahNavigator(first, { ...warmOptions(read.api, boot?.me?.screens, embedsAnswers(element)), ...options });
 
     const root = createRoot(element);
     root.render(

@@ -5,8 +5,15 @@ declare(strict_types=1);
 namespace Ptah\Support;
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Ptah\Crud\CrudScreenRegistry;
+use Ptah\Http\Controllers\Admin\CrudConfigApiController;
+use Ptah\Http\Controllers\Crud\FiltersApiController;
+use Ptah\Http\Controllers\CrudApiController;
 use Ptah\Http\Headless\HeadlessCompanySwitcher;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 /**
@@ -138,6 +145,88 @@ final class StackBoot
         }
 
         return ['menu' => $menu, 'me' => self::me($user), 'switcher' => $switcher];
+    }
+
+    /**
+     * Whether this page may carry API answers (`answers()`): the API is on,
+     * someone is signed in, and the page's route went through every
+     * middleware the API is behind (`ptah.crud_api.middleware`) — an answer
+     * is never embedded in a page that is less guarded than the endpoint it
+     * came from. `ptah.crud_api.embed => false` turns it off.
+     */
+    public static function embeds(?Request $request = null): bool
+    {
+        if (! config('ptah.crud_api.enabled') || ! config('ptah.crud_api.embed', true) || auth()->user() === null) {
+            return false;
+        }
+
+        $route = ($request ?? request())->route();
+        if (! $route instanceof Route) {
+            return false;
+        }
+
+        $api = array_filter((array) config('ptah.crud_api.middleware', ['web', 'auth']), 'is_string');
+
+        return array_diff($api, array_filter($route->gatherMiddleware(), 'is_string')) === [];
+    }
+
+    /**
+     * The first answers a CRUD screen asks the API for, by the path the
+     * client asks them with — its schema, its first listing (reopened where
+     * the user left), the description of its filters and whether this user
+     * gets the config button. The page of the screen embeds them
+     * (`data-answers`), so opening a screen, or moving to it, is one request
+     * instead of five. Each is the very answer of its endpoint: the
+     * controller's action runs here.
+     *
+     * Null when nothing is embedded: `embeds()` says no, the page URL has a
+     * query string (the client then asks, as before), or the screen refuses
+     * this user — the client asks and shows the refusal itself.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function answers(string $screen, ?Request $request = null): ?array
+    {
+        $request ??= request();
+
+        if ($screen === '' || preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*$/', $screen) !== 1
+            || $request->query() !== [] || ! self::embeds($request)) {
+            return null;
+        }
+
+        $base = '/crud/'.rawurlencode($screen);
+        $plain = fn (): Request => $request->duplicate([], []);
+
+        $calls = [
+            $base.'/schema' => fn (): JsonResponse => app(CrudApiController::class)->schema($plain(), $screen),
+            $base.'?restore=1' => fn (): JsonResponse => app(CrudApiController::class)->index($request->duplicate(['restore' => '1'], []), $screen),
+            $base.'/filters/meta' => fn (): JsonResponse => app(FiltersApiController::class)->meta($plain(), $screen),
+            $base.'/config/can' => fn (): JsonResponse => app(CrudConfigApiController::class)->can($plain(), $screen),
+        ];
+
+        $answers = [];
+
+        foreach ($calls as $path => $call) {
+            try {
+                $response = $call();
+                if ($response->getStatusCode() === 200) {
+                    $answers[$path] = $response->getData();
+                }
+            } catch (Throwable $e) {
+                // A refusal (403/404) is the client's to show; anything else
+                // is reported and the client asks the endpoint itself.
+                if (! $e instanceof HttpExceptionInterface) {
+                    report($e);
+                }
+            }
+
+            // Without a schema there is no screen to draw: nothing is embedded.
+            if ($answers === []) {
+                return null;
+            }
+        }
+
+        return $answers;
     }
 
     /** A URL as it is; a path under public/ as its asset URL. */

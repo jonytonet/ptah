@@ -627,7 +627,11 @@ const TOAST_ICONS: Record<string, string> = { success: 'checkCircle', warn: 'ale
             </div>
         </div>
 
-        <PtahForm v-if="state.form || crud.formOpening" :crud="crud" :state="state" :t="t" :locale="locale" />
+        <PtahForm v-if="state.form || crud.formOpening === 'create'" :crud="crud" :state="state" :t="t" :locale="locale" />
+        <!-- Editing: a loading over the screen at the click; the modal opens with the record in it. -->
+        <div v-if="!state.form && crud.formOpening === 'edit'" class="pc-busy" role="status" :aria-label="t.loading" data-ptah-opening="edit">
+            <span class="pc-busy-spin" aria-hidden="true"></span>
+        </div>
         <!-- After the form in the DOM: they open over it. -->
         <PtahCrudHistory :crud="crud" :locale="locale" />
         <PtahCrudAttachments :crud="crud" :locale="locale" />

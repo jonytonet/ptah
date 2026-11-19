@@ -95,6 +95,49 @@ export function normalizeShell(raw: Partial<Shell> | null | undefined): Shell {
     };
 }
 
+// ── Answers the page brought with it ────────────────────────────────────────
+
+/** An embedded answer is used if it is asked for within this time (ms). */
+export const PRELOAD_MS = 20_000;
+
+const preloaded = new Map<string, { value: unknown; at: number }>();
+
+/**
+ * Keeps the API answers a page embedded (`data-answers` of `#ptah-app`, by
+ * API path): the first GET of each path takes its answer from here instead
+ * of the network — once, and only while it is fresh. Opening a screen is then
+ * the one request of its page.
+ */
+export function preloadAnswers(answers: unknown): void {
+    if (answers === null || typeof answers !== 'object' || Array.isArray(answers)) {
+        return;
+    }
+    const now = Date.now();
+    preloaded.forEach((entry, path) => {
+        if (now - entry.at > PRELOAD_MS) {
+            preloaded.delete(path);
+        }
+    });
+    for (const [path, value] of Object.entries(answers as Record<string, unknown>)) {
+        preloaded.set(path, { value, at: now });
+    }
+}
+
+/** Drops every embedded answer — signing out, switching company. */
+export function forgetPreloaded(): void {
+    preloaded.clear();
+}
+
+function takePreloaded(path: string): { value: unknown } | null {
+    const entry = preloaded.get(path);
+    if (!entry) {
+        return null;
+    }
+    preloaded.delete(path);
+
+    return Date.now() - entry.at <= PRELOAD_MS ? { value: entry.value } : null;
+}
+
 /** The ptah headless CRUD API, one method per endpoint. */
 export class PtahApi {
     private readonly baseUrl: string;
@@ -117,6 +160,13 @@ export class PtahApi {
     }
 
     private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+        if (method === 'GET' && body === undefined) {
+            // The page already brought this answer (`preloadAnswers`).
+            const known = takePreloaded(path);
+            if (known) {
+                return known.value as T;
+            }
+        }
         const headers: Record<string, string> = {
             Accept: 'application/json',
             'X-Requested-With': 'XMLHttpRequest',

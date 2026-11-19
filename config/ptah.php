@@ -362,6 +362,10 @@ return [
         'enabled' => env('PTAH_CRUD_API', false),
         'prefix' => 'ptah/api',
         'middleware' => ['web', 'auth'],
+        // The page of a screen carries its first API answers (schema, listing,
+        // filters), so opening it is one request. Only on a page whose route
+        // has every middleware above. false = the client asks for each.
+        'embed' => (bool) env('PTAH_CRUD_API_EMBED', true),
         // The front-end entry the page of a screen loads (React/Vue stack).
         'entry' => env('PTAH_STACK', 'livewire') === 'vue' ? 'resources/js/ptah-app.js' : 'resources/js/ptah-app.jsx',
     ],

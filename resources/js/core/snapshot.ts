@@ -9,7 +9,7 @@
  * ever replayed to the same user in the same tab session. Signing out and
  * switching company forget them all.
  */
-import { PtahApi } from './api';
+import { forgetPreloaded, PtahApi } from './api';
 import type { GroupBreak, Listing, ListState, Meta, Preferences, Row, Schema, Total } from './types';
 
 export const SNAPSHOT_PREFIX = 'ptah:snap:';
@@ -174,14 +174,20 @@ export function warmPage(apiUrl?: string, api?: PtahApi): (page: { page: string;
  * What `mountPtah` gives its navigator: `prepare` (above) and `early`, which
  * warms the CRUD screen named by the URL's path — the key `ptah:forge`
  * registers — while the document is still on its way, when the user has it
- * (`screens` of `/me`).
+ * (`screens` of `/me`). Not when the server embeds a screen's first answers
+ * in its page (`embedded`, `data-embed`): the document is then the only request.
  */
-export function warmOptions(apiUrl?: string, screens: string[] = []): { prepare: ReturnType<typeof warmPage>; early: (url: URL) => void } {
+export function warmOptions(apiUrl?: string, screens: string[] = [], embedded = false): { prepare: ReturnType<typeof warmPage>; early: (url: URL) => void } {
     const api = new PtahApi({ baseUrl: apiUrl });
 
     return {
         prepare: warmPage(apiUrl, api),
         early: (url) => {
+            // The page brings the screen's first answers itself (`data-answers`):
+            // asking for them beside it would be the same work twice.
+            if (embedded) {
+                return;
+            }
             const key = decodeURIComponent(url.pathname).replace(/^\/+|\/+$/g, '');
             if (key !== '' && screens.includes(key)) {
                 void warmScreen(api, key);
@@ -245,6 +251,7 @@ export function takeWarm(screen: string): Promise<[Schema, Listing]> | null {
 /** Forgets every kept listing — signing out, switching company. */
 export function forgetSnapshots(): void {
     warm.clear();
+    forgetPreloaded();
     try {
         const store = storage();
         if (!store) {

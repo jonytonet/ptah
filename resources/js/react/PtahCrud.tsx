@@ -192,7 +192,13 @@ export function PtahCrud({ screen, locale, title, toolbar, controller, ...option
             {/* A board shows every record of the filter: no pages. */}
             {!board && <Pagination crud={crud} state={state} t={t} w={w} />}
             {state.selection.length > 0 && <BulkBar crud={crud} state={state} t={t} w={w} />}
-            {(state.form || crud.formOpening) && <PtahCrudFormModal crud={crud} state={state} t={t} locale={locale} />}
+            {(state.form || crud.formOpening === 'create') && <PtahCrudFormModal crud={crud} state={state} t={t} locale={locale} />}
+            {/* Editing: a loading over the screen at the click; the modal opens with the record in it. */}
+            {!state.form && crud.formOpening === 'edit' && (
+                <div className="pc-busy" role="status" aria-label={t.loading} data-ptah-opening="edit">
+                    <span className="pc-busy-spin" aria-hidden="true" />
+                </div>
+            )}
             {/* After the form in the DOM: they open over it. */}
             <PtahCrudHistory crud={crud} locale={locale} />
             <PtahCrudAttachments crud={crud} locale={locale} />
@@ -742,7 +748,7 @@ function RowButtons({ crud, state, w, row, card }: PartProps & { row: Row; card?
         <div className={card ? 'pc-card-btns' : 'pc-row-btns'}>
             {card && row.actions.map((action, index) => <ActionButton key={index} crud={crud} row={row} action={action} w={w} />)}
             {permissions.canUpdate && !trashed && (
-                <button type="button" className="pc-act pc-act--edit" title={w.edit} aria-label={w.edit} onClick={(event) => (stop(event), void crud.openEdit(row.id))}>
+                <button type="button" className="pc-act pc-act--edit" title={w.edit} aria-label={w.edit} onPointerEnter={() => crud.intendEdit(row.id)} onPointerLeave={() => crud.leaveEdit()} onFocus={() => crud.intendEdit(row.id)} onBlur={() => crud.leaveEdit()} onClick={(event) => (stop(event), void crud.openEdit(row.id))}>
                     <Icon name="edit" />
                 </button>
             )}

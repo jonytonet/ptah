@@ -36,9 +36,12 @@ php artisan ptah:install --force
 php artisan ptah:install --skip-npm
 php artisan ptah:install --demo
 php artisan ptah:install --boost
+php artisan ptah:install --stack=react
+php artisan ptah:install --stack=vue
 ```
 
 **Options:**
+- ``--stack=livewire|react|vue`` — What draws the screens (default ``livewire``; since 1.59.0). For ``react``/``vue`` it also sets ``PTAH_STACK`` and ``PTAH_CRUD_API=true`` in ``.env``, writes the entry file (``resources/js/ptah-app.jsx`` or ``.js``) and ``routes/ptah-screens.php``, and prepares ``vite.config.js`` and ``package.json``. Safe to run again; running it with another value switches the stack. See [Stacks.md](Stacks.md)
 - ``--force`` — Overwrites existing files without asking
 - ``--skip-npm`` — Does not run ``npm install`` and ``npm run build``
 - ``--demo`` — Installs demo data (companies, departments, roles, menu)

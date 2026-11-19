@@ -125,6 +125,9 @@
          Why it matters: a literal written here is invisible to the user's theme choice, so the
          sidebar and navbar would stay slate no matter which tone the user picks. --}}
     <style>
+        /* Overlay de carregando do BaseCrud (editar, salvar...): disco na cor da superficie. */
+        .ptah-busy-spin { filter: drop-shadow(0 4px 12px rgba(0, 0, 0, .18)); }
+        .ptah-busy-disc { fill: var(--ptah-surface); }
         [x-cloak] { display: none !important; }
         .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
         .scrollbar-none::-webkit-scrollbar { display: none; }

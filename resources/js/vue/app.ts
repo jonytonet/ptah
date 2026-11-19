@@ -6,7 +6,7 @@
  */
 import { createApp, defineComponent, Fragment, h, markRaw, onBeforeUnmount, shallowRef } from 'vue';
 import type { Component, PropType, VNode } from 'vue';
-import { initialPage, PtahApi, PtahNavigator, readBoot, setNavigationHandler, setSnapshotScope, warmOptions, words } from '../core';
+import { embedsAnswers, initialPage, preloadAnswers, PtahApi, PtahNavigator, readAnswers, readBoot, setNavigationHandler, setSnapshotScope, warmOptions, words } from '../core';
 import type { ControllerOptions, NavigatorOptions, NavigatorState, PtahBoot, PtahPage } from '../core';
 import { PtahAudit, PtahUserPermissions } from './admin/access';
 import { PtahAiModels } from './admin/ai';
@@ -173,8 +173,10 @@ export function mountPtah(element: HTMLElement | null, extra: Record<string, unk
     const boot = readBoot(element);
     // The kept listings (instant) belong to this user and company.
     setSnapshotScope(boot?.me?.user?.id, boot?.me?.company_id);
+    // The first answers of the screen came with the page: it opens without asking again.
+    preloadAnswers(readAnswers(element));
     const own = typeof extra.onNavigate === 'function' ? (extra.onNavigate as (url: string) => void) : null;
-    const navigator = own || options.navigate === false ? undefined : markRaw(new PtahNavigator(first, { ...warmOptions(read.api, boot?.me?.screens), ...options }));
+    const navigator = own || options.navigate === false ? undefined : markRaw(new PtahNavigator(first, { ...warmOptions(read.api, boot?.me?.screens, embedsAnswers(element)), ...options }));
 
     const app = createApp(PtahApp, {
         page: first.page,

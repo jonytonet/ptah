@@ -26,6 +26,11 @@
     // (X-Ptah-Navigate) — its layout is already on screen.
     $ptahBoot = request()->headers->has('X-Ptah-Navigate') ? null : \Ptah\Support\StackBoot::forPage($page ?? 'crud');
     $ptahBootJson = $ptahBoot === null ? false : json_encode($ptahBoot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    // The first answers of a CRUD screen (schema, listing, filters, config
+    // button), so opening it is this one request — see StackBoot::answers().
+    $ptahEmbeds = \Ptah\Support\StackBoot::embeds();
+    $ptahAnswers = $ptahEmbeds && ($page ?? 'crud') === 'crud' && ($screen ?? '') !== '' ? \Ptah\Support\StackBoot::answers((string) $screen) : null;
+    $ptahAnswersJson = $ptahAnswers === null ? false : json_encode($ptahAnswers, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
@@ -70,6 +75,8 @@
          @if ($ptahThemeMode) data-theme-mode="{{ $ptahThemeMode }}" @endif
          @if ($ptahProfile) data-profile="{{ $ptahProfile }}" @endif
          @if ($ptahLogout) data-logout="{{ $ptahLogout }}" @endif
+         @if ($ptahEmbeds) data-embed="1" @endif
+         @if ($ptahAnswersJson !== false) data-answers="{{ $ptahAnswersJson }}" @endif
          @if ($ptahBootJson !== false) data-boot="{{ $ptahBootJson }}" @endif></div>
 </body>
 </html>

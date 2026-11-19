@@ -201,4 +201,20 @@ class LivewireLegacyFixesTest extends TestCase
         Livewire::test(CrudConfigEditor::class, ['model' => LegacyFixItem::class])
             ->assertDontSeeHtml('<span class="ptah-c-btn_label">Config</span>');
     }
+
+    #[Test]
+    public function editing_shows_a_loading_over_the_screen_from_the_click(): void
+    {
+        $this->configure();
+
+        // The modal only opens when the server answers: until then the click
+        // showed nothing. The overlay follows openEdit (and duplicate) at once.
+        Livewire::test(BaseCrud::class, ['model' => LegacyFixItem::class])
+            ->assertSeeHtml('wire:loading.delay.shortest wire:target="openEdit,duplicateRecord"')
+            ->assertSeeHtml('wire:loading.delay.long wire:target="save,deleteRecord,export"')
+            // Not a selector Livewire hides at rest: the overlay would always show.
+            ->assertDontSeeHtml('wire:loading.flex.delay')
+            // The spinner centres itself (a wire:loading block is shown as inline-block).
+            ->assertSeeHtml('position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)');
+    }
 }

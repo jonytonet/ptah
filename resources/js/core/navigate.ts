@@ -13,6 +13,7 @@
  * document load, so nothing ever breaks: the worst case is today's behaviour.
  */
 import type { SwitcherState } from './admin/company';
+import { preloadAnswers } from './api';
 import type { Me } from './types';
 
 /** The pages drawn without the signed-in layout. Moving between the two kinds is a full load. */
@@ -102,8 +103,22 @@ export function readBoot(element: HTMLElement): PtahBoot | null {
     };
 }
 
+/** The API answers the page embedded (`data-answers`), by API path, or null. */
+export function readAnswers(element: HTMLElement): Record<string, unknown> | null {
+    const answers = parseJson(element.dataset.answers);
+
+    return isRecord(answers) ? answers : null;
+}
+
+/** Whether the server embeds a screen's first answers in its page (`data-embed`). */
+export function embedsAnswers(element: HTMLElement): boolean {
+    return element.dataset.embed !== undefined;
+}
+
 export interface ParsedDocument {
     page: PtahPage;
+    /** The first API answers of the page's screen (`data-answers`). Never kept in the history. */
+    answers: Record<string, unknown> | null;
     /** The `<meta name="csrf-token">` of the answer. */
     csrf: string | null;
 }
@@ -121,6 +136,7 @@ export function parsePtahDocument(html: string, url: string): ParsedDocument | n
 
     return {
         page: readPage(element, url, doc.querySelector('title')?.textContent?.trim() ?? ''),
+        answers: readAnswers(element),
         csrf: doc.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? null,
     };
 }
@@ -348,7 +364,11 @@ export class PtahNavigator {
             return null;
         }
 
-        return parsePtahDocument(await response.text(), finalUrl);
+        const parsed = parsePtahDocument(await response.text(), finalUrl);
+        // What the screen would ask the API next came with its page.
+        preloadAnswers(parsed?.answers);
+
+        return parsed;
     }
 
     /** A description fetched on a hover, still fresh, for this URL. */

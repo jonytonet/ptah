@@ -232,6 +232,12 @@ This is the main command that bootstraps everything:
 php artisan ptah:install
 ```
 
+> **React or Vue instead of Livewire (since 1.59.0):** add `--stack=react` or
+> `--stack=vue`. The installer then also turns the headless API on, writes the
+> front-end entry file and prepares Vite. Everything else in this guide — the
+> modules, `ptah:forge`, the screen configs, the permissions — is the same in
+> the three stacks. Details in [Stacks.md](Stacks.md).
+
 The installer will ask whether it should run migrations automatically (it skips the question when the Ptah tables already exist):
 
 ```

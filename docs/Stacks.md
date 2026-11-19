@@ -173,6 +173,29 @@ out and switching company forget them all; a screen the server now refuses
 (403/404) drops its copy and shows the refusal, never the old rows. The
 first visit of a screen draws a skeleton of its shape (`PtahCrudSkeleton`).
 
+### One request per screen
+
+The page of a screen carries what the screen would ask the API first — its
+schema, its first listing, the description of its filters and whether the
+user gets the config button — in `data-answers` of `#ptah-app`. The front end
+takes each answer from there once, so opening a screen (a document load or a
+move in place) is the single request of its page.
+
+This happens only when the page is as guarded as the API: the route of the
+page must have every middleware listed in `ptah.crud_api.middleware`
+(`['web', 'auth']` by default — the routes `ptah:forge` writes have both). A
+page that lacks one, or whose URL has a query string, embeds nothing and the
+front end asks the API as before (the screen works, with more requests).
+`PTAH_CRUD_API_EMBED=false` turns the embedding off.
+
+### Editing a record
+
+A click on *Edit* shows a loading over the screen at once and the modal opens
+with the record in it. The record is asked for ahead when the pointer rests on
+the edit button of a row (or the button takes the focus), so the click that
+follows usually opens the form without waiting — `crud.intendEdit(id)` and
+`crud.leaveEdit()` do the same for a button of your own.
+
 ## Styling
 
 `ptah-ui.css` is self-contained (no Tailwind needed). It follows `--ptah-primary`

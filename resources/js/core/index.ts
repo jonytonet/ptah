@@ -34,5 +34,7 @@ export {
 export type { AdminEntry, SidebarState } from './layout';
 export { GUEST_PAGES, INTENT_MS, initialPage, isGuestPage, navigateTo, parsePtahDocument, PREFETCH_MS, PREPARE_MS, PtahNavigator, readBoot, readPage, setNavigationHandler } from './navigate';
 export type { NavigateOptions, NavigatorOptions, NavigatorState, ParsedDocument, PtahBoot, PtahPage } from './navigate';
+export { forgetPreloaded, preloadAnswers, PRELOAD_MS } from './api';
+export { embedsAnswers, readAnswers } from './navigate';
 export { dropSnapshot, forgetSnapshots, readSnapshot, setSnapshotScope, SNAPSHOT_LIMIT, SNAPSHOT_PREFIX, snapshotScope, takeWarm, takeWarmCall, WARM_MS, warmCall, warmOptions, warmPage, warmScreen, writeSnapshot } from './snapshot';
 export type { Snapshot } from './snapshot';

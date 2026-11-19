@@ -108,6 +108,12 @@ const emptyList = (): ListState => ({
  * Everything a CRUD screen does, without a framework: the React and the Vue
  * components only draw this state and call these methods.
  */
+/** How long the pointer rests on an edit button before its record is asked for (ms). */
+export const EDIT_INTENT_MS = 80;
+
+/** A record asked for on intent is used by the click that follows within this time (ms). */
+export const EDIT_WARM_MS = 8000;
+
 export class CrudController {
     readonly api: PtahApi;
     private state: CrudState;
@@ -211,6 +217,8 @@ export class CrudController {
         this.stopRealtime();
         this.stopRealtime = () => undefined;
         this.realtimeKey = '';
+        this.leaveEdit();
+        this.warmedEdit = null;
         this.timers.forEach(clearTimeout);
         this.timers.clear();
         this.listeners.clear();
@@ -481,9 +489,10 @@ export class CrudController {
     private openSeq = 0;
 
     /**
-     * A form is on its way (the request of "New"/"Edit" is in flight): the
-     * screen can show the modal with its loading state at once, as the
-     * Livewire modal does. `state.form` stays null until the data arrives, so
+     * A form is on its way (the request of "New"/"Edit" is in flight). For
+     * 'create' the screen shows the modal with its loading state at once, as
+     * the Livewire modal does; for 'edit' it shows a loading over the screen
+     * and the modal opens with the record in it. `state.form` stays null until the data arrives, so
      * nothing that follows the form sees an empty one.
      */
     get formOpening(): 'create' | 'edit' | null {
@@ -538,11 +547,55 @@ export class CrudController {
         }
     }
 
+    /** The record asked for ahead, on the intent to edit it (one at a time). */
+    private warmedEdit: { id: RowId; promise: Promise<FormPayload>; at: number } | null = null;
+    private intentTimer: ReturnType<typeof setTimeout> | null = null;
+
+    /**
+     * The pointer rests on (or the focus reaches) the edit button of a row:
+     * its record is asked for ahead, so the click that usually follows opens
+     * the form without waiting. Kept EDIT_WARM_MS; `leaveEdit()` cancels an
+     * intent that did not last.
+     */
+    intendEdit(id: RowId, delay = EDIT_INTENT_MS): void {
+        this.leaveEdit();
+        if (this.warmedEdit && this.warmedEdit.id === id && Date.now() - this.warmedEdit.at < EDIT_WARM_MS) {
+            return;
+        }
+        this.intentTimer = setTimeout(() => {
+            this.intentTimer = null;
+            const promise = this.api.show(this.screen, id);
+            const entry = { id, promise, at: Date.now() };
+            this.warmedEdit = entry;
+            // A refusal is the click's to show: the click asks again.
+            promise.catch(() => {
+                if (this.warmedEdit === entry) {
+                    this.warmedEdit = null;
+                }
+            });
+        }, delay);
+    }
+
+    leaveEdit(): void {
+        if (this.intentTimer !== null) {
+            clearTimeout(this.intentTimer);
+            this.intentTimer = null;
+        }
+    }
+
+    private takeWarmedEdit(id: RowId): Promise<FormPayload> | null {
+        const known = this.warmedEdit;
+        this.warmedEdit = null;
+
+        return known && known.id === id && Date.now() - known.at < EDIT_WARM_MS ? known.promise : null;
+    }
+
     async openEdit(id: RowId): Promise<void> {
+        this.leaveEdit();
         this.startOpening('edit');
         const mine = ++this.openSeq;
         try {
-            const record = await this.api.show(this.screen, id);
+            const record = await (this.takeWarmedEdit(id) ?? this.api.show(this.screen, id));
             if (mine !== this.openSeq) {
                 return;
             }
