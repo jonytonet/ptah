@@ -332,6 +332,7 @@ Ptah is designed to work with AI agents. When installed with `--boost`, the pack
 | `php artisan ptah:blueprint {spec.json}` | A whole module from one spec: forge in FK order, migrate, config, menu, permissions, seed |
 | `php artisan ptah:last-error` | The last log error, compact: exception, SQL, application frames only |
 | `php artisan ptah:upgrade-check` | After updating ptah: what this project must do (config keys, published views/stubs, FK, migrations) |
+| `php artisan ptah:spa-audit` | Before turning `PTAH_SPA_NAVIGATION` on: what in this project's views and scripts assumes a document load |
 
 > Full reference for every command and every flag: **[Commands.md](docs/Commands.md)**.
 > Swagger/OpenAPI docs are generated via `ptah:forge --api` (or `ptah:module api`) followed

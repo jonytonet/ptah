@@ -658,7 +658,15 @@ timer keyed by URL: revisiting a screen within that window could delete a newer
 in-flight prefetch, logging `Cannot set properties of undefined (setting 'html')` and
 leaving a click that waited on it without navigating. So there is no hover prefetch.
 Avoid `wire:navigate` on your own links in this layout for the same reason (or keep
-them on screens you do not revisit quickly); use `@ptahNavigate($url)`.
+them on screens you do not revisit quickly); use `@ptahNavigate($url)`. The defect is
+still in Livewire **4.4.8** (checked in 1.59.1: the expiry timer is still keyed by
+URL), so this holds for 4.3.x and 4.4.x alike.
+
+**While the next page is on its way** the content of the page being left
+(`<main>`) is inert: a click there could only be lost — its answer would arrive
+after the page is gone. The sidebar and the top bar stay usable. On the swap, the
+Livewire requests still pending for the components of the page being left are
+cancelled; the ones of persisted components (assistant, toasts) are kept.
 
 **What stays a full load** — another origin, `javascript:`/`mailto:`/`tel:`, a
 `target` other than `_self`, downloads/exports/print views (they are `download`
@@ -690,7 +698,26 @@ patterns in `forge.spa_navigation_except` (`Str::is`, no leading slash):
 'spa_navigation_except' => ['relatorios/*', 'legado'],
 ```
 
-**Before turning it on, check your own scripts** (pages rendered in this layout):
+A screen with a layout of its own (a point of sale, a TV panel) can say so where
+its route is declared, instead of being listed in the config — the links to it are
+then printed without the attribute, and the browser loads it directly (otherwise
+ptah fetches it, sees it is not the layout and loads it again: two requests):
+
+```php
+Route::get('pdv', PdvController::class)->middleware('ptah.full-load');
+```
+
+**A link button.** `@ptahNavigate` is a Blade directive, so it cannot be written
+inside a component tag. `<x-forge-button>` takes `navigate`, which applies the same
+rule to its `href`:
+
+```blade
+<x-forge-button :href="route('clientes.index')" navigate>Clientes</x-forge-button>
+```
+
+**Before turning it on, check your own scripts** (pages rendered in this layout).
+`php artisan ptah:spa-audit` lists the places below with file and line
+([AgentTools.md](AgentTools.md#ptahspa-audit)):
 
 - `DOMContentLoaded` / `window.onload` never fire again after the first page — use
   `document.addEventListener('livewire:navigated', …)` (it also fires on the first
@@ -707,6 +734,13 @@ patterns in `forge.spa_navigation_except` (`Str::is`, no leading slash):
   needs its re-init on `livewire:navigated`, or its page in `spa_navigation_except`.
 - `<script src>` tags in `<head>` that differ between pages are injected (and run)
   once; libraries loaded in the body need `data-navigate-once`.
+- What you push to the layout's `@stack('scripts')` from a `View::composer` (a
+  global search, a quick-create shortcut, an "install the app" prompt) is rendered
+  again on every page. That is what you want for something that depends on the URL;
+  for the rest, an `x-data` that calls `window.addEventListener` adds one more
+  listener per visit — use Alpine's `@event.window` (released with the element), a
+  flag on `window`, or wrap the block in `@persist('name')` so the same element is
+  carried from page to page instead of rendered again.
 
 The React and Vue stacks have their own navigator with the same goal
 ([Stacks.md → Navigation](Stacks.md#navigation)); it is always on there, because

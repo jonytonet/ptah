@@ -99,7 +99,7 @@
         },
         "forge-button": {
             "tag": "x-forge-button",
-            "doc": "forge-button — Ptah Forge\nProps:\n  - color   : primary | success | danger | warn | dark | light  (default: primary)\n  - size    : sm | md | lg  (default: md)\n  - flat    : boolean - transparent background\n  - relief  : boolean - solid appearance without shadow\n  - rounded : boolean - fully rounded\n  - disabled: boolean\n  - loading : boolean - shows inline spinner\n  - href    : string - renders an <a> with the same look instead of a <button>\n              (wire:navigate, target etc. pass through). Disabled or loading\n              drops the href and sets aria-disabled, so it cannot be followed.\nSlots:\n  - default : button text\n  - icon    : optional icon — rendered raw (unescaped). SECURITY: provide only\n              trusted, developer-authored markup (e.g. an <svg>). Never feed it\n              user-controlled data, which would enable XSS.",
+            "doc": "forge-button — Ptah Forge\nProps:\n  - color   : primary | success | danger | warn | dark | light  (default: primary)\n  - size    : sm | md | lg  (default: md)\n  - flat    : boolean - transparent background\n  - relief  : boolean - solid appearance without shadow\n  - rounded : boolean - fully rounded\n  - disabled: boolean\n  - loading : boolean - shows inline spinner\n  - href    : string - renders an <a> with the same look instead of a <button>\n              (wire:navigate, target etc. pass through). Disabled or loading\n              drops the href and sets aria-disabled, so it cannot be followed.\n  - navigate: boolean - with href: the link swaps the page in place when the\n              layout's single-page navigation is on and the link qualifies\n              (Ptah\\Support\\SpaNavigation — same rule as the menu). Off, or\n              a link that does not qualify: a normal link.\nSlots:\n  - default : button text\n  - icon    : optional icon — rendered raw (unescaped). SECURITY: provide only\n              trusted, developer-authored markup (e.g. an <svg>). Never feed it\n              user-controlled data, which would enable XSS.",
             "props": [
                 {
                     "name": "color",
@@ -132,6 +132,10 @@
                 {
                     "name": "href",
                     "default": "null"
+                },
+                {
+                    "name": "navigate",
+                    "default": "false"
                 }
             ]
         },

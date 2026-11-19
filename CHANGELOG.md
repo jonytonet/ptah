@@ -7,6 +7,61 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.59.1] - 2026-11-19
+
+Reported by a production host (Livewire 4.4.8) after turning
+`PTAH_SPA_NAVIGATION` on.
+
+### Fixed
+
+- **Livewire single-page navigation: a click on the page being left threw
+  Alpine errors and its modal never opened.** While the next page is on its
+  way, the page being left stays on screen — and was still clickable. A click
+  there (the row's *Edit*, after choosing a menu item) started a request whose
+  answer arrived after the swap, and Livewire morphed a component that had
+  already left the document: `Illegal invocation` (`open` resolving to
+  `window.open`), `moreOpen is not defined`, `_showShortcuts is not defined`,
+  `_confirmDiscard is not defined` — and the modal did not open on the new
+  page. Now the content of the page being left (`<main>`) is inert from the
+  start of a navigation until the next page is in, and on the swap the
+  Livewire messages still pending for its components are cancelled
+  (`Livewire.interceptMessage`); the ones of persisted components (assistant,
+  toasts) are kept.
+- **Back/forward left Alpine effects without their element.** 1.59.0 removed
+  the copies rendered by `x-for`/`x-if` before Livewire's snapshot, but did
+  not release their effects. The layout now runs the same teardown Livewire
+  runs on a link navigation (`Alpine.destroyTree`, skipping persisted blocks
+  and teleport targets).
+- **The docs named only Livewire 4.3.1** for the prefetch defect behind "do
+  not use `wire:navigate` in this layout". It is still in 4.4.8, and the docs
+  now say so. The package's suite runs on Livewire 4.4.8.
+
+### Added
+
+- **`ptah:spa-audit`** — before turning the navigation on: lists, with
+  file:line, what in the project's `resources/views` and `resources/js`
+  assumes a document load (`DOMContentLoaded`, `window.onload`,
+  `wire:navigate`, a library's `startOnLoad`, `window`/`document` listeners
+  and `setInterval` inside views). `--path`, `--strict`, `--json`. Each line
+  is a place to look at, not a proven defect.
+- **`ptah.full-load` route middleware** — marks a screen with a layout of its
+  own (point of sale, TV panel) where its route is declared: the layout's
+  links to it are printed without the navigate attribute, so it is one
+  request instead of a fetch followed by a reload. `spa_navigation_except`
+  keeps working.
+- **`navigate` on `<x-forge-button href>`** — applies the rule of
+  `@ptahNavigate` (which cannot be written inside a component tag) to the
+  button's link.
+- **`ptah:upgrade-check` says when `composer.json` pins an exact version**
+  (`"jonytonet/ptah": "1.58.6"`): `composer update jonytonet/ptah` then runs
+  clean and stays on that version. Informational.
+
+### Upgrading
+
+`composer update jonytonet/ptah`. If your `composer.json` has an exact
+version, that command does not move it: `composer require
+jonytonet/ptah:^1.59`, or edit the version. Nothing to migrate.
+
 ## [1.59.0] - 2026-11-19
 
 ### Added

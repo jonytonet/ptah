@@ -1021,6 +1021,7 @@ left to do. Full reference, options and sample output: **[AgentTools.md](AgentTo
 | `ptah:blueprint {spec} [--dry-run] [--no-migrate] [--force]` | Module from a JSON spec: forge (FK order), migrate, config, menu-sync, permission:sync, seed |
 | `ptah:last-error [--file=] [--frames=6] [--json]` | Last log error: exception, SQL, app frames only |
 | `ptah:upgrade-check [--strict] [--json]` | Post-update actions for this host |
+| `ptah:spa-audit [--path=*] [--strict] [--json]` | Before `PTAH_SPA_NAVIGATION=true`: the places in this project's views and scripts that assume a document load, with file:line |
 
 ---
 

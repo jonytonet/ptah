@@ -84,28 +84,107 @@
             window.Livewire.navigate(a.href);
         });
 
-        /* Back/forward: Livewire snapshots the page it is LEAVING (its HTML, for
-           a later forward/back) without first tearing down Alpine — unlike a
-           link navigation. The snapshot then carries the elements Alpine
-           rendered from <template x-for> / x-if (a select's options, a list),
-           and restoring it initialises them OUTSIDE their loop: "option is not
-           defined". `livewire:navigating` fires before that snapshot, so the
-           rendered copies are dropped here; the templates render them again
-           when the page is restored. Persisted blocks keep theirs (they are
-           carried over live, not from the snapshot). */
-        function dropAlpineRenderedCopies() {
-            document.querySelectorAll('template[x-for], template[x-if]').forEach(function (tpl) {
-                if (tpl.closest('[x-persist]')) return;
-                /* Alpine 3 keeps them in a Map (key -> element). */
-                if (tpl._x_lookup && typeof tpl._x_lookup.forEach === 'function') {
-                    tpl._x_lookup.forEach(function (n) {
-                        if (n && n.parentNode) n.parentNode.removeChild(n);
-                    });
-                }
-                if (tpl._x_currentIfEl && tpl._x_currentIfEl.parentNode) {
-                    tpl._x_currentIfEl.parentNode.removeChild(tpl._x_currentIfEl);
-                }
+        /* While the next page is on its way the page being left is still on
+           screen — and was still clickable. A click on it in that window (the
+           row's Edit, a filter) started a request whose answer arrived AFTER
+           the swap: Livewire then morphed a component that had already left
+           the document, on a tree whose Alpine was torn down — "moreOpen is
+           not defined", "Illegal invocation" (`open` resolving to
+           window.open), and the modal the person asked for never opened
+           (reported from production, 1.59.1). Two halves:
+
+           1. The content of the page being left goes inert from the moment a
+              navigation starts until the next page is in (or 10 s, if it
+              never comes): a click there could only be lost. The sidebar and
+              the top bar stay usable — choosing another screen is fine.
+           2. On the swap, the messages still in flight for the components of
+              the page being left are cancelled (Livewire.interceptMessage):
+              whatever was pending — that click, a poll, a slow action — has
+              no page to land on. Components carried over live (x-persist: the
+              AI chat, the toasts) keep theirs. */
+        var leaving = null, leavingTimer = null;
+        function release() {
+            clearTimeout(leavingTimer);
+            if (leaving) {
+                leaving.removeAttribute('inert');
+                leaving.removeAttribute('aria-busy');
+            }
+            leaving = null;
+        }
+        document.addEventListener('livewire:navigate', function () {
+            release();
+            leaving = document.querySelector('main');
+            if (!leaving) return;
+            leaving.setAttribute('inert', '');
+            leaving.setAttribute('aria-busy', 'true');
+            leavingTimer = setTimeout(release, 10000);
+        });
+
+        var inFlight = [];
+        function watchMessages() {
+            if (spa.watching || !window.Livewire || typeof window.Livewire.interceptMessage !== 'function') return;
+            spa.watching = true;
+            window.Livewire.interceptMessage(function (m) {
+                var entry = { message: m.message, cancel: m.cancel };
+                inFlight.push(entry);
+                m.onFinish(function () {
+                    var at = inFlight.indexOf(entry);
+                    if (at !== -1) inFlight.splice(at, 1);
+                });
             });
+        }
+        watchMessages();
+        document.addEventListener('livewire:init', watchMessages);
+
+        function cancelMessagesOfThePageBeingLeft() {
+            var pending = inFlight;
+            inFlight = [];
+            pending.forEach(function (entry) {
+                try {
+                    var el = entry.message && entry.message.component ? entry.message.component.el : null;
+                    if (el && el.closest && el.closest('[x-persist]')) {
+                        inFlight.push(entry);
+                        return;
+                    }
+                    entry.cancel();
+                } catch (e) {}
+            });
+        }
+
+        /* Back/forward: Livewire snapshots the page it is LEAVING (its HTML, for
+           a later forward/back) WITHOUT tearing Alpine down first — a link
+           navigation does (cleanupAlpineElementsOnThePageThatArentInsideAPersistedElement).
+           The snapshot then carries the elements Alpine rendered from
+           <template x-for> / x-if, and restoring it initialises them OUTSIDE
+           their loop ("option is not defined").
+
+           So the same teardown runs here, on `livewire:navigating` (which fires
+           before that snapshot): Alpine.destroyTree() over the body, skipping
+           what Livewire carries over live — persisted blocks (x-persist) and teleport
+           targets. It runs each directive's cleanup: the rendered copies are
+           removed AND their effects and window/document listeners are released.
+
+           1.59.0 only removed the copies from the DOM. Their effects stayed
+           subscribed and, detached from their x-data, ran with an empty scope
+           the next time that data changed: "moreOpen is not defined",
+           "Illegal invocation" (`open` resolving to window.open) — and the
+           row's Edit stopped opening the modal (reported from production,
+           1.59.1). On a link navigation Livewire runs the very same teardown
+           right after this one; a second pass over a destroyed tree is a no-op. */
+        function tearDownAlpine() {
+            var A = window.Alpine;
+            if (!A || typeof A.destroyTree !== 'function' || typeof A.walk !== 'function' || !document.body) return;
+            try {
+                A.destroyTree(document.body, function (root, callback) {
+                    A.walk(root, function (el, skip) {
+                        if (el.hasAttribute && (el.hasAttribute('x-persist') || el.hasAttribute('data-teleport-target'))) {
+                            skip();
+                            return;
+                        }
+                        callback(el, skip);
+                    });
+                });
+            } catch (e) {}
         }
 
         document.addEventListener('livewire:navigating', function () {
@@ -121,10 +200,13 @@
                     } catch (e) {}
                 });
             }
-            dropAlpineRenderedCopies();
+            /* After reading the sidebar's state above: the teardown forgets it. */
+            tearDownAlpine();
+            cancelMessagesOfThePageBeingLeft();
         });
 
         document.addEventListener('livewire:navigated', function () {
+            release();
             /* Two cases end in a real reload instead of a swapped page:
                - a deploy changed the build. Vite's hashed file names change the
                  PATH, not the query string, so Livewire's own

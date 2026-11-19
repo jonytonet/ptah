@@ -16,6 +16,7 @@ window, and says what is still left to do instead of leaving it to be noticed.
 | five hand edits to add a column | `ptah:field <Entity> add <field>` | one line per file |
 | a dozen commands in the right order for a module | `ptah:blueprint spec.json` | one line per step |
 | reading the CHANGELOG to guess what an update needs here | `ptah:upgrade-check` | one line per action |
+| grepping the project for `DOMContentLoaded`, `wire:navigate`… before turning the single-page navigation on | `ptah:spa-audit` | one line per place, with file:line |
 
 All of them are read-only unless the name says otherwise (`field`, `blueprint`,
 `check --write`) or the option does (`map --write` saves `.ptah/map.md`), and every
@@ -329,6 +330,34 @@ exist. Refused in production without `--force`.
 
 ---
 
+## ptah:spa-audit
+
+Before `PTAH_SPA_NAVIGATION=true`: the checklist of
+[Configuration.md](Configuration.md) ("check your own scripts"), done by
+reading `resources/views` and `resources/js`.
+
+```bash
+php artisan ptah:spa-audit
+php artisan ptah:spa-audit --path=app/View --path=public/js   # more directories
+php artisan ptah:spa-audit --strict     # exit 1 when anything is listed
+php artisan ptah:spa-audit --json
+```
+
+| Rule | Finds |
+|---|---|
+| dom-content-loaded | `DOMContentLoaded` — fires once per document |
+| window-onload | `window.onload` / a `load` listener |
+| wire-navigate | `wire:navigate` in a view — use `@ptahNavigate` |
+| start-on-load | a library that starts itself on load (`startOnLoad`, `autoStart`, `autoInit`) |
+| global-listener-in-view | `window.addEventListener` / `document.addEventListener` inside a view (it is added again on every page) |
+| interval-in-view | `setInterval` inside a view |
+
+It reads text, not behaviour: each line is a place to look at, not a proven
+defect — a listener already guarded by a flag is still listed. `node_modules`,
+builds and ptah's own published views are skipped.
+
+---
+
 ## ptah:upgrade-check
 
 After `composer update jonytonet/ptah`: what **this** project has to do.
@@ -348,6 +377,7 @@ php artisan ptah:upgrade-check --json
 | preferences | `user_preferences.user_id` FK pointing somewhere other than the configured identity → `ptah:preferences:realign` |
 | migrations | migrations not run yet |
 | structure_editor | menu/company screens closed because `PTAH_STRUCTURE_EDITOR` is off |
+| composer | `composer.json` pins `jonytonet/ptah` to an exact version (`"1.58.6"`): `composer update jonytonet/ptah` runs clean and does not move it. Informational — use `^1.59`, or edit the version at each upgrade |
 
 ---
 
