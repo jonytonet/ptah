@@ -17,10 +17,11 @@ const LABELS: Record<string, string> = { name: 'Nome', status: 'Situação', amo
  * A stand-in for the CRUD API of one screen (`items`) plus the extras routes
  * (ExtrasApiController): same paths and shapes. The draft fields are name and
  * status; the record's fingerprint is `v` + its name; a name of "Arquivar"
- * archives through the onChange formula. Row 1 has two pages of lines, row 2
- * none (and an unavailable grid), row 3 fails.
+ * archives through the onChange formula. Row 1 has one detail screen
+ * (`items..1.0`, its lines — served below as a whole CRUD screen), row 2 an
+ * unavailable one (or none, `emptyDetails`), row 3 fails.
  */
-export function fakeExtras(options: { features?: boolean; failColumns?: boolean } = {}) {
+export function fakeExtras(options: { features?: boolean; failColumns?: boolean; emptyDetails?: boolean } = {}) {
     const calls: ExtrasCall[] = [];
     const items = [
         { id: 1, name: 'Alfa', status: 'active', amount: 10 },
@@ -67,18 +68,28 @@ export function fakeExtras(options: { features?: boolean; failColumns?: boolean 
         trashed: false,
     });
 
-    const line = (id: number, name: string) => ({ id, cells: { name: { value: name, html: `<b>${name}</b>` }, qty: { value: id, html: String(id) } }, style: null, trashed: false });
-    const linesGrid = (page: number) => ({
-        index: 0,
-        title: 'Linhas',
-        available: true,
-        columns: [
-            { field: 'name', label: 'Linha', type: 'text', align: null },
-            { field: 'qty', label: 'Qtd', type: 'number', align: 'right' },
-        ],
-        rows: page === 1 ? [line(11, 'L1'), line(12, 'L2')] : [line(13, 'L3')],
-        meta: { page, per_page: 2, total: 3, last_page: 2 },
-        totals: [{ field: 'qty', aggregate: 'sum', value: 36 }],
+    // The lines of each item — the child screen `items..{id}.0`.
+    const lines = [
+        { id: 11, parent: 1, name: 'L1' },
+        { id: 12, parent: 1, name: 'L2' },
+        { id: 13, parent: 2, name: 'L3' },
+    ];
+    let nextLine = 14;
+    const lineRow = (item: (typeof lines)[number]): Row => ({
+        id: item.id,
+        cells: { name: { value: item.name, html: `<b>${item.name}</b>` } },
+        style: null,
+        actions: [],
+        trashed: false,
+    });
+    const lineSchema = (): Schema => ({
+        ...schema(),
+        title: 'Linhas do item',
+        titleSingular: 'Linha',
+        columns: [{ field: 'name', label: 'Linha', type: 'text', renderer: null, align: null, sortBy: 'name' }],
+        form: [{ field: 'name', label: 'Linha', type: 'text', required: true, readonly: false, options: null, mask: null, maskPatterns: null, placeholder: null, help: null }],
+        preferences: { ...preferences, columns: { name: true }, column_widths: {} },
+        features: { ...NO_FEATURES },
     });
 
     const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -91,6 +102,43 @@ export function fakeExtras(options: { features?: boolean; failColumns?: boolean 
         const method = (init.method ?? 'GET').toUpperCase();
         const body = typeof init.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : null;
         calls.push({ method, path: `${path}${url.search}`, body });
+
+        // ── A detail screen: `items..{row}.{index}` ──
+        const child = path.match(/^\.\.(\d+)\.(\d+)(\/.*)?$/);
+        if (child) {
+            const parent = Number(child[1]);
+            const rest = child[3] ?? '';
+            if (child[2] !== '0' || !items.some((item) => item.id === parent)) {
+                return json(404, { message: 'Not found.' });
+            }
+            if (rest === '/schema') {
+                return json(200, lineSchema());
+            }
+            if (rest === '' && method === 'GET') {
+                const search = (url.searchParams.get('search') ?? '').toLowerCase();
+                const mine = lines.filter((item) => item.parent === parent && item.name.toLowerCase().includes(search));
+
+                return json(200, {
+                    data: mine.map(lineRow),
+                    meta: { page: 1, per_page: 25, total: mine.length, last_page: 1, sort: 'id', direction: 'DESC', search, trashed: false },
+                    state: { page: 1, per_page: 25, sort: 'id', direction: 'DESC', search, filters: {}, operators: {}, date_ranges: {}, date_operators: {}, quick_date: '', trashed: false },
+                    totals: [],
+                    messages: [],
+                });
+            }
+            if (rest === '/create') {
+                return json(200, { data: { name: null }, labels: [] });
+            }
+            if (rest === '' && method === 'POST') {
+                const data = (body?.data ?? {}) as Record<string, string>;
+                // The server binds the line to the row of the key, whatever was sent.
+                lines.push({ id: nextLine++, parent, name: data.name });
+
+                return json(201, { ok: true, id: nextLine - 1, errors: [], messages: [{ text: 'Salvo!', level: 'success' }] });
+            }
+
+            return json(404, { message: `No fake for ${method} child ${rest}` });
+        }
 
         if (path === '/schema') {
             return json(200, schema());
@@ -196,16 +244,10 @@ export function fakeExtras(options: { features?: boolean; failColumns?: boolean 
                 return json(500, { message: 'Server Error' });
             }
             if (id === 2) {
-                return json(200, {
-                    data: [
-                        { ...linesGrid(1), rows: [], meta: { page: 1, per_page: 2, total: 0, last_page: 1 }, totals: [] },
-                        { index: 1, title: 'Notas', available: false, columns: [], rows: [], meta: null, totals: [] },
-                    ],
-                });
+                return json(200, { data: options.emptyDetails ? [] : [{ index: 1, title: 'Notas', screen: 'items..2.1', available: false }] });
             }
-            const page = Number(url.searchParams.get('page') ?? 1);
 
-            return json(200, { data: [linesGrid(page)] });
+            return json(200, { data: [{ index: 0, title: 'Linhas', screen: `items..${id}.0`, available: true }] });
         }
 
         const record = path.match(/^\/(\d+)$/);
@@ -224,5 +266,5 @@ export function fakeExtras(options: { features?: boolean; failColumns?: boolean 
         return json(404, { message: `No fake for ${method} ${path}` });
     };
 
-    return { api: new PtahApi({ fetch: handler as typeof fetch }), calls, items: () => items, preferences: () => preferences };
+    return { api: new PtahApi({ fetch: handler as typeof fetch }), calls, items: () => items, lines: () => lines, preferences: () => preferences };
 }

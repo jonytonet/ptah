@@ -29,6 +29,12 @@ export interface BoardsFakeOptions {
     empty?: boolean;
     overflow?: boolean;
     canUpdate?: boolean;
+    /** `ptah.crud.responsive_cards` (default on). */
+    responsiveCards?: boolean;
+    /** The record history is on (the History button of each row). */
+    history?: boolean;
+    /** The saved view mode. */
+    viewMode?: string;
 }
 
 const OPTIONS = [
@@ -56,7 +62,7 @@ export function fakeBoards(options: BoardsFakeOptions = {}) {
               { id: 3, title: 'Fechar caixa', status: 'done', note: '', due: '2026-09-15' },
               { id: 4, title: 'Aguardando peça', status: 'waiting', note: '', due: '2026-10-02' },
           ];
-    let preferences: Preferences = { columns: { id: true, title: true, note: true, status: true }, column_order: [], column_widths: {}, view_mode: 'auto', view_density: 'global', saved_filters: {}, search_history: [] };
+    let preferences: Preferences = { columns: { id: true, title: true, note: true, status: true }, column_order: [], column_widths: {}, view_mode: options.viewMode ?? 'auto', view_density: 'global', saved_filters: {}, search_history: [] };
 
     const schema = (): Schema => ({
         title: 'Tarefas',
@@ -77,7 +83,7 @@ export function fakeBoards(options: BoardsFakeOptions = {}) {
         trash: false,
         defaults: { sort: 'id', direction: 'DESC', per_page: 25 },
         preferences,
-        features: { ...NO_FEATURES, kanban: options.kanban ?? true, calendar: options.calendar ?? true },
+        features: { ...NO_FEATURES, kanban: options.kanban ?? true, calendar: options.calendar ?? true, history: options.history ?? false, responsiveCards: options.responsiveCards ?? true },
     });
 
     const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -97,6 +103,8 @@ export function fakeBoards(options: BoardsFakeOptions = {}) {
         },
         style: task.id === 1 ? 'color: red' : null,
         actions: task.id === 1 ? [{ label: 'Aprovar', type: 'action', value: 'approve', icon: null, color: 'primary', confirm: 'Aprovar esta tarefa?' }] : [],
+        // configLinkLinha on task 2 only.
+        link: task.id === 2 ? '/tarefas/2' : null,
         trashed: false,
     });
 

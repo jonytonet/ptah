@@ -26,6 +26,26 @@ export interface Field {
     maskPatterns: string[] | null;
     placeholder: string | null;
     help: string | null;
+    /** The form section this field opens or belongs to (`colsFormBlock`). */
+    block?: string | null;
+    /** The `accept` of an image field (`colsUploadAllowedTypes`). */
+    accept?: string | null;
+    /** A searchdropdown's own settings; null for any other field. */
+    lookup?: LookupSettings | null;
+    /** A registered mask's hints: its placeholder, keyboard and longest shape. */
+    maskPlaceholder?: string | null;
+    inputMode?: string | null;
+    maxLength?: number | null;
+}
+
+export interface LookupSettings {
+    /** `colsSDPlaceholder`; null: "Search <label>…". */
+    placeholder: string | null;
+    /** Where the options open: under the field, or above it. */
+    startList: 'top' | 'bottom' | string;
+    /** The field this one depends on (a cascade): locked while it is empty. */
+    dependsOn: string | null;
+    dependsOnLabel: string | null;
 }
 
 export interface FilterDef {
@@ -91,6 +111,11 @@ export interface Features {
     masterDetail: boolean;
     quickDates: boolean;
     advancedSearch: boolean;
+    /**
+     * `ptah.crud.responsive_cards`: view mode `auto` turns into cards on a
+     * narrow screen. Off, `auto` stays a table (as the Livewire screen).
+     */
+    responsiveCards: boolean;
 }
 
 export const NO_FEATURES: Features = {
@@ -104,6 +129,8 @@ export const NO_FEATURES: Features = {
     masterDetail: false,
     quickDates: false,
     advancedSearch: false,
+    // Not a feature but a layout switch: the server's default.
+    responsiveCards: true,
 };
 
 export interface Cell {
@@ -128,6 +155,8 @@ export interface Row {
     cells: Record<string, Cell>;
     style: string | null;
     actions: RowAction[];
+    /** Where a click on the row goes (`configLinkLinha`), already checked by the server; null: none. */
+    link?: string | null;
     trashed: boolean;
 }
 
@@ -178,6 +207,11 @@ export interface Listing {
 export interface FormPayload {
     data: Record<string, unknown>;
     labels: Record<string, string>;
+    /** The modal title ("Nova conta", "Editar conta") and subtitle, from the server. */
+    title?: string;
+    subtitle?: string;
+    /** URLs of the stored images, by field. */
+    previews?: Record<string, string>;
 }
 
 export interface SaveResult {
@@ -185,6 +219,8 @@ export interface SaveResult {
     id: RowId | null;
     errors: Record<string, string>;
     messages: Message[];
+    /** Where an after-save hook sends the user. */
+    redirect?: string | null;
 }
 
 export interface ActionResult {
@@ -197,6 +233,9 @@ export interface ActionResult {
 export interface LookupItem {
     value: string | number;
     label: string;
+    /** The second and third lines of an option (`colsSDLabelTwo`/`Three`). */
+    labelTwo?: string;
+    labelThree?: string;
     [key: string]: unknown;
 }
 
@@ -239,6 +278,8 @@ export interface Shell {
 export interface ShellExtras {
     company_switcher: boolean;
     notifications: boolean;
+    /** The floating AI assistant (ai_agent module). */
+    ai_chat?: boolean;
     /** The administration links this user may open. */
     admin: { label: string; url: string; icon: string }[];
 }

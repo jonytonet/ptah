@@ -16,6 +16,7 @@ import {
     DENSITY_ICONS,
     densityLabel,
     eventTitle,
+    followRowLink,
     getCalendar,
     getKanban,
     isNarrow,
@@ -59,7 +60,8 @@ const failure = (error: unknown, t: BoardsWords) => (error instanceof ApiError &
 
 /**
  * Which view to draw now: the saved mode, with 'auto' decided by the
- * viewport at render time (cards below `md`, the table above) — never saved.
+ * viewport at render time (cards below `md`, the table above; always the
+ * table when the server turned `responsiveCards` off) — never saved.
  */
 export function useResolvedView(crud: CrudController): Exclude<ViewMode, 'auto'> {
     const state = useCrudState(crud);
@@ -631,7 +633,14 @@ export function PtahCrudCards({ crud, locale, renderActions }: CardsProps) {
                             <article
                                 key={row.id}
                                 aria-label={`#${row.id}`}
+                                // configLinkLinha: the card opens its record (Enter when focused).
+                                tabIndex={row.link ? 0 : undefined}
+                                onClick={row.link ? (event) => followRowLink(event, row.link) : undefined}
+                                onAuxClick={row.link ? (event) => followRowLink(event, row.link) : undefined}
+                                onKeyDown={row.link ? (event) => followRowLink(event, row.link) : undefined}
+                                data-link={row.link ?? undefined}
                                 style={{
+                                    cursor: row.link ? 'pointer' : undefined,
                                     display: 'flex',
                                     flexDirection: 'column',
                                     padding: 16,

@@ -819,3 +819,43 @@ textarea.pf-control { resize: vertical; }
 @media (prefers-reduced-motion: reduce) {
     .pl-sidebar, .pl-main, .pl-caret { transition: none; }
 }
+
+/* ── form parity ── */
+/* The <PtahCrud> form at parity with the Livewire modal: subtitle, sections,
+   read-only text, loading state, dependent searchdropdown, colour, image. */
+.pc-modal-heading { min-width: 0; }
+.pc-modal-subtitle { margin: 2px 0 0; font-size: 0.75rem; color: var(--pc-text-muted); }
+.pc-overlay--top { z-index: 1050; align-items: center; }
+.pc-form-loading { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 120px; font-size: 0.875rem; color: var(--pc-text-muted); }
+.pc-form-spinner { width: 16px; height: 16px; border: 2px solid var(--pc-line); border-top-color: var(--pc-primary); border-radius: 50%; animation: pf-spin 0.8s linear infinite; }
+.pc-form-block { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.pc-form > .pc-form-block:first-child { margin-top: 0; }
+.pc-form-block-label { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pc-primary); }
+.pc-form-block-line { flex: 1; height: 1px; background: var(--pc-line); }
+.pc-readonly { font-size: 0.875rem; color: var(--pc-text-strong); white-space: pre-wrap; overflow-wrap: anywhere; padding: 6px 0; }
+.pc-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+.pc-combo-field { position: relative; display: flex; align-items: center; }
+.pc-combo-input { padding-right: 30px; }
+.pc-combo-input:disabled { cursor: not-allowed; opacity: 0.7; }
+.pc-combo-toggle { position: absolute; right: 6px; border: 0; background: transparent; color: var(--pc-text-muted); cursor: pointer; padding: 2px 4px; line-height: 1; }
+.pc-combo-toggle:disabled { opacity: 0.4; pointer-events: none; }
+.pc-combo-list--up { top: auto; bottom: calc(100% + 4px); }
+.pc-combo-line { display: block; font-size: 0.6875rem; opacity: 0.75; }
+
+.pc-color { display: flex; align-items: stretch; gap: 8px; }
+.pc-color-pick { flex: none; width: 48px; height: auto; min-height: 36px; padding: 3px; border: 1px solid var(--pc-line-field); border-radius: var(--pc-radius); background: var(--pc-bg); cursor: pointer; }
+.pc-color-hex { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.pc-color-clear { flex: none; }
+
+.pc-image-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 4px; }
+.pc-image-pick { position: relative; cursor: pointer; }
+.pc-image-pick:focus-within { outline: 2px solid var(--pc-primary); outline-offset: 2px; }
+.pc-image-busy { margin: 0; }
+.pc-image-remove { border: 0; background: transparent; padding: 0; font: inherit; font-size: 0.75rem; color: var(--pc-danger); cursor: pointer; }
+.pc-image-preview { margin-top: 10px; }
+.pc-image-preview img { display: block; max-width: 100%; max-height: 12rem; object-fit: contain; border: 1px solid var(--pc-line); border-radius: var(--pc-radius); background: var(--pc-bg-soft); }
+
+@media (prefers-reduced-motion: reduce) {
+    .pc-form-spinner { animation: none; }
+}

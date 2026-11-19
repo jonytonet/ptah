@@ -61,22 +61,34 @@ class ExtrasApiTest extends TestCase
         CrudScreen::register('active-items', ExtrasItem::class)->configRoute('')->lockedFilters(fn () => ['status' => 'active']);
         $this->configure();
 
-        CrudConfig::updateOrCreate(['model' => ExtrasLine::class, 'route' => ''], ['config' => [
-            'crud' => ExtrasLine::class,
-            'displayName' => 'Linhas do item',
-            'cols' => [
-                ['colsNomeFisico' => 'id', 'colsNomeLogico' => 'ID', 'colsTipo' => 'number'],
-                ['colsNomeFisico' => 'name', 'colsNomeLogico' => 'Linha', 'colsTipo' => 'text', 'colsGravar' => true],
-                ['colsNomeFisico' => 'amount', 'colsNomeLogico' => 'Qtd', 'colsTipo' => 'number', 'colsGravar' => true],
-            ],
-            'permissions' => [],
-        ]]);
+        $this->setLineConfig();
 
         $this->alfa = ExtrasItem::create(['name' => 'Alfa', 'status' => 'active', 'amount' => 10]);
         $this->beta = ExtrasItem::create(['name' => 'Beta', 'status' => 'archived', 'amount' => 500]);
         ExtrasLine::create(['name' => 'L1', 'amount' => 1, 'category_id' => $this->alfa->id]);
         ExtrasLine::create(['name' => 'L2', 'amount' => 2, 'category_id' => $this->alfa->id]);
         ExtrasLine::create(['name' => 'L3', 'amount' => 3, 'category_id' => $this->beta->id]);
+    }
+
+    /**
+     * The detail model's config. `category_id` (the foreign key) is a form
+     * field, so a client CAN send another parent — the lock must win.
+     *
+     * @param  array<string, mixed>  $extra
+     */
+    private function setLineConfig(array $extra = []): void
+    {
+        CrudConfig::updateOrCreate(['model' => ExtrasLine::class, 'route' => ''], ['config' => array_merge([
+            'crud' => ExtrasLine::class,
+            'displayName' => 'Linhas do item',
+            'cols' => [
+                ['colsNomeFisico' => 'id', 'colsNomeLogico' => 'ID', 'colsTipo' => 'number'],
+                ['colsNomeFisico' => 'name', 'colsNomeLogico' => 'Linha', 'colsTipo' => 'text', 'colsGravar' => true],
+                ['colsNomeFisico' => 'amount', 'colsNomeLogico' => 'Qtd', 'colsTipo' => 'number', 'colsGravar' => true],
+                ['colsNomeFisico' => 'category_id', 'colsNomeLogico' => 'Item', 'colsTipo' => 'number', 'colsGravar' => true],
+            ],
+            'permissions' => [],
+        ], $extra)]);
     }
 
     /** @param  array<string, mixed>  $extra */
@@ -233,45 +245,136 @@ class ExtrasApiTest extends TestCase
 
     // ── Master / detail ─────────────────────────────────────────────────────
 
-    #[Test]
-    public function the_details_of_a_row_are_its_lines_only_in_the_child_columns(): void
+    /** The detail screen of a row, as the details endpoint names it. */
+    private function child(ExtrasItem $row, int $index = 0, string $screen = 'items'): string
     {
-        $json = $this->getJson("/ptah/api/crud/items/{$this->alfa->id}/details")->assertOk()->json('data');
+        return "/ptah/api/crud/{$screen}..{$row->id}.{$index}";
+    }
 
-        $this->assertCount(2, $json);
-        [$lines, $orphan] = $json;
+    /** @return list<string> */
+    private function names(string $url): array
+    {
+        $rows = $this->getJson($url)->assertOk()->json('data');
 
-        $this->assertSame(0, $lines['index']);
-        $this->assertSame('Linhas', $lines['title']);
-        $this->assertTrue($lines['available']);
-        $this->assertSame(['id', 'name', 'amount'], array_column($lines['columns'], 'field'));
-        $this->assertEqualsCanonicalizing(['L1', 'L2'], array_map(fn ($row) => $row['cells']['name']['value'], $lines['rows']));
-        $this->assertSame(2, $lines['meta']['total']);
-        $this->assertArrayNotHasKey('actions', $lines['rows'][0]);
-        $this->assertArrayNotHasKey('status', $lines['rows'][0]['cells']);
-
-        // No config for that model: unavailable, and its class name never shown.
-        $this->assertSame(1, $orphan['index']);
-        $this->assertFalse($orphan['available']);
-        $this->assertSame('', $orphan['title']);
-        $this->assertStringNotContainsString('ExtrasOrphan', json_encode($json));
-
-        // One grid, one page.
-        $one = $this->getJson("/ptah/api/crud/items/{$this->beta->id}/details?detail=0&page=1")->assertOk()->json('data');
-        $this->assertCount(1, $one);
-        $this->assertSame(['L3'], array_map(fn ($row) => $row['cells']['name']['value'], $one[0]['rows']));
+        return array_map(fn ($row) => $row['cells']['name']['value'], $rows);
     }
 
     #[Test]
-    public function the_details_endpoint_refuses_what_the_screen_refuses(): void
+    public function the_details_of_a_row_are_child_screens_named_by_the_server(): void
     {
-        $this->getJson("/ptah/api/crud/active-items/{$this->beta->id}/details")->assertNotFound();
-        $this->getJson('/ptah/api/crud/items/99999/details')->assertNotFound();
-        $this->getJson("/ptah/api/crud/items/{$this->alfa->id}/details?detail=7")->assertNotFound();
-        $this->getJson("/ptah/api/crud/items/{$this->alfa->id}/details?detail=x")->assertStatus(422);
+        $json = $this->getJson("/ptah/api/crud/items/{$this->alfa->id}/details")->assertOk()->json('data');
 
+        $this->assertSame([
+            ['index' => 0, 'title' => 'Linhas', 'screen' => "items..{$this->alfa->id}.0", 'available' => true],
+            // No config for that model: unavailable, and its class name never shown.
+            ['index' => 1, 'title' => '', 'screen' => "items..{$this->alfa->id}.1", 'available' => false],
+        ], $json);
+        $this->assertStringNotContainsString('ExtrasOrphan', json_encode($json));
+    }
+
+    #[Test]
+    public function a_child_screen_lists_only_the_rows_of_its_parent_through_every_endpoint(): void
+    {
+        $this->assertEqualsCanonicalizing(['L1', 'L2'], $this->names($this->child($this->alfa)));
+        $this->assertSame(['L3'], $this->names($this->child($this->beta)));
+
+        // The client's filters narrow inside the lock, never widen it.
+        $this->assertSame([], $this->names($this->child($this->alfa).'?search=L3'));
+
+        // The child's own config and columns.
+        $schema = $this->getJson($this->child($this->alfa).'/schema')->assertOk()->json();
+        $this->assertSame('Linhas do item', $schema['title']);
+        $this->assertSame(['id', 'name', 'amount', 'category_id'], array_column($schema['columns'], 'field'));
+
+        // A feature endpoint resolves the same key.
+        $this->getJson($this->child($this->alfa).'/columns')->assertOk()->assertJsonPath('data.0.field', 'name');
+    }
+
+    #[Test]
+    public function a_child_screen_forces_the_parents_key_on_every_write(): void
+    {
+        // category_id is a form field of the child: the lock still wins.
+        $this->postJson($this->child($this->alfa), ['data' => ['name' => 'L9', 'amount' => 9, 'category_id' => $this->beta->id]])->assertCreated();
+        $this->assertSame((int) $this->alfa->id, (int) ExtrasLine::query()->where('name', 'L9')->value('category_id'));
+
+        // A line of another parent is not reachable through this child.
+        $l3 = ExtrasLine::query()->where('name', 'L3')->firstOrFail();
+        $this->getJson($this->child($this->alfa)."/{$l3->id}")->assertNotFound();
+        $this->putJson($this->child($this->alfa)."/{$l3->id}", ['data' => ['name' => 'hijacked']])->assertNotFound();
+        // The API answers a refused delete with 422 (nothing deleted).
+        $this->deleteJson($this->child($this->alfa)."/{$l3->id}")->assertStatus(422);
+        $this->assertSame('L3', $l3->fresh()?->name);
+    }
+
+    #[Test]
+    public function a_child_screen_is_unreachable_through_a_row_or_index_the_parent_does_not_offer(): void
+    {
+        // The parent row outside the parent's locked filters.
+        $this->getJson($this->child($this->beta, 0, 'active-items'))->assertNotFound();
+        $this->getJson($this->child($this->alfa, 0, 'active-items'))->assertOk();
+        $this->getJson("/ptah/api/crud/active-items/{$this->beta->id}/details")->assertNotFound();
+
+        // Forged indexes and rows.
+        $this->getJson($this->child($this->alfa, 7))->assertNotFound();
+        $this->getJson($this->child($this->alfa, 2))->assertNotFound(); // incomplete entry
+        $this->getJson($this->child($this->alfa, 1))->assertNotFound(); // model without config
+        $this->getJson('/ptah/api/crud/items..99999.0')->assertNotFound();
+        $this->getJson("/ptah/api/crud/items..0{$this->alfa->id}.0")->assertNotFound();
+        $this->getJson("/ptah/api/crud/items..{$this->alfa->id}.00")->assertNotFound();
+        $this->getJson("/ptah/api/crud/nope..{$this->alfa->id}.0")->assertNotFound();
+        $this->getJson('/ptah/api/crud/items/99999/details')->assertNotFound();
+
+        // No master/detail on the parent at all.
         $this->configure(['masterDetail' => null]);
+        $this->getJson($this->child($this->alfa))->assertNotFound();
         $this->getJson("/ptah/api/crud/items/{$this->alfa->id}/details")->assertNotFound();
+    }
+
+    #[Test]
+    public function a_child_screen_has_its_own_permissions_and_its_parents_gate(): void
+    {
+        $this->setLineConfig(['permissions' => ['showCreateButton' => false]]);
+        $this->postJson($this->child($this->alfa), ['data' => ['name' => 'L9']])->assertForbidden();
+        $this->getJson($this->child($this->alfa))->assertOk();
+        $this->assertFalse($this->getJson($this->child($this->alfa).'/schema')->json('permissions.canCreate'));
+        $this->assertSame(0, ExtrasLine::query()->where('name', 'L9')->count());
+
+        // The parent's own gate closes its children.
+        CrudScreen::register('closed-items', ExtrasItem::class)->configRoute('')->authorize(fn () => false);
+        $this->getJson($this->child($this->alfa, 0, 'closed-items'))->assertForbidden();
+    }
+
+    #[Test]
+    public function a_registered_key_may_not_look_like_a_child_screen(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        CrudScreen::register("items..{$this->alfa->id}.0", ExtrasLine::class);
+    }
+
+    // ── Row link and responsive cards ───────────────────────────────────────
+
+    #[Test]
+    public function each_row_carries_its_safe_link(): void
+    {
+        $this->assertNull($this->getJson('/ptah/api/crud/items')->assertOk()->json('data.0.link'));
+
+        $this->configure(['configLinkLinha' => '/items/%id%/view']);
+        $rows = $this->getJson('/ptah/api/crud/items?sort=id&direction=ASC')->assertOk()->json('data');
+        $this->assertSame("/items/{$this->alfa->id}/view", $rows[0]['link']);
+
+        // A scheme that could run something: no link at all.
+        $this->configure(['configLinkLinha' => "java\tscript:alert(%id%)"]);
+        $this->assertNull($this->getJson('/ptah/api/crud/items')->assertOk()->json('data.0.link'));
+    }
+
+    #[Test]
+    public function the_responsive_cards_switch_reaches_the_client(): void
+    {
+        $this->assertTrue($this->getJson('/ptah/api/crud/items/schema')->assertOk()->json('features.responsiveCards'));
+
+        config(['ptah.crud.responsive_cards' => false]);
+        $this->assertFalse($this->getJson('/ptah/api/crud/items/schema')->assertOk()->json('features.responsiveCards'));
     }
 
     // ── Columns ─────────────────────────────────────────────────────────────

@@ -25,6 +25,16 @@ use InvalidArgumentException;
  */
 final class CrudScreen
 {
+    /**
+     * A detail screen (master/detail): `{parent}..{rowId}.{detailIndex}`.
+     * The registry refuses `..` in a registered key, so such a key can only
+     * name the child of a parent row — and the resolver builds its
+     * definition on the server from the parent's own config, after checking
+     * the row is in the parent's scope. Canonical numbers only: one key per
+     * child. The parent part may itself be a detail key (a nested detail).
+     */
+    private const DETAIL = '/^(?<parent>.+)\.\.(?<id>[1-9][0-9]{0,17})\.(?<index>0|[1-9][0-9]{0,3})$/';
+
     /** @var array<string, mixed>|Closure(Request): array<string, mixed> */
     private array|Closure $lockedFilters = [];
 
@@ -50,6 +60,26 @@ final class CrudScreen
         if (! preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*$/', $key)) {
             throw new InvalidArgumentException("CrudScreen key '{$key}' may only hold letters, digits, dot, dash and underscore.");
         }
+    }
+
+    /** The key of the detail screen `$index` of the row `$id` of `$parent`. */
+    public static function detailKey(string $parent, int $id, int $index): string
+    {
+        return $parent.'..'.$id.'.'.$index;
+    }
+
+    /**
+     * The parts of a detail key, or null when the key is not one.
+     *
+     * @return array{parent: string, id: int, index: int}|null
+     */
+    public static function parseDetailKey(string $key): ?array
+    {
+        if (! preg_match(self::DETAIL, $key, $m)) {
+            return null;
+        }
+
+        return ['parent' => $m['parent'], 'id' => (int) $m['id'], 'index' => (int) $m['index']];
     }
 
     /** Registers the screen and returns it for the fluent options. */

@@ -1,20 +1,13 @@
 import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
-import {
-    controlOf,
-    CrudController,
-    debounce,
-    fromInput,
-    inputType,
-    isWide,
-    pagesAround,
-    toInput,
-    words,
-} from '../core';
-import type { ControllerOptions, CrudState, Field, LookupItem, Row, RowAction, Words } from '../core';
-import { nextViewMode } from '../core/crud/boards';
+import { CrudController, debounce, pagesAround, words } from '../core';
+import type { ControllerOptions, CrudState, Row, RowAction, Words } from '../core';
+import { followRowLink, nextViewMode } from '../core/crud/boards';
 import { fullOrder, moveColumn, saveColumnOrder } from '../core/crud/extras';
 import { clearAllFilters, filterByCell, filterSession, isCellFilterable } from '../core/crud/filters';
+import { focusFirstField, formSections, formSubtitle, formTitle, lockBodyScroll, needsDiscardConfirm, submitLabel } from '../core/crud/form';
+import { PtahFormField, PtahFormSection } from './crud/form';
+import { PtahCrudConfigButton } from './admin/crud-config';
 import { PtahCrudCalendar, PtahCrudCards, PtahCrudKanban, PtahCrudViewSwitch, useResolvedView } from './crud/boards';
 import { PtahCrudColumnResizer, PtahCrudColumnsMenu, PtahCrudDetailRow, PtahCrudDetailToggle, PtahCrudFormChanges, PtahCrudFormDraft, PtahCrudSaveAndNew } from './crud/extras';
 import { PtahCrudFilterBadges, PtahCrudFilterPanel, PtahCrudSearchHistory, PtahCrudUrlFilters } from './crud/filters';
@@ -74,7 +67,8 @@ export function PtahCrud({ screen, locale, title, toolbar, controller, ...option
 
     return (
         <div className="pc-root" data-density={state.preferences?.view_density ?? 'global'}>
-            <PtahCrudUrlFilters crud={crud} locale={locale} />
+            {/* A detail grid (a child screen) does not read the page's address. */}
+            <PtahCrudUrlFilters crud={crud} locale={locale} readLocation={!crud.screen.includes('..')} />
             <Toolbar crud={crud} state={state} t={t} title={title} extra={toolbar} locale={locale} />
             <PtahCrudFilterBadges crud={crud} locale={locale} />
             {state.selection.length > 0 && <BulkBar crud={crud} state={state} t={t} />}
@@ -85,11 +79,11 @@ export function PtahCrud({ screen, locale, title, toolbar, controller, ...option
             ) : view === 'cards' ? (
                 <PtahCrudCards crud={crud} locale={locale} renderActions={(row) => <RowButtons crud={crud} state={state} t={t} row={row} locale={locale} />} />
             ) : (
-                <Table crud={crud} state={state} t={t} locale={locale} />
+                <Table crud={crud} state={state} t={t} locale={locale} options={options} />
             )}
             {/* A board shows every record of the filter: no pages. */}
             {view !== 'kanban' && view !== 'calendar' && <Footer crud={crud} state={state} t={t} />}
-            {state.form && <FormModal crud={crud} state={state} t={t} locale={locale} />}
+            {(state.form || crud.formOpening) && <FormModal crud={crud} state={state} t={t} locale={locale} />}
             {/* After the form in the DOM: they open over it. */}
             <PtahCrudHistory crud={crud} locale={locale} />
             <PtahCrudAttachments crud={crud} locale={locale} />
@@ -132,7 +126,7 @@ function Toolbar({ crud, state, t, title, extra, locale }: PartProps & { title?:
     useEffect(() => {
         const onKey = (event: KeyboardEvent) => {
             const now = crud.getState();
-            if (event.key !== 'v' || event.ctrlKey || event.metaKey || event.altKey || typing(event) || now.form || now.panel || now.deleting !== null) {
+            if (event.key !== 'v' || crud.screen.includes('..') || event.ctrlKey || event.metaKey || event.altKey || typing(event) || now.form || now.panel || now.deleting !== null) {
                 return;
             }
             void crud.savePreferences({ view_mode: nextViewMode(now.preferences?.view_mode) });
@@ -175,6 +169,7 @@ function Toolbar({ crud, state, t, title, extra, locale }: PartProps & { title?:
                 )}
                 <PtahCrudViewSwitch crud={crud} locale={locale} />
                 <PtahCrudColumnsMenu crud={crud} locale={locale} />
+                <PtahCrudConfigButton crud={crud} locale={locale} />
                 {schema.export.enabled && (
                     <Menu label={t.export}>
                         {[...schema.export.formats, 'print'].map((format) => (
@@ -291,7 +286,7 @@ function alignClass(align: string | null): string | undefined {
     return align === 'right' ? 'pc-align-right' : align === 'center' ? 'pc-align-center' : undefined;
 }
 
-function Table({ crud, state, t, locale }: PartProps) {
+function Table({ crud, state, t, locale, options }: PartProps & { options: ControllerOptions }) {
     const schema = state.schema!;
     const { permissions, features } = schema;
     const hasRowButtons =
@@ -366,7 +361,15 @@ function Table({ crud, state, t, locale }: PartProps) {
                     )}
                     {state.rows.map((row) => (
                         <Fragment key={row.id}>
-                        <tr style={styleOf(row.style)}>
+                        <tr
+                            style={row.link ? { cursor: 'pointer', ...styleOf(row.style) } : styleOf(row.style)}
+                            // configLinkLinha: the row opens its record (Enter when focused).
+                            tabIndex={row.link ? 0 : undefined}
+                            data-link={row.link ?? undefined}
+                            onClick={row.link ? (event) => followRowLink(event, row.link) : undefined}
+                            onAuxClick={row.link ? (event) => followRowLink(event, row.link) : undefined}
+                            onKeyDown={row.link ? (event) => followRowLink(event, row.link) : undefined}
+                        >
                             {detail && (
                                 <td className="pc-col-check">
                                     <PtahCrudDetailToggle crud={crud} row={row} locale={locale} />
@@ -396,7 +399,18 @@ function Table({ crud, state, t, locale }: PartProps) {
                                 </td>
                             )}
                         </tr>
-                        {detail && <PtahCrudDetailRow crud={crud} row={row} colSpan={span} locale={locale} />}
+                        {detail && (
+                            <PtahCrudDetailRow
+                                crud={crud}
+                                row={row}
+                                colSpan={span}
+                                locale={locale}
+                                // The child screen, bound by the server to this row: its own
+                                // controller, nothing remembered (the Livewire nested grid
+                                // starts clean on every expansion too).
+                                renderDetail={(child) => <PtahCrud {...options} screen={child.screen} title={child.title || undefined} locale={locale} api={crud.api} remember={false} />}
+                            />
+                        )}
                         </Fragment>
                     ))}
                 </tbody>
@@ -567,265 +581,139 @@ function useEscape(onEscape: () => void) {
     }, [onEscape]);
 }
 
-function FormModal({ crud, state, t, locale }: PartProps) {
+/**
+ * The create/edit modal, as the Livewire one: title by gender and subtitle,
+ * sections, focus on the first field, the page locked behind it, "discard
+ * changes?" before closing a changed form (Cancel, ✕, Escape, a click
+ * outside), and a loading state while the form is on its way — mounted with
+ * `state.form || crud.formOpening`.
+ */
+export function FormModal({ crud, state, t, locale }: PartProps) {
     const schema = state.schema!;
-    const form = state.form!;
+    const form = state.form;
     const titleId = `pc-form-title-${crud.screen}`;
-    // A panel over the form (history, attachments) takes the Escape first.
-    useEscape(() => !crud.getState().panel && crud.closeForm());
+    const [dirty, setDirty] = useState(false);
+    const [confirming, setConfirming] = useState(false);
+    const body = useRef<HTMLDivElement>(null);
+    const instance = form?.instance ?? 0;
+
+    // A new opening (also "save & new", a draft reverted) starts clean and focused.
+    useEffect(() => {
+        setDirty(false);
+        setConfirming(false);
+        if (form) {
+            focusFirstField(body.current);
+        }
+    }, [instance, form === null]); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => lockBodyScroll(), []);
+
+    const tryClose = () => {
+        if (needsDiscardConfirm(crud, dirty)) {
+            setConfirming(true);
+        } else {
+            crud.closeForm();
+        }
+    };
+    // The confirmation takes the Escape first; a panel over the form (history, attachments) too.
+    useEscape(() => {
+        if (confirming) {
+            setConfirming(false);
+        } else if (!crud.getState().panel) {
+            tryClose();
+        }
+    });
+
+    const title = form ? formTitle(form, schema, t) : `${crud.formOpening === 'edit' ? t.editPrefix : t.newPrefix} ${schema.titleSingular}`;
 
     return (
-        <div className="pc-overlay" onMouseDown={(event) => event.target === event.currentTarget && crud.closeForm()}>
-            <div className="pc-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
-                <form
-                    noValidate
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        void crud.save();
-                    }}
-                >
-                    <div className="pc-modal-head">
-                        <h3 className="pc-modal-title" id={titleId}>
-                            {form.mode === 'create' ? t.newRecord : t.editRecord} — {schema.titleSingular}
-                        </h3>
-                        <button type="button" className="pc-icon-btn" aria-label={t.close} onClick={() => crud.closeForm()}>
-                            ✕
-                        </button>
-                    </div>
-                    <div className="pc-modal-body">
-                        {form.errors._general && (
-                            <p className="pc-alert" role="alert">
-                                {form.errors._general}
+        <>
+            <div className="pc-overlay" onMouseDown={(event) => event.target === event.currentTarget && tryClose()}>
+                <div className="pc-modal" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-busy={form ? undefined : true}>
+                    <form
+                        noValidate
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            void crud.save();
+                        }}
+                    >
+                        <div className="pc-modal-head">
+                            <div className="pc-modal-heading">
+                                <h3 className="pc-modal-title" id={titleId}>
+                                    {title}
+                                </h3>
+                                {form && <p className="pc-modal-subtitle">{formSubtitle(form, t)}</p>}
+                            </div>
+                            <button type="button" className="pc-icon-btn" aria-label={t.close} onClick={tryClose}>
+                                ✕
+                            </button>
+                        </div>
+                        <div className="pc-modal-body" ref={body}>
+                            {!form ? (
+                                <div className="pc-form-loading" role="status">
+                                    <span className="pc-form-spinner" aria-hidden="true" />
+                                    {t.formLoading}
+                                </div>
+                            ) : (
+                                <>
+                                    {form.errors._general && (
+                                        <p className="pc-alert" role="alert">
+                                            {form.errors._general}
+                                        </p>
+                                    )}
+                                    <PtahCrudFormDraft crud={crud} locale={locale} />
+                                    <PtahCrudFormChanges crud={crud} />
+                                    {/* Typing anywhere in the fields makes the form dirty, as the Blade's @input/@change. */}
+                                    <div className="pc-form" onInput={() => setDirty(true)} onChange={() => setDirty(true)}>
+                                        {formSections(schema.form).map(({ field, heading }) => (
+                                            <Fragment key={field.field}>
+                                                {heading !== null && <PtahFormSection title={heading} />}
+                                                <PtahFormField field={field} crud={crud} form={form} t={t} onTouch={() => setDirty(true)} />
+                                            </Fragment>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        <div className="pc-modal-foot">
+                            {/* History and attachments of the record being edited, as in the Livewire modal. */}
+                            {form && form.mode === 'edit' && form.id !== null && <PtahCrudRecordButtons crud={crud} row={{ id: form.id }} locale={locale} />}
+                            <span className="pc-spacer" />
+                            <button type="button" className="pc-btn" disabled={form?.saving} onClick={tryClose}>
+                                {t.cancel}
+                            </button>
+                            {form && <PtahCrudSaveAndNew crud={crud} locale={locale} />}
+                            {form && (
+                                <button type="submit" className="pc-btn pc-btn--primary" disabled={form.saving} aria-busy={form.saving || undefined}>
+                                    {form.saving ? t.saving : submitLabel(form, t)}
+                                </button>
+                            )}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {confirming && (
+                <div className="pc-overlay pc-overlay--top" onMouseDown={(event) => event.target === event.currentTarget && setConfirming(false)}>
+                    <div className="pc-modal pc-modal--sm" role="alertdialog" aria-modal="true" aria-labelledby={`${titleId}-discard`} aria-describedby={`${titleId}-discard-text`}>
+                        <div className="pc-modal-body">
+                            <p className="pc-modal-title" id={`${titleId}-discard`}>
+                                {t.unsavedTitle}
                             </p>
-                        )}
-                        <PtahCrudFormDraft crud={crud} locale={locale} />
-                        <PtahCrudFormChanges crud={crud} />
-                        <div className="pc-form">
-                            {schema.form.map((field) => (
-                                <FormField key={field.field} field={field} crud={crud} state={state} t={t} />
-                            ))}
+                            <p className="pc-modal-subtitle" id={`${titleId}-discard-text`}>
+                                {t.unsavedConfirm}
+                            </p>
+                        </div>
+                        <div className="pc-modal-foot">
+                            <button type="button" className="pc-btn" autoFocus onClick={() => setConfirming(false)}>
+                                {t.unsavedKeep}
+                            </button>
+                            <button type="button" className="pc-btn pc-btn--danger" onClick={() => crud.closeForm()}>
+                                {t.unsavedDiscard}
+                            </button>
                         </div>
                     </div>
-                    <div className="pc-modal-foot">
-                        {/* History and attachments of the record being edited, as in the Livewire modal. */}
-                        {form.mode === 'edit' && form.id !== null && <PtahCrudRecordButtons crud={crud} row={{ id: form.id }} locale={locale} />}
-                        <span className="pc-spacer" />
-                        <button type="button" className="pc-btn" onClick={() => crud.closeForm()}>
-                            {t.cancel}
-                        </button>
-                        <PtahCrudSaveAndNew crud={crud} locale={locale} />
-                        <button type="submit" className="pc-btn pc-btn--primary" disabled={form.saving}>
-                            {form.saving ? t.saving : t.save}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-}
-
-function FormField({ field, crud, state, t }: PartProps & { field: Field }) {
-    const form = state.form!;
-    const id = `pc-${crud.screen}-${field.field}`;
-    const error = form.errors[field.field];
-    const value = form.data[field.field];
-    const control = controlOf(field);
-    const common = {
-        id,
-        className: `pc-input${error ? ' pc-input--error' : ''}`,
-        disabled: field.readonly,
-        'aria-invalid': error ? true : undefined,
-        'aria-describedby': error ? `${id}-error` : undefined,
-    };
-    let input: ReactNode;
-
-    if (control === 'switch') {
-        input = (
-            <label className="pc-switch">
-                <input id={id} type="checkbox" checked={value === true || value === 1 || value === '1'} disabled={field.readonly} onChange={(event) => crud.setField(field.field, event.target.checked)} />
-                <span className="pc-switch-track" />
-                <span>{field.label}</span>
-            </label>
-        );
-    } else if (control === 'textarea') {
-        input = <textarea {...common} placeholder={field.placeholder ?? undefined} value={toInput(field, value)} onChange={(event) => crud.setField(field.field, event.target.value)} />;
-    } else if (control === 'select' || control === 'yesno') {
-        const options = control === 'yesno' ? [{ label: t.yes, value: '1' }, { label: t.no, value: '0' }] : (field.options ?? []);
-        input = (
-            <select {...common} value={toInput(field, value)} onChange={(event) => crud.setField(field.field, event.target.value)}>
-                <option value="">{t.choose}</option>
-                {options.map((option) => (
-                    <option key={option.value} value={option.value}>
-                        {option.label}
-                    </option>
-                ))}
-            </select>
-        );
-    } else if (control === 'file') {
-        input = (
-            <>
-                <input {...common} type="file" accept={field.type === 'image' ? 'image/*' : undefined} onChange={(event) => crud.setFile(field.field, event.target.files?.[0] ?? null)} />
-                {typeof value === 'string' && value !== '' && <p className="pc-help">{value}</p>}
-            </>
-        );
-    } else if (control === 'lookup') {
-        input = (
-            <Lookup
-                id={id}
-                value={value === null || value === undefined ? '' : String(value)}
-                label={form.labels[field.field] ?? ''}
-                disabled={field.readonly}
-                invalid={Boolean(error)}
-                t={t}
-                search={(query) => crud.lookup(field.field, query)}
-                onPick={(item) => crud.setField(field.field, item?.value ?? '', item?.label ?? '')}
-            />
-        );
-    } else {
-        input = (
-            <input
-                {...common}
-                type={inputType(field)}
-                placeholder={field.placeholder ?? undefined}
-                // A password opens empty and empty means "keep it".
-                autoComplete={field.type === 'password' ? 'new-password' : undefined}
-                value={toInput(field, value)}
-                onChange={(event) => crud.setField(field.field, fromInput(field, event.target.value))}
-            />
-        );
-    }
-
-    return (
-        <div className={`pc-form-field${isWide(field) ? ' pc-form-field--wide' : ''}`}>
-            {control !== 'switch' && (
-                <label className="pc-label" htmlFor={id}>
-                    {field.label}
-                    {field.required && (
-                        <span className="pc-required" aria-hidden="true">
-                            {' '}
-                            *
-                        </span>
-                    )}
-                </label>
+                </div>
             )}
-            {input}
-            {field.help && <p className="pc-help">{field.help}</p>}
-            {error && (
-                <p className="pc-error" id={`${id}-error`} role="alert">
-                    {error}
-                </p>
-            )}
-        </div>
-    );
-}
-
-// ── Lookup (searchdropdown) ─────────────────────────────────────────────────
-
-interface LookupProps {
-    id: string;
-    value: string;
-    label: string;
-    disabled?: boolean;
-    invalid?: boolean;
-    t: Words;
-    search: (query: string) => Promise<LookupItem[]>;
-    onPick: (item: LookupItem | null) => void;
-}
-
-function Lookup({ id, value, label, disabled, invalid, t, search, onPick }: LookupProps) {
-    const [text, setText] = useState(label || value);
-    const [items, setItems] = useState<LookupItem[] | null>(null);
-    const [active, setActive] = useState(-1);
-    const seq = useRef(0);
-    const ref = useRef<HTMLDivElement>(null);
-
-    useEffect(() => setText(label || value), [label, value]);
-
-    const run = useMemo(
-        () =>
-            debounce((query: string) => {
-                const mine = ++seq.current;
-                void search(query).then((found) => {
-                    if (mine === seq.current) {
-                        setItems(found);
-                        setActive(-1);
-                    }
-                });
-            }, 250),
-        [search],
-    );
-    useEffect(() => () => run.cancel(), [run]);
-
-    useEffect(() => {
-        const close = (event: MouseEvent) => {
-            if (!ref.current?.contains(event.target as Node)) {
-                setItems(null);
-            }
-        };
-        document.addEventListener('mousedown', close);
-
-        return () => document.removeEventListener('mousedown', close);
-    }, []);
-
-    const pick = (item: LookupItem) => {
-        setText(String(item.label));
-        setItems(null);
-        onPick(item);
-    };
-
-    return (
-        <div className="pc-combo" ref={ref}>
-            <input
-                id={id}
-                type="text"
-                role="combobox"
-                aria-expanded={items !== null}
-                aria-controls={`${id}-list`}
-                aria-autocomplete="list"
-                aria-invalid={invalid || undefined}
-                autoComplete="off"
-                className={`pc-input${invalid ? ' pc-input--error' : ''}`}
-                placeholder={t.typeToSearch}
-                disabled={disabled}
-                value={text}
-                onFocus={() => run(text === (label || value) ? '' : text)}
-                onChange={(event) => {
-                    setText(event.target.value);
-                    if (event.target.value === '') {
-                        onPick(null);
-                    }
-                    run(event.target.value);
-                }}
-                onKeyDown={(event) => {
-                    if (!items) {
-                        return;
-                    }
-                    if (event.key === 'ArrowDown') {
-                        event.preventDefault();
-                        setActive(Math.min(items.length - 1, active + 1));
-                    } else if (event.key === 'ArrowUp') {
-                        event.preventDefault();
-                        setActive(Math.max(0, active - 1));
-                    } else if (event.key === 'Enter' && active >= 0) {
-                        event.preventDefault();
-                        pick(items[active]);
-                    } else if (event.key === 'Escape') {
-                        event.stopPropagation();
-                        setItems(null);
-                    }
-                }}
-            />
-            {items !== null && (
-                <ul className="pc-combo-list" id={`${id}-list`} role="listbox">
-                    {items.length === 0 && <li className="pc-combo-note">{t.noResults}</li>}
-                    {items.map((item, index) => (
-                        <li key={String(item.value)} role="option" aria-selected={index === active} className="pc-combo-item" onMouseDown={(event) => event.preventDefault()} onClick={() => pick(item)}>
-                            {String(item.label)}
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </div>
+        </>
     );
 }
 

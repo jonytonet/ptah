@@ -4,6 +4,15 @@ import PtahCrud from '../../vue/PtahCrud.vue';
 import PtahLayout from '../../vue/PtahLayout.vue';
 import { fakeApi } from '../fake-api';
 
+/** The form's dialog once its fields arrived (it opens at once, loading). */
+async function readyDialog() {
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() => expect(dialog.getAttribute('aria-busy')).toBeNull());
+
+    return dialog;
+}
+
+
 afterEach(cleanup);
 
 const mount = async (props: Record<string, unknown> = {}) => {
@@ -73,14 +82,14 @@ describe('<PtahCrud> (Vue)', () => {
         await mount();
 
         await fireEvent.click(screen.getByRole('button', { name: '+ Novo' }));
-        const dialog = await screen.findByRole('dialog');
-        await fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
+        const dialog = await readyDialog();
+        await fireEvent.click(within(dialog).getByRole('button', { name: 'Criar' }));
 
         expect(await within(dialog).findByText('Nome is required.')).toBeTruthy();
         expect(within(dialog).getByLabelText(/Nome/).getAttribute('aria-invalid')).toBe('true');
 
         await fireEvent.update(within(dialog).getByLabelText(/Nome/), 'Delta');
-        await fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
+        await fireEvent.click(within(dialog).getByRole('button', { name: 'Criar' }));
 
         await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
         expect(await screen.findByText('Delta')).toBeTruthy();
@@ -102,11 +111,11 @@ describe('<PtahCrud> (Vue)', () => {
 
         const row = screen.getByText('Alfa').closest('tr')!;
         await fireEvent.click(within(row).getByRole('button', { name: 'Editar' }));
-        const dialog = await screen.findByRole('dialog');
+        const dialog = await readyDialog();
         expect((within(dialog).getByLabelText(/Nome/) as HTMLInputElement).value).toBe('Alfa');
 
         await fireEvent.update(within(dialog).getByLabelText(/Nome/), 'Alfa 2');
-        await fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
+        await fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar Alterações' }));
 
         expect(await screen.findByText('Alfa 2')).toBeTruthy();
         expect(items().find((item) => item.id === 1)?.name).toBe('Alfa 2');

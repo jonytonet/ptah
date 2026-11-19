@@ -1,149 +1,144 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted } from 'vue';
-import { controlOf, fromInput, inputType, isWide, toInput } from '../core';
-import type { CrudController, CrudState, Field, Option, Words } from '../core';
+/**
+ * The create/edit modal, as the Livewire one: title by gender and subtitle,
+ * sections, focus on the first field, the page locked behind it, "discard
+ * changes?" before closing a changed form (Cancel, ✕, Escape, a click
+ * outside), and a loading state while the form is on its way — mounted with
+ * `state.form || crud.formOpening`. Mirrors the React FormModal.
+ */
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import type { CrudController, CrudState, Words } from '../core';
+import { focusFirstField, formSections, formSubtitle, formTitle, lockBodyScroll, needsDiscardConfirm, submitLabel } from '../core/crud/form';
+import { PtahFormField, PtahFormSection } from './crud/form';
 import { PtahCrudFormChanges, PtahCrudFormDraft, PtahCrudSaveAndNew } from './crud/extras';
 import { PtahCrudRecordButtons } from './crud/records';
-import PtahLookup from './PtahLookup.vue';
 
 const props = defineProps<{ crud: CrudController; state: CrudState; t: Words; locale?: string }>();
 
-const id = (field: Field) => `pc-${props.crud.screen}-${field.field}`;
-const error = (field: Field) => props.state.form?.errors[field.field];
-const value = (field: Field) => props.state.form?.data[field.field];
-const text = (field: Field) => toInput(field, value(field));
-const isOn = (field: Field) => [true, 1, '1'].includes(value(field) as never);
-const optionsOf = (field: Field): Option[] =>
-    controlOf(field) === 'yesno'
-        ? [
-              { label: props.t.yes, value: '1' },
-              { label: props.t.no, value: '0' },
-          ]
-        : (field.options ?? []);
-const target = (event: Event) => event.target as HTMLInputElement;
+const titleId = computed(() => `pc-form-title-${props.crud.screen}`);
+const dirty = ref(false);
+const confirming = ref(false);
+const body = ref<HTMLElement | null>(null);
+const form = computed(() => props.state.form);
+const entries = computed(() => formSections(props.state.schema?.form ?? []));
+const title = computed(() => {
+    const schema = props.state.schema;
+    if (!schema) {
+        return '';
+    }
 
-// A masked field shows the masked text even when the stored value did not
-// change (a letter typed into a digits-only mask).
-const onText = (field: Field, event: Event) => {
-    const element = target(event);
-    const next = fromInput(field, element.value);
-    props.crud.setField(field.field, next);
-    element.value = toInput(field, next);
+    return form.value ? formTitle(form.value, schema, props.t) : `${props.crud.formOpening === 'edit' ? props.t.editPrefix : props.t.newPrefix} ${schema.titleSingular}`;
+});
+
+// A new opening (also "save & new", a draft reverted) starts clean and focused.
+// Two sources, each compared on its own: a new state object (every keystroke) is not a new opening.
+watch(
+    [() => form.value?.instance ?? 0, () => form.value === null],
+    () => {
+        dirty.value = false;
+        confirming.value = false;
+        if (form.value) {
+            void nextTick(() => focusFirstField(body.value));
+        }
+    },
+    { immediate: true },
+);
+
+// The confirmation opens on "Keep editing", the safe choice.
+const keepButton = ref<HTMLButtonElement | null>(null);
+watch(confirming, (open) => {
+    if (open) {
+        void nextTick(() => keepButton.value?.focus());
+    }
+});
+
+const touch = () => {
+    dirty.value = true;
 };
 
-const onKey = (event: KeyboardEvent) => {
-    // A panel over the form (history, attachments) takes the Escape first.
-    if (event.key === 'Escape' && !props.crud.getState().panel) {
+const tryClose = () => {
+    if (needsDiscardConfirm(props.crud, dirty.value)) {
+        confirming.value = true;
+    } else {
         props.crud.closeForm();
     }
 };
 
-onMounted(() => document.addEventListener('keydown', onKey));
-onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
+// The confirmation takes the Escape first; a panel over the form (history, attachments) too.
+const onKey = (event: KeyboardEvent) => {
+    if (event.key !== 'Escape') {
+        return;
+    }
+    if (confirming.value) {
+        confirming.value = false;
+    } else if (!props.crud.getState().panel) {
+        tryClose();
+    }
+};
+
+let release: (() => void) | null = null;
+onMounted(() => {
+    document.addEventListener('keydown', onKey);
+    release = lockBodyScroll();
+});
+onBeforeUnmount(() => {
+    document.removeEventListener('keydown', onKey);
+    release?.();
+});
 </script>
 
 <template>
-    <div v-if="state.form && state.schema" class="pc-overlay" @mousedown.self="crud.closeForm()">
-        <div class="pc-modal" role="dialog" aria-modal="true" :aria-labelledby="`pc-form-title-${crud.screen}`">
+    <div v-if="state.schema && (form || crud.formOpening)" class="pc-overlay" @mousedown.self="tryClose()">
+        <div class="pc-modal" role="dialog" aria-modal="true" :aria-labelledby="titleId" :aria-busy="form ? undefined : true">
             <form novalidate @submit.prevent="crud.save()">
                 <div class="pc-modal-head">
-                    <h3 :id="`pc-form-title-${crud.screen}`" class="pc-modal-title">
-                        {{ state.form.mode === 'create' ? t.newRecord : t.editRecord }} — {{ state.schema.titleSingular }}
-                    </h3>
-                    <button type="button" class="pc-icon-btn" :aria-label="t.close" @click="crud.closeForm()">✕</button>
-                </div>
-                <div class="pc-modal-body">
-                    <p v-if="state.form.errors._general" class="pc-alert" role="alert">{{ state.form.errors._general }}</p>
-                    <PtahCrudFormDraft :crud="crud" :locale="locale" />
-                    <PtahCrudFormChanges :crud="crud" />
-                    <div class="pc-form">
-                        <div v-for="field in state.schema.form" :key="field.field" :class="['pc-form-field', { 'pc-form-field--wide': isWide(field) }]">
-                            <label v-if="controlOf(field) !== 'switch'" class="pc-label" :for="id(field)">
-                                {{ field.label }}<span v-if="field.required" class="pc-required" aria-hidden="true"> *</span>
-                            </label>
-
-                            <label v-if="controlOf(field) === 'switch'" class="pc-switch">
-                                <input :id="id(field)" type="checkbox" :checked="isOn(field)" :disabled="field.readonly" @change="crud.setField(field.field, target($event).checked)" />
-                                <span class="pc-switch-track" />
-                                <span>{{ field.label }}</span>
-                            </label>
-
-                            <textarea
-                                v-else-if="controlOf(field) === 'textarea'"
-                                :id="id(field)"
-                                :class="['pc-input', { 'pc-input--error': error(field) }]"
-                                :disabled="field.readonly"
-                                :placeholder="field.placeholder ?? undefined"
-                                :aria-invalid="error(field) ? true : undefined"
-                                :value="text(field)"
-                                @input="crud.setField(field.field, target($event).value)"
-                            />
-
-                            <select
-                                v-else-if="controlOf(field) === 'select' || controlOf(field) === 'yesno'"
-                                :id="id(field)"
-                                :class="['pc-input', { 'pc-input--error': error(field) }]"
-                                :disabled="field.readonly"
-                                :aria-invalid="error(field) ? true : undefined"
-                                :value="text(field)"
-                                @change="crud.setField(field.field, target($event).value)"
-                            >
-                                <option value="">{{ t.choose }}</option>
-                                <option v-for="option in optionsOf(field)" :key="option.value" :value="option.value">{{ option.label }}</option>
-                            </select>
-
-                            <template v-else-if="controlOf(field) === 'file'">
-                                <input
-                                    :id="id(field)"
-                                    type="file"
-                                    :class="['pc-input', { 'pc-input--error': error(field) }]"
-                                    :accept="field.type === 'image' ? 'image/*' : undefined"
-                                    :disabled="field.readonly"
-                                    @change="crud.setFile(field.field, target($event).files?.[0] ?? null)"
-                                />
-                                <p v-if="typeof value(field) === 'string' && value(field) !== ''" class="pc-help">{{ value(field) }}</p>
-                            </template>
-
-                            <PtahLookup
-                                v-else-if="controlOf(field) === 'lookup'"
-                                :id="id(field)"
-                                :value="value(field) === null || value(field) === undefined ? '' : String(value(field))"
-                                :label="state.form.labels[field.field] ?? ''"
-                                :disabled="field.readonly"
-                                :invalid="Boolean(error(field))"
-                                :t="t"
-                                :search="(query: string) => crud.lookup(field.field, query)"
-                                @pick="(item) => crud.setField(field.field, item?.value ?? '', item?.label ?? '')"
-                            />
-
-                            <input
-                                v-else
-                                :id="id(field)"
-                                :type="inputType(field)"
-                                :class="['pc-input', { 'pc-input--error': error(field) }]"
-                                :disabled="field.readonly"
-                                :placeholder="field.placeholder ?? undefined"
-                                :autocomplete="field.type === 'password' ? 'new-password' : undefined"
-                                :aria-invalid="error(field) ? true : undefined"
-                                :aria-describedby="error(field) ? `${id(field)}-error` : undefined"
-                                :value="text(field)"
-                                @input="onText(field, $event)"
-                            />
-
-                            <p v-if="field.help" class="pc-help">{{ field.help }}</p>
-                            <p v-if="error(field)" :id="`${id(field)}-error`" class="pc-error" role="alert">{{ error(field) }}</p>
-                        </div>
+                    <div class="pc-modal-heading">
+                        <h3 :id="titleId" class="pc-modal-title">{{ title }}</h3>
+                        <p v-if="form" class="pc-modal-subtitle">{{ formSubtitle(form, t) }}</p>
                     </div>
+                    <button type="button" class="pc-icon-btn" :aria-label="t.close" @click="tryClose()">✕</button>
+                </div>
+                <div ref="body" class="pc-modal-body">
+                    <div v-if="!form" class="pc-form-loading" role="status">
+                        <span class="pc-form-spinner" aria-hidden="true" />
+                        {{ t.formLoading }}
+                    </div>
+                    <template v-else>
+                        <p v-if="form.errors._general" class="pc-alert" role="alert">{{ form.errors._general }}</p>
+                        <PtahCrudFormDraft :crud="crud" :locale="locale" />
+                        <PtahCrudFormChanges :crud="crud" />
+                        <!-- Typing anywhere in the fields makes the form dirty, as the Blade's @input/@change. -->
+                        <div class="pc-form" @input="touch" @change="touch">
+                            <template v-for="entry in entries" :key="entry.field.field">
+                                <PtahFormSection v-if="entry.heading !== null" :title="entry.heading" />
+                                <PtahFormField :crud="crud" :form="form" :field="entry.field" :t="t" @touch="touch" />
+                            </template>
+                        </div>
+                    </template>
                 </div>
                 <div class="pc-modal-foot">
                     <!-- History and attachments of the record being edited, as in the Livewire modal. -->
-                    <PtahCrudRecordButtons v-if="state.form.mode === 'edit' && state.form.id !== null" :crud="crud" :row="{ id: state.form.id }" :locale="locale" />
+                    <PtahCrudRecordButtons v-if="form && form.mode === 'edit' && form.id !== null" :crud="crud" :row="{ id: form.id }" :locale="locale" />
                     <span class="pc-spacer" />
-                    <button type="button" class="pc-btn" @click="crud.closeForm()">{{ t.cancel }}</button>
-                    <PtahCrudSaveAndNew :crud="crud" :locale="locale" />
-                    <button type="submit" class="pc-btn pc-btn--primary" :disabled="state.form.saving">{{ state.form.saving ? t.saving : t.save }}</button>
+                    <button type="button" class="pc-btn" :disabled="form?.saving" @click="tryClose()">{{ t.cancel }}</button>
+                    <PtahCrudSaveAndNew v-if="form" :crud="crud" :locale="locale" />
+                    <button v-if="form" type="submit" class="pc-btn pc-btn--primary" :disabled="form.saving" :aria-busy="form.saving || undefined">
+                        {{ form.saving ? t.saving : submitLabel(form, t) }}
+                    </button>
                 </div>
             </form>
+        </div>
+    </div>
+    <div v-if="confirming" class="pc-overlay pc-overlay--top" @mousedown.self="confirming = false">
+        <div class="pc-modal pc-modal--sm" role="alertdialog" aria-modal="true" :aria-labelledby="`${titleId}-discard`" :aria-describedby="`${titleId}-discard-text`">
+            <div class="pc-modal-body">
+                <p :id="`${titleId}-discard`" class="pc-modal-title">{{ t.unsavedTitle }}</p>
+                <p :id="`${titleId}-discard-text`" class="pc-modal-subtitle">{{ t.unsavedConfirm }}</p>
+            </div>
+            <div class="pc-modal-foot">
+                <button ref="keepButton" type="button" class="pc-btn" @click="confirming = false">{{ t.unsavedKeep }}</button>
+                <button type="button" class="pc-btn pc-btn--danger" @click="crud.closeForm()">{{ t.unsavedDiscard }}</button>
+            </div>
         </div>
     </div>
 </template>

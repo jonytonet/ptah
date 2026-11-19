@@ -2,17 +2,19 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { CrudController, debounce, pagesAround, words } from '../core';
 import type { ControllerOptions, PtahApi, Row, RowAction } from '../core';
-import { nextViewMode } from '../core/crud/boards';
+import { followRowLink, nextViewMode } from '../core/crud/boards';
 import { fullOrder, moveColumn, saveColumnOrder } from '../core/crud/extras';
 import { clearAllFilters, filterByCell, filterSession, isCellFilterable } from '../core/crud/filters';
+import { PtahCrudConfigButton } from './admin/crud-config';
 import { PtahCrudCalendar, PtahCrudCards, PtahCrudKanban, PtahCrudViewSwitch, useResolvedView } from './crud/boards';
 import { PtahCrudColumnResizer, PtahCrudColumnsMenu, PtahCrudDetailRow, PtahCrudDetailToggle } from './crud/extras';
 import { PtahCrudFilterBadges, PtahCrudFilterPanel, PtahCrudSearchHistory, PtahCrudUrlFilters } from './crud/filters';
 import { PtahCrudImport, PtahCrudImportButton } from './crud/import';
-import { PtahCrudAttachments, PtahCrudHistory, PtahCrudRecordButtons } from './crud/records';
+import { PtahCrudAttachments, PtahCrudHistory } from './crud/records';
 import PtahConfirm from './PtahConfirm.vue';
 import PtahForm from './PtahForm.vue';
 import PtahMenu from './PtahMenu.vue';
+import PtahRowButtons from './PtahRowButtons.vue';
 import { usePtahCrud } from './usePtahCrud';
 
 const props = withDefaults(
@@ -59,7 +61,7 @@ const typing = (event: KeyboardEvent) => {
 // `v` walks the views (auto → table → cards), as on the Livewire screen.
 const onKey = (event: KeyboardEvent) => {
     const now = crud.getState();
-    if (event.key !== 'v' || event.ctrlKey || event.metaKey || event.altKey || typing(event) || now.form || now.panel || now.deleting !== null) {
+    if (event.key !== 'v' || crud.screen.includes('..') || event.ctrlKey || event.metaKey || event.altKey || typing(event) || now.form || now.panel || now.deleting !== null) {
         return;
     }
     void crud.savePreferences({ view_mode: nextViewMode(now.preferences?.view_mode) });
@@ -134,10 +136,9 @@ const confirmAction = () => {
     }
     pendingAction.value = null;
 };
-const onLink = (event: MouseEvent, action: RowAction) => {
-    if (action.confirm && !window.confirm(action.confirm)) {
-        event.preventDefault();
-    }
+// configLinkLinha: a click (or Enter) on a row with a link opens its record.
+const followLink = (event: MouseEvent | KeyboardEvent, row: Row) => {
+    followRowLink(event, row.link);
 };
 
 // ── Table ───────────────────────────────────────────────────────────────────
@@ -209,7 +210,8 @@ onBeforeUnmount(() => {
     </div>
 
     <div v-else class="pc-root" :data-density="state.preferences?.view_density ?? 'global'">
-        <PtahCrudUrlFilters :crud="crud" :locale="locale" />
+        <!-- A detail grid (a child screen) does not read the page's address. -->
+        <PtahCrudUrlFilters :crud="crud" :locale="locale" :read-location="!crud.screen.includes('..')" />
 
         <!-- Toolbar -->
         <div class="pc-toolbar">
@@ -227,6 +229,7 @@ onBeforeUnmount(() => {
             </button>
             <PtahCrudViewSwitch :crud="crud" :locale="locale" />
             <PtahCrudColumnsMenu :crud="crud" :locale="locale" />
+            <PtahCrudConfigButton :crud="crud" :locale="locale" />
             <PtahMenu v-if="state.schema.export.enabled" :label="t.export">
                 <li v-for="format in [...state.schema.export.formats, 'print']" :key="format">
                     <button type="button" class="pc-menu-item" @click="crud.export(format)">{{ formatLabel(format) }}</button>
@@ -255,7 +258,12 @@ onBeforeUnmount(() => {
 
         <PtahCrudKanban v-if="view === 'kanban'" :crud="crud" :locale="locale" />
         <PtahCrudCalendar v-else-if="view === 'calendar'" :crud="crud" :locale="locale" />
-        <PtahCrudCards v-else-if="view === 'cards'" :crud="crud" :locale="locale" />
+        <PtahCrudCards v-else-if="view === 'cards'" :crud="crud" :locale="locale">
+            <!-- The table's own row buttons (history, attachments, actions), as in React. -->
+            <template #actions="{ row }">
+                <PtahRowButtons :crud="crud" :row="row" :permissions="state.schema.permissions" :t="t" :locale="locale" @run="runAction(row, $event)" />
+            </template>
+        </PtahCrudCards>
 
         <!-- Table -->
         <div v-else class="pc-table-wrap" :aria-busy="state.busy">
@@ -293,7 +301,15 @@ onBeforeUnmount(() => {
                         <td class="pc-empty" :colspan="span">{{ t.empty }}</td>
                     </tr>
                     <template v-for="row in state.rows" :key="row.id">
-                    <tr :style="row.style ?? undefined">
+                    <!-- configLinkLinha: the row opens its record (Enter when focused). -->
+                    <tr
+                        :style="row.link ? [{ cursor: 'pointer' }, row.style ?? ''] : (row.style ?? undefined)"
+                        :tabindex="row.link ? 0 : undefined"
+                        :data-link="row.link ?? undefined"
+                        @click="followLink($event, row)"
+                        @auxclick="followLink($event, row)"
+                        @keydown="followLink($event, row)"
+                    >
                         <td v-if="detail" class="pc-col-check">
                             <PtahCrudDetailToggle :crud="crud" :row="row" :locale="locale" />
                         </td>
@@ -313,26 +329,26 @@ onBeforeUnmount(() => {
                             v-html="row.cells[column.field]?.html ?? ''"
                         />
                         <td v-if="hasRowButtons" class="pc-col-actions">
-                            <PtahCrudRecordButtons :crud="crud" :row="row" :locale="locale" />
-                            <template v-for="(action, index) in row.actions" :key="index">
-                                <a v-if="action.type === 'link'" class="pc-icon-btn" :href="action.value" :title="action.label" :aria-label="action.label" @click="onLink($event, action)">
-                                    <i v-if="action.icon" :class="action.icon" aria-hidden="true" /><template v-else>{{ action.label || '→' }}</template>
-                                </a>
-                                <button v-else type="button" class="pc-icon-btn" :title="action.label" :aria-label="action.label" @click="runAction(row, action)">
-                                    <i v-if="action.icon" :class="action.icon" aria-hidden="true" /><template v-else>{{ action.label || '→' }}</template>
-                                </button>
-                            </template>
-                            <template v-if="row.trashed">
-                                <button v-if="state.schema.permissions.canRestore" type="button" class="pc-icon-btn" @click="crud.restore(row.id)">{{ t.restore }}</button>
-                            </template>
-                            <template v-else>
-                                <button v-if="state.schema.permissions.canUpdate" type="button" class="pc-icon-btn" @click="crud.openEdit(row.id)">{{ t.edit }}</button>
-                                <button v-if="state.schema.permissions.canCreate" type="button" class="pc-icon-btn" @click="crud.duplicate(row.id)">{{ t.duplicate }}</button>
-                                <button v-if="state.schema.permissions.canDelete" type="button" class="pc-icon-btn pc-icon-btn--danger" @click="crud.askDelete(row.id)">{{ t.delete }}</button>
-                            </template>
+                            <PtahRowButtons :crud="crud" :row="row" :permissions="state.schema.permissions" :t="t" :locale="locale" @run="runAction(row, $event)" />
                         </td>
                     </tr>
-                    <PtahCrudDetailRow v-if="detail" :crud="crud" :row="row" :col-span="span" :locale="locale" />
+                    <PtahCrudDetailRow v-if="detail" :crud="crud" :row="row" :col-span="span" :locale="locale">
+                        <!-- The child screen, bound by the server to this row: its own
+                             controller, nothing remembered (the Livewire nested grid starts
+                             clean on every expansion too). -->
+                        <template #detail="{ detail: child }">
+                            <PtahCrud
+                                :screen="child.screen"
+                                :title="child.title || undefined"
+                                :locale="locale"
+                                :api="crud.api"
+                                :remember="false"
+                                :toast-ms="toastMs"
+                                :on-action="onAction"
+                                :open="open"
+                            />
+                        </template>
+                    </PtahCrudDetailRow>
                     </template>
                 </tbody>
                 <tfoot v-if="state.totals.length > 0">
@@ -371,7 +387,7 @@ onBeforeUnmount(() => {
             </nav>
         </div>
 
-        <PtahForm v-if="state.form" :crud="crud" :state="state" :t="t" :locale="locale" />
+        <PtahForm v-if="state.form || crud.formOpening" :crud="crud" :state="state" :t="t" :locale="locale" />
         <!-- After the form in the DOM: they open over it. -->
         <PtahCrudHistory :crud="crud" :locale="locale" />
         <PtahCrudAttachments :crud="crud" :locale="locale" />

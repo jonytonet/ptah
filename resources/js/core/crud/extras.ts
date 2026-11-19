@@ -10,7 +10,7 @@
 import { ApiError } from '../api';
 import type { PtahApi } from '../api';
 import type { CrudController, FormState } from '../controller';
-import type { Cell, Column, Preferences, RowId, Total } from '../types';
+import type { Preferences, RowId } from '../types';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -48,24 +48,18 @@ export interface FieldPatch {
     labels: Record<string, string>;
 }
 
-export interface DetailColumn extends Pick<Column, 'field' | 'label' | 'type' | 'align'> {}
-
-export interface DetailRow {
-    id: RowId;
-    cells: Record<string, Cell>;
-    style: string | null;
-    trashed: boolean;
-}
-
-export interface DetailGrid {
+/**
+ * One detail of a row: a whole CRUD screen of the child model, served by the
+ * same API under a key the server derives (`{screen}..{id}.{index}`) and
+ * binds, on every request, to that row — mount `<PtahCrud screen={screen}>`.
+ */
+export interface DetailScreen {
     index: number;
     title: string;
-    /** False when the user may not read that grid (or it has no config). */
+    /** The child screen's key: never built by the client. */
+    screen: string;
+    /** False when the user may not read that detail (or it has no config). */
     available: boolean;
-    columns: DetailColumn[];
-    rows: DetailRow[];
-    meta: { page: number; per_page: number; total: number; last_page: number } | null;
-    totals: Total[];
 }
 
 export interface ColumnItem {
@@ -113,12 +107,15 @@ export async function formTriggers(api: PtahApi, screen: string): Promise<string
     return Array.isArray(raw?.fields) ? raw.fields.map(String) : [];
 }
 
-/** The detail grids of a row; `detail` + `page` page one of them. */
-export async function rowDetails(api: PtahApi, screen: string, id: RowId, detail?: number, page = 1): Promise<DetailGrid[]> {
-    const query = detail === undefined ? '' : `?detail=${detail}&page=${page}`;
-    const raw = await api.call<{ data?: DetailGrid[] }>('GET', `${base(screen)}/${encodeURIComponent(String(id))}/details${query}`);
+/** The detail screens of a row. */
+export async function rowDetails(api: PtahApi, screen: string, id: RowId): Promise<DetailScreen[]> {
+    const raw = await api.call<{ data?: Partial<DetailScreen>[] }>('GET', `${base(screen)}/${encodeURIComponent(String(id))}/details`);
 
-    return Array.isArray(raw?.data) ? raw.data.map((grid) => ({ ...grid, totals: Array.isArray(grid.totals) ? grid.totals : [] })) : [];
+    return Array.isArray(raw?.data)
+        ? raw.data
+              .filter((item) => typeof item?.screen === 'string' && item.screen !== '')
+              .map((item) => ({ index: Number(item.index ?? 0), title: String(item.title ?? ''), screen: String(item.screen), available: Boolean(item.available) }))
+        : [];
 }
 
 /** Every column the user may show or hide, with its label, in the current order. */
@@ -738,10 +735,8 @@ export async function saveAndNew(crud: CrudController): Promise<boolean> {
 
 export interface DetailEntry {
     status: 'loading' | 'ready' | 'error';
-    grids: DetailGrid[];
+    details: DetailScreen[];
     error: string | null;
-    /** A grid whose page is being fetched. */
-    paging: number | null;
 }
 
 export interface DetailsView {
@@ -750,8 +745,8 @@ export interface DetailsView {
 }
 
 /**
- * The expanded rows of a screen and their details, fetched on the first
- * expansion and kept per row (collapsing does not forget them).
+ * The expanded rows of a screen and the detail screens of each, fetched on
+ * the first expansion and kept per row (collapsing does not forget them).
  */
 export class DetailsStore extends Store<DetailsView> {
     constructor(private readonly crud: CrudController) {
@@ -775,32 +770,14 @@ export class DetailsStore extends Store<DetailsView> {
         }
     }
 
-    /** (Re)loads every grid of a row. */
+    /** (Re)loads the detail screens of a row. */
     async load(id: RowId): Promise<void> {
         const key = String(id);
-        this.entry(key, { status: 'loading', grids: this.value.entries[key]?.grids ?? [], error: null, paging: null });
+        this.entry(key, { status: 'loading', details: this.value.entries[key]?.details ?? [], error: null });
         try {
-            this.entry(key, { status: 'ready', grids: await rowDetails(this.crud.api, this.crud.screen, id), error: null, paging: null });
+            this.entry(key, { status: 'ready', details: await rowDetails(this.crud.api, this.crud.screen, id), error: null });
         } catch (error) {
-            this.entry(key, { status: 'error', grids: [], error: error instanceof ApiError && error.status < 500 ? error.message : null, paging: null });
-        }
-    }
-
-    /** Another page of one grid of a row. */
-    async page(id: RowId, index: number, page: number): Promise<void> {
-        const key = String(id);
-        const current = this.value.entries[key];
-        if (!current) {
-            return;
-        }
-        this.entry(key, { ...current, paging: index });
-        try {
-            const [grid] = await rowDetails(this.crud.api, this.crud.screen, id, index, page);
-            const latest = this.value.entries[key] ?? current;
-            this.entry(key, { ...latest, paging: null, grids: latest.grids.map((item) => (item.index === index && grid ? grid : item)) });
-        } catch (error) {
-            this.entry(key, { ...(this.value.entries[key] ?? current), paging: null });
-            this.crud.toast(message(error, 'Error'), 'danger');
+            this.entry(key, { status: 'error', details: [], error: error instanceof ApiError && error.status < 500 ? error.message : null });
         }
     }
 

@@ -11,6 +11,8 @@ export { PtahForgotPassword, PtahLogin, PtahProfile, PtahResetPassword, PtahTwoF
 export type { AuthPageProps } from './auth';
 export { PtahDashboard, PtahWidgets } from './dashboard';
 export { PtahAudit, PtahUserPermissions } from './admin/access';
+export { PtahAiChat, PtahAiModels } from './admin/ai';
+export { PtahCrudConfig, PtahCrudConfigButton } from './admin/crud-config';
 export { PtahCompanies, PtahCompanySwitcher, PtahDepartments } from './admin/company';
 export { PtahMenuAdmin, PtahSettings } from './admin/menu';
 export { PtahPages, PtahPermissionGuide, PtahRoles } from './admin/roles';

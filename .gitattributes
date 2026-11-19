@@ -34,3 +34,4 @@
 /resources/js/__tests__ export-ignore
 /vitest.config.ts       export-ignore
 /package-lock.json      export-ignore
+/scripts                export-ignore

@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Ptah\Crud\CrudRuntime;
 use Ptah\Crud\CrudRuntimeResolver;
 use Ptah\Crud\CrudScreen;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 use function Livewire\store;
 
@@ -178,77 +179,46 @@ class ExtrasApiController extends Controller
     // ── Master / detail ─────────────────────────────────────────────────────
 
     /**
-     * The detail grids of one row — what the Livewire screen mounts under an
-     * expanded row: a BaseCrud of each `masterDetail` model, locked to the
-     * row's key. The row is looked up through this screen's scope (a record
-     * outside its locks is a 404); each grid runs the child model's own
-     * config, permissions and columns. `detail` + `page` page one grid.
+     * The detail screens of one row — what the Livewire screen mounts under
+     * an expanded row: a full BaseCrud of each `masterDetail` model, locked to
+     * the row's key. Each comes as the key of a screen the whole API serves
+     * (`{screen}..{id}.{index}`): listing, filters, form, export, row
+     * actions… all through the usual endpoints, all bound on the server to
+     * this row (see CrudRuntimeResolver). The row is looked up through this
+     * screen's scope (outside its locks: 404); a detail the user may not read
+     * (or whose model has no config) is `available: false`.
      */
     public function details(Request $request, string $screen, int $id): JsonResponse
     {
         $crud = $this->resolver->resolve($request, $screen);
-        $config = (array) ($crud->crudConfig['masterDetail'] ?? []);
 
-        abort_if($config === [], 404);
-        abort_if($crud->record($id) === null, 404);
+        abort_if(empty($crud->crudConfig['masterDetail']), 404);
+        abort_unless($crud->reaches($id), 404);
 
-        $only = $request->query('detail');
-        if ($only !== null && (! is_string($only) || ! ctype_digit($only))) {
-            throw ValidationException::withMessages(['detail' => trans('validation.integer', ['attribute' => 'detail'])]);
-        }
-        $page = max(1, (int) $request->integer('page', 1));
         $out = [];
-
-        foreach ($config as $index => $detail) {
-            if (! is_array($detail) || empty($detail['model']) || empty($detail['foreignKey'])) {
-                continue;
-            }
-            if ($only !== null && (string) $only !== (string) $index) {
+        foreach (array_keys((array) $crud->crudConfig['masterDetail']) as $index) {
+            if (! is_int($index) || ($detail = $crud->detailConfig($index)) === null) {
                 continue;
             }
 
-            $out[] = $this->detailGrid($request, $crud, $screen, (int) $index, $detail, $id, $only !== null ? $page : 1);
+            $key = CrudScreen::detailKey($screen, $id, $index);
+
+            try {
+                $child = $this->resolver->resolve($request, $key);
+            } catch (HttpException) {
+                $child = null;
+            }
+
+            $out[] = [
+                'index' => $index,
+                // Never the model path as a title: it is a class name.
+                'title' => $detail['title'] ?? ($child === null ? '' : $child->humanTitle()),
+                'screen' => $key,
+                'available' => $child !== null,
+            ];
         }
-
-        abort_if($only !== null && $out === [], 404);
 
         return response()->json(['data' => $out]);
-    }
-
-    /**
-     * @param  array<string, mixed>  $detail
-     * @return array<string, mixed>
-     */
-    private function detailGrid(Request $request, CrudRuntime $parent, string $screen, int $index, array $detail, int $id, int $page): array
-    {
-        $title = is_string($detail['title'] ?? null) && trim($detail['title']) !== '' ? trim($detail['title']) : null;
-
-        // The nested Livewire grid: the child model, its rows locked to the
-        // parent's key, the config of the same page route (falling back to
-        // the model's global config, as the nested component does).
-        $definition = (new CrudScreen($screen.'.detail-'.$index, (string) $detail['model']))
-            ->configRoute($parent->configRoute)
-            ->lockedFilters([(string) $detail['foreignKey'] => $id]);
-        $child = CrudRuntime::for($definition, $request);
-
-        if (! $child->hasConfig() || ! $child->permissions()['canRead']) {
-            // Never the model path as a title: it is a class name.
-            return ['index' => $index, 'title' => $title ?? '', 'available' => false, 'columns' => [], 'rows' => [], 'meta' => null, 'totals' => []];
-        }
-
-        $schema = $child->schema();
-        $listing = $child->applyState(['page' => $page])->listing();
-
-        return [
-            'index' => $index,
-            'title' => $title ?? (string) $schema['title'],
-            'available' => true,
-            'columns' => array_map(fn (array $col) => array_intersect_key($col, array_flip(['field', 'label', 'type', 'align'])), $schema['columns']),
-            // The child's own row actions run on the child screen: not here.
-            'rows' => array_map(fn (array $row) => ['id' => $row['id'], 'cells' => $row['cells'], 'style' => $row['style'], 'trashed' => $row['trashed']], $listing['data']),
-            'meta' => array_intersect_key($listing['meta'], array_flip(['page', 'per_page', 'total', 'last_page'])),
-            'totals' => $listing['totals'],
-        ];
     }
 
     // ── Columns ─────────────────────────────────────────────────────────────

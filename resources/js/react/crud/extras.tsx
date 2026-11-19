@@ -5,7 +5,7 @@
  * CrudController and renders nothing when its feature is off.
  */
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import type { CSSProperties, DragEvent } from 'react';
+import type { CSSProperties, DragEvent, ReactNode } from 'react';
 import type { CrudController, CrudState, Row } from '../../core';
 import {
     columnResizer,
@@ -21,11 +21,10 @@ import {
     saveAndNew,
     saveColumnOrder,
     setAllColumns,
-    styleMap,
     watchFormChanges,
 } from '../../core/crud/extras';
-import type { ColumnItem, DetailGrid, ExtrasWords } from '../../core/crud/extras';
-import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal, ForgePagination, ForgeSpinner } from '../forge';
+import type { ColumnItem, DetailScreen, ExtrasWords } from '../../core/crud/extras';
+import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal, ForgeSpinner } from '../forge';
 
 interface PieceProps {
     crud: CrudController;
@@ -150,8 +149,25 @@ export function PtahCrudDetailToggle({ crud, row, locale }: PieceProps & { row: 
     );
 }
 
-/** The expanded content of a row: one small grid per detail, loaded on the first expansion. */
-export function PtahCrudDetailRow({ crud, row, colSpan, locale }: PieceProps & { row: Row; colSpan: number }) {
+export interface DetailRowProps extends PieceProps {
+    row: Row;
+    colSpan: number;
+    /**
+     * Draws one detail: a whole CRUD screen of the child model. PtahCrud
+     * passes `<PtahCrud screen={detail.screen} title={detail.title} remember={false} />`
+     * — handed in, not imported, so this file never imports PtahCrud (which
+     * imports it).
+     */
+    renderDetail: (detail: DetailScreen) => ReactNode;
+}
+
+/**
+ * The expanded content of a row, mounted on the first expansion: under each
+ * other, a full CRUD screen per detail of the row (search, filters, form,
+ * export, row actions — the child's own permissions), bound by the server to
+ * this row, as the nested BaseCrud of the Livewire table.
+ */
+export function PtahCrudDetailRow({ crud, row, colSpan, locale, renderDetail }: DetailRowProps) {
     const t = useWords(locale);
     const state = useCrud(crud);
     const store = detailsOf(crud);
@@ -166,7 +182,7 @@ export function PtahCrudDetailRow({ crud, row, colSpan, locale }: PieceProps & {
     return (
         <tr className="pc-detail-row">
             <td colSpan={colSpan} style={{ padding: '12px 24px', background: 'var(--pc-bg-soft)' }} aria-busy={!entry || entry.status === 'loading'}>
-                {(!entry || (entry.status === 'loading' && entry.grids.length === 0)) && <ForgeSpinner label={t.loading} />}
+                {(!entry || (entry.status === 'loading' && entry.details.length === 0)) && <ForgeSpinner label={t.loading} />}
                 {entry?.status === 'error' && (
                     <ForgeAlert color="danger">
                         <div style={ROW}>
@@ -177,11 +193,20 @@ export function PtahCrudDetailRow({ crud, row, colSpan, locale }: PieceProps & {
                         </div>
                     </ForgeAlert>
                 )}
-                {entry && entry.status !== 'error' && entry.grids.length === 0 && entry.status === 'ready' && <ForgeEmpty title={t.detailsEmpty} />}
+                {entry?.status === 'ready' && entry.details.length === 0 && <ForgeEmpty title={t.detailsEmpty} />}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    {entry?.grids.map((grid) => (
-                        <DetailGridView key={grid.index} grid={grid} busy={entry.paging === grid.index} t={t} onPage={(page) => void store.page(row.id, grid.index, page)} />
-                    ))}
+                    {entry?.details.map((detail) =>
+                        detail.available ? (
+                            <section key={detail.screen} className="pc-detail" aria-label={detail.title || undefined}>
+                                {renderDetail(detail)}
+                            </section>
+                        ) : (
+                            <section key={detail.screen} aria-label={detail.title || undefined}>
+                                {detail.title && <p style={TITLE}>{detail.title}</p>}
+                                <p style={MUTED}>{t.detailUnavailable}</p>
+                            </section>
+                        ),
+                    )}
                 </div>
             </td>
         </tr>
@@ -189,67 +214,6 @@ export function PtahCrudDetailRow({ crud, row, colSpan, locale }: PieceProps & {
 }
 
 const TITLE: CSSProperties = { margin: '0 0 8px', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--pc-text-muted)' };
-
-function DetailGridView({ grid, busy, t, onPage }: { grid: DetailGrid; busy: boolean; t: ExtrasWords; onPage: (page: number) => void }) {
-    const totals = new Map(grid.totals.map((total) => [total.field, total]));
-
-    return (
-        <section aria-label={grid.title}>
-            <p style={TITLE}>{grid.title}</p>
-            {!grid.available ? (
-                <p style={MUTED}>{t.detailUnavailable}</p>
-            ) : (
-                <>
-                    <div className="pc-table-wrap" aria-busy={busy}>
-                        <table className="pc-table">
-                            <thead>
-                                <tr>
-                                    {grid.columns.map((column) => (
-                                        <th key={column.field} className={column.align === 'right' ? 'pc-align-right' : column.align === 'center' ? 'pc-align-center' : undefined}>
-                                            {column.label}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {grid.rows.length === 0 && (
-                                    <tr>
-                                        <td className="pc-empty" colSpan={Math.max(1, grid.columns.length)}>
-                                            {t.detailsEmpty}
-                                        </td>
-                                    </tr>
-                                )}
-                                {grid.rows.map((detail) => (
-                                    <tr key={String(detail.id)} style={styleMap(detail.style)}>
-                                        {grid.columns.map((column) => (
-                                            // Rendered and escaped by the server, as the main table's cells.
-                                            <td key={column.field} className={column.align === 'right' ? 'pc-align-right' : column.align === 'center' ? 'pc-align-center' : undefined} dangerouslySetInnerHTML={{ __html: detail.cells[column.field]?.html ?? '' }} />
-                                        ))}
-                                    </tr>
-                                ))}
-                            </tbody>
-                            {grid.totals.length > 0 && (
-                                <tfoot>
-                                    <tr>
-                                        {grid.columns.map((column) => (
-                                            <td key={column.field}>{totals.has(column.field) ? String(totals.get(column.field)!.value ?? '') : ''}</td>
-                                        ))}
-                                    </tr>
-                                </tfoot>
-                            )}
-                        </table>
-                    </div>
-                    {grid.meta && grid.meta.last_page > 1 && (
-                        <div style={{ ...ROW, justifyContent: 'flex-end', marginTop: 8 }}>
-                            {busy && <ForgeSpinner size="sm" label={t.loading} />}
-                            <ForgePagination page={grid.meta.page} lastPage={grid.meta.last_page} onChange={onPage} />
-                        </div>
-                    )}
-                </>
-            )}
-        </section>
-    );
-}
 
 // ── Columns ─────────────────────────────────────────────────────────────────
 

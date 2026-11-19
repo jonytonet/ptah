@@ -24,7 +24,7 @@ final class StackPage
     /**
      * The route action: `$livewire` as it is, or the stack page named
      * `$page`. `$guard` names the lock the Livewire component applies in
-     * boot() — `structure` — so the page itself answers 403, not only the
+     * boot() — `structure`, `ai` — so the page itself answers 403, not only the
      * API behind it.
      *
      * @param  class-string  $livewire
@@ -37,6 +37,14 @@ final class StackPage
         }
 
         return function () use ($page, $guard) {
+            if ($guard === 'ai') {
+                abort_unless(
+                    (function_exists('ptah_can') && ptah_can('ai.config', 'read')) || (function_exists('ptah_is_master') && ptah_is_master()),
+                    403,
+                    trans('ptah::ui.permission_denied')
+                );
+            }
+
             if ($guard === 'structure') {
                 abort_unless(
                     function_exists('ptah_can_manage_structure') && ptah_can_manage_structure(),
@@ -54,7 +62,7 @@ final class StackPage
      * forge-navbar.blade.php: the company switcher, the bell, and each
      * administration link only for who passes the lock of the screen it opens.
      *
-     * @return array{company_switcher: bool, notifications: bool, admin: list<array{label: string, url: string, icon: string}>}
+     * @return array{company_switcher: bool, notifications: bool, ai_chat: bool, admin: list<array{label: string, url: string, icon: string}>}
      */
     public static function shell(): array
     {
@@ -86,6 +94,8 @@ final class StackPage
         return [
             'company_switcher' => $auth && (bool) config('ptah.modules.company'),
             'notifications' => $auth && (bool) config('ptah.notifications.enabled'),
+            // The floating assistant of the layout ($ptahHasAiLauncher).
+            'ai_chat' => $auth && (bool) config('ptah.modules.ai_agent'),
             'admin' => $admin,
         ];
     }

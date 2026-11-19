@@ -17,6 +17,7 @@ import {
 } from '../core';
 import type { Me, MenuLink, Shell } from '../core';
 import PtahNav from './PtahNav.vue';
+import { PtahAiChat } from './admin/ai';
 import { PtahCompanySwitcher } from './admin/company';
 import { PtahNotificationBell } from './admin/shell';
 
@@ -301,5 +302,6 @@ onBeforeUnmount(() => {
                 <slot />
             </main>
         </div>
+        <PtahAiChat v-if="extras.ai_chat" :api="client" :locale="lang" />
     </div>
 </template>

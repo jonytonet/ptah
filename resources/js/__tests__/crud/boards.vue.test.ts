@@ -2,7 +2,9 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { afterEach, describe, expect, it } from 'vitest';
 import { h } from 'vue';
 import type { Row } from '../../core/types';
+import { resolveView, rowNavigator } from '../../core/crud/boards';
 import { PtahCrudCalendar, PtahCrudCards, PtahCrudKanban, PtahCrudViewSwitch } from '../../vue/crud/boards';
+import PtahCrud from '../../vue/PtahCrud.vue';
 import { fakeBoards, toasts } from './boards.fake';
 
 afterEach(cleanup);
@@ -217,5 +219,101 @@ describe('boards (Vue)', () => {
         const empty = await fakeBoards({ empty: true }).controller();
         render(PtahCrudCards, { props: { crud: empty, locale: 'pt_BR' } });
         expect(screen.getByText('Nenhum registro encontrado')).toBeTruthy();
+    });
+});
+
+describe('row link, responsive cards and card buttons (Vue)', () => {
+    const go = rowNavigator.go;
+    const open = rowNavigator.open;
+    const narrowMedia = (matches: boolean) => {
+        window.matchMedia = ((query: string) => ({ matches, media: query, addEventListener: () => undefined, removeEventListener: () => undefined })) as unknown as typeof window.matchMedia;
+    };
+    afterEach(() => {
+        rowNavigator.go = go;
+        rowNavigator.open = open;
+        delete (window as { matchMedia?: unknown }).matchMedia;
+    });
+    const spy = () => {
+        const went: string[] = [];
+        const opened: string[] = [];
+        rowNavigator.go = (url) => void went.push(url);
+        rowNavigator.open = (url) => void opened.push(url);
+
+        return { went, opened };
+    };
+
+    it('a card with a link opens its record; its buttons, checkbox and alt+click do not', async () => {
+        const nav = spy();
+        const crud = await fakeBoards().controller();
+        render(PtahCrudCards, { props: { crud, locale: 'pt_BR' } });
+        const card = screen.getByRole('article', { name: '#2' });
+        expect(card.getAttribute('tabindex')).toBe('0');
+
+        await fireEvent.click(within(card).getByText('Nota'));
+        expect(nav.went).toEqual(['/tarefas/2']);
+        await fireEvent.click(card, { ctrlKey: true });
+        expect(nav.opened).toEqual(['/tarefas/2']);
+
+        await fireEvent.click(within(card).getByRole('checkbox'));
+        await fireEvent.click(within(card).getByRole('button', { name: 'Excluir' }));
+        await fireEvent.click(card, { altKey: true });
+        expect(nav.went).toHaveLength(1);
+
+        await fireEvent.keyDown(card, { key: 'Enter' });
+        expect(nav.went).toEqual(['/tarefas/2', '/tarefas/2']);
+
+        const plain = screen.getByRole('article', { name: '#1' });
+        expect(plain.getAttribute('tabindex')).toBeNull();
+        await fireEvent.click(plain);
+        expect(nav.went).toHaveLength(2);
+    });
+
+    it('a table row with a link opens its record; its buttons do not', async () => {
+        const nav = spy();
+        const server = fakeBoards({ viewMode: 'table' });
+        render(PtahCrud, { props: { screen: 'tasks', api: server.api, locale: 'pt_BR', toastMs: 0, remember: false } });
+        const cell = await screen.findByText('Entregar pedido B');
+        const row = cell.closest('tr')!;
+        expect(row.getAttribute('tabindex')).toBe('0');
+
+        await fireEvent.click(cell);
+        expect(nav.went).toEqual(['/tarefas/2']);
+        await fireEvent(cell, new MouseEvent('auxclick', { bubbles: true, button: 1 }));
+        expect(nav.opened).toEqual(['/tarefas/2']);
+
+        await fireEvent.click(within(row).getByRole('checkbox'));
+        await fireEvent.click(within(row).getByRole('button', { name: 'Excluir' }));
+        expect(nav.went).toHaveLength(1);
+        expect(screen.getByText('Orçar cliente A').closest('tr')!.getAttribute('tabindex')).toBeNull();
+    });
+
+    it("keeps 'auto' a table on a narrow screen when responsive cards are off", async () => {
+        const features = { kanban: false, calendar: false };
+        expect(resolveView('auto', features, true)).toBe('cards');
+        expect(resolveView('auto', { ...features, responsiveCards: false }, true)).toBe('table');
+
+        narrowMedia(true);
+        render(PtahCrud, { props: { screen: 'tasks', api: fakeBoards({ responsiveCards: false }).api, locale: 'pt_BR', toastMs: 0, remember: false } });
+        expect(await screen.findByRole('table')).toBeTruthy();
+        expect(screen.queryByRole('article')).toBeNull();
+        cleanup();
+
+        render(PtahCrud, { props: { screen: 'tasks', api: fakeBoards().api, locale: 'pt_BR', toastMs: 0, remember: false } });
+        expect(await screen.findByRole('article', { name: '#1' })).toBeTruthy();
+        expect(screen.queryByRole('table')).toBeNull();
+    });
+
+    it('the cards of PtahCrud carry the same row buttons as the table, history included', async () => {
+        const server = fakeBoards({ viewMode: 'cards', history: true });
+        render(PtahCrud, { props: { screen: 'tasks', api: server.api, locale: 'pt_BR', toastMs: 0, remember: false } });
+        const card = await screen.findByRole('article', { name: '#1' });
+
+        expect(within(card).getByRole('button', { name: 'Histórico' })).toBeTruthy();
+        expect(within(card).getByRole('button', { name: 'Editar' })).toBeTruthy();
+        expect(within(card).getByRole('button', { name: 'Duplicar' })).toBeTruthy();
+
+        // The configured action asks first, in the screen's own dialog.
+        await fireEvent.click(within(card).getByRole('button', { name: 'Aprovar' }));
+        expect(await screen.findByText('Aprovar esta tarefa?')).toBeTruthy();
     });
 });

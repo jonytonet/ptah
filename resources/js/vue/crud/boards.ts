@@ -16,6 +16,7 @@ import {
     DENSITY_ICONS,
     densityLabel,
     eventTitle,
+    followRowLink,
     getCalendar,
     getKanban,
     isNarrow,
@@ -45,7 +46,8 @@ const muted = { color: 'var(--pc-text-muted)', fontSize: '0.75rem' };
 
 /**
  * Which view to draw now: the saved mode, with 'auto' decided by the
- * viewport at render time (cards below `md`, the table above) — never saved.
+ * viewport at render time (cards below `md`, the table above; always the
+ * table when the server turned `responsiveCards` off) — never saved.
  */
 export function useResolvedView(crud: CrudController): Ref<Exclude<ViewMode, 'auto'>> {
     const state = usePtahCrud(crud);
@@ -678,7 +680,11 @@ export const PtahCrudCards = defineComponent({
                                   outline: selected ? '2px solid var(--pc-primary)' : undefined,
                               };
 
-                              return h('article', { key: row.id, 'aria-label': `#${row.id}`, style: [base, row.style ?? ''] }, [
+                              const link = row.link ?? null;
+                              const follow = link ? (event: MouseEvent | KeyboardEvent) => followRowLink(event, link) : undefined;
+
+                              // configLinkLinha: the card opens its record (Enter when focused).
+                              return h('article', { key: row.id, 'aria-label': `#${row.id}`, tabindex: link ? 0 : undefined, 'data-link': link ?? undefined, onClick: follow, onAuxclick: follow, onKeydown: follow, style: [base, link ? { cursor: 'pointer' } : {}, row.style ?? ''] }, [
                                   h('div', { style: { display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' } }, [
                                       schema.selectable ? h('input', { type: 'checkbox', 'aria-label': words.selectRow.replace(':id', String(row.id)), checked: selected, onChange: () => props.crud.toggleRow(row.id) }) : null,
                                       h('div', { style: { minWidth: 0, flex: 1 } }, [

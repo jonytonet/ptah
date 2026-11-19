@@ -9,6 +9,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -349,5 +350,39 @@ class RecordsApiTest extends TestCase
             ->assertOk()->assertExactJson(['counts' => [(string) $this->mine->id => 2, (string) $other->id => 1, '777' => 0]]);
 
         $this->getJson('/ptah/api/crud/orders/attachments/counts')->assertOk()->assertExactJson(['counts' => []]);
+    }
+
+    #[Test]
+    public function the_counts_keep_the_scope_in_a_fixed_number_of_queries(): void
+    {
+        $others = [];
+        foreach (['PED-3', 'PED-4', 'PED-5', 'PED-6'] as $code) {
+            $others[] = $order = RecOrder::create(['code' => $code, 'team_id' => 1]);
+            $this->attach($order);
+        }
+        $this->attach($this->mine);
+        // Out of the screen's locked filters, with attachments of its own.
+        $this->attach($this->theirs, 'x.pdf');
+        $this->attach($this->theirs, 'y.pdf');
+
+        // Warm up what a first request caches (config, schema lookups).
+        $this->getJson("/ptah/api/crud/orders/attachments/counts?ids[]={$this->mine->id}")->assertOk();
+
+        DB::enableQueryLog();
+        $this->getJson("/ptah/api/crud/orders/attachments/counts?ids[]={$this->mine->id}&ids[]={$this->theirs->id}")
+            ->assertOk()->assertExactJson(['counts' => [(string) $this->mine->id => 1, (string) $this->theirs->id => 0]]);
+        $few = count(DB::getQueryLog());
+
+        DB::flushQueryLog();
+        $ids = implode('&', array_map(fn (RecOrder $order) => 'ids[]='.$order->id, [$this->mine, $this->theirs, ...$others]));
+        $json = $this->getJson("/ptah/api/crud/orders/attachments/counts?{$ids}")->assertOk()->json('counts');
+        $many = count(DB::getQueryLog());
+        DB::disableQueryLog();
+
+        $this->assertSame(0, $json[(string) $this->theirs->id]);
+        $this->assertSame(1, $json[(string) $this->mine->id]);
+        $this->assertSame([1, 1, 1, 1], array_map(fn (RecOrder $order) => $json[(string) $order->id], $others));
+        // Three times the ids, the same queries: not one lookup per id.
+        $this->assertSame($few, $many);
     }
 }

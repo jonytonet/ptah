@@ -115,9 +115,14 @@ export const NARROW_QUERY = '(max-width: 767.98px)';
  * layout question is per device — saving 'cards' because a phone opened the
  * screen would hand the desktop a card grid the next morning.
  * A board mode the screen no longer offers falls back to the table, as the
- * Livewire view does.
+ * Livewire view does. With `responsiveCards` off (`ptah.crud.responsive_cards`)
+ * 'auto' stays a table on a narrow screen too, as base-crud.blade.php does.
  */
-export function resolveView(mode: string | null | undefined, features: Pick<Features, 'kanban' | 'calendar'>, narrow: boolean): Exclude<ViewMode, 'auto'> {
+export function resolveView(
+    mode: string | null | undefined,
+    features: Pick<Features, 'kanban' | 'calendar'> & Partial<Pick<Features, 'responsiveCards'>>,
+    narrow: boolean,
+): Exclude<ViewMode, 'auto'> {
     switch (mode) {
         case 'table':
         case 'cards':
@@ -127,7 +132,8 @@ export function resolveView(mode: string | null | undefined, features: Pick<Feat
         case 'calendar':
             return features.calendar ? 'calendar' : 'table';
         default:
-            return narrow ? 'cards' : 'table';
+            // ptah.crud.responsive_cards off: 'auto' is a table everywhere.
+            return narrow && features.responsiveCards !== false ? 'cards' : 'table';
     }
 }
 
@@ -146,6 +152,77 @@ export function watchNarrow(listener: (narrow: boolean) => void): () => void {
     media.addEventListener?.('change', onChange);
 
     return () => media.removeEventListener?.('change', onChange);
+}
+
+// ── Row link (`configLinkLinha`) ────────────────────────────────────────────
+
+/** Where a row link goes — replaceable (tests, a client-side router). */
+export const rowNavigator = {
+    open(url: string): void {
+        window.open(url, '_blank');
+    },
+    go(url: string): void {
+        window.location.assign(url);
+    },
+};
+
+/** What `followRowLink` reads of a DOM event (mouse or keyboard). */
+export interface RowLinkEvent {
+    type: string;
+    button?: number;
+    key?: string;
+    ctrlKey: boolean;
+    metaKey: boolean;
+    altKey: boolean;
+    target: EventTarget | null;
+    currentTarget: EventTarget | null;
+}
+
+/** What already answers a click inside a row: the row link leaves it alone. */
+const INTERACTIVE = 'a, button, input, select, textarea, label, summary, [role="button"], [contenteditable="true"]';
+
+/**
+ * A click (or Enter) on a row or card with a link — `ptahRowNav` of the
+ * Livewire screen: middle-click or ctrl/cmd-click opens a new tab, a plain
+ * click navigates; selecting the row's text to copy it does not navigate,
+ * nor does a click on the row's own buttons, checkboxes or links, nor the
+ * alt+click that filters by a cell. True when it navigated.
+ */
+export function followRowLink(event: RowLinkEvent, url: string | null | undefined): boolean {
+    if (!url || event.altKey) {
+        return false;
+    }
+    const row = event.currentTarget as Element | null;
+    const target = event.target as Element | null;
+    const inside = target && typeof target.closest === 'function' ? target.closest(INTERACTIVE) : null;
+    if (inside && inside !== row && (!row || row.contains(inside))) {
+        return false;
+    }
+    if (event.type === 'keydown') {
+        // Only the row itself (focused) answers Enter — not a field inside it.
+        if (event.key !== 'Enter' || target !== row) {
+            return false;
+        }
+        rowNavigator.go(url);
+
+        return true;
+    }
+    const selection = typeof window !== 'undefined' && typeof window.getSelection === 'function' ? window.getSelection() : null;
+    if (selection && !selection.isCollapsed && selection.toString().trim() !== '' && row && selection.anchorNode && row.contains(selection.anchorNode)) {
+        return false;
+    }
+    if (event.button === 1 || event.ctrlKey || event.metaKey) {
+        rowNavigator.open(url);
+
+        return true;
+    }
+    // Another button (right) on auxclick: nothing.
+    if (event.type === 'auxclick') {
+        return false;
+    }
+    rowNavigator.go(url);
+
+    return true;
 }
 
 /** The `v` shortcut of the Livewire screen: auto → table → cards → auto. */

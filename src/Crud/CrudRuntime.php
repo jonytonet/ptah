@@ -6,16 +6,19 @@ namespace Ptah\Crud;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\PaginationState;
 use Illuminate\Pagination\Paginator;
 use Ptah\Crud\Concerns\FiltersRuntime;
 use Ptah\Livewire\BaseCrud\BaseCrud;
+use Ptah\Models\Attachment;
 use Ptah\Support\IconClass;
 use Ptah\Support\PtahMask;
 use Ptah\Support\SafeUrl;
 use Ptah\Support\Scalar;
+use Ptah\Support\UploadDisk;
 
 /**
  * The BaseCrud, run without Livewire (1.59.0).
@@ -80,6 +83,67 @@ final class CrudRuntime extends BaseCrud
         }
 
         return $runtime;
+    }
+
+    /**
+     * The definition of the detail screen `$index` of the row `$id` — what
+     * the Livewire table mounts under an expanded row: a BaseCrud of the
+     * `masterDetail` model, its rows locked to the parent's key, the config
+     * of the same page route (falling back to the model's global config, as
+     * the nested component does). Null when the detail does not exist or the
+     * row is outside this screen's scope: nothing of the child is reachable
+     * through a parent row the user cannot see.
+     */
+    public function detailScreen(string $key, int $id, int $index): ?CrudScreen
+    {
+        $detail = $this->detailConfig($index);
+
+        if ($detail === null || ! $this->reaches($id)) {
+            return null;
+        }
+
+        return (new CrudScreen($key, $detail['model']))
+            ->configRoute($this->configRoute)
+            ->lockedFilters([$detail['foreignKey'] => $id]);
+    }
+
+    /**
+     * A usable `masterDetail` entry (a model and a foreign key), or null.
+     *
+     * @return array{model: string, foreignKey: string, title: ?string}|null
+     */
+    public function detailConfig(int $index): ?array
+    {
+        $detail = ((array) ($this->crudConfig['masterDetail'] ?? []))[$index] ?? null;
+
+        if (! is_array($detail) || ! is_string($detail['model'] ?? null) || $detail['model'] === ''
+            || ! is_string($detail['foreignKey'] ?? null) || $detail['foreignKey'] === '') {
+            return null;
+        }
+
+        $title = is_string($detail['title'] ?? null) && trim($detail['title']) !== '' ? trim($detail['title']) : null;
+
+        return ['model' => $detail['model'], 'foreignKey' => $detail['foreignKey'], 'title' => $title];
+    }
+
+    /**
+     * The row is one this screen lists — its company, locks, pre-filter and
+     * scope (scopedQuery(), the query edit and delete use). A trashed row
+     * counts where the screen offers the trash: the Livewire trash view
+     * expands its rows too.
+     */
+    public function reaches(int $id): bool
+    {
+        $query = $this->scopedQuery();
+
+        if ($query === null) {
+            return false;
+        }
+        if ($this->crudConfigAllows('restore') && $this->modelSoftDeletes()) {
+            $query->withoutGlobalScope(SoftDeletingScope::class);
+        }
+
+        return $query->whereKey($id)->exists();
     }
 
     public function remember(bool $remember = true): self
@@ -434,6 +498,9 @@ final class CrudRuntime extends BaseCrud
                 'maskPatterns' => PtahMask::get($col['colsMask'] ?? null)['patterns'] ?? null,
                 'placeholder' => $col['colsPlaceholder'] ?? null,
                 'help' => $col['colsHelpText'] ?? null,
+                // Form parity: what the Livewire modal reads from the column
+                // and a client cannot work out on its own.
+                ...$this->formFieldExtras($col),
             ];
         }
 
@@ -502,6 +569,9 @@ final class CrudRuntime extends BaseCrud
             // Part of every filter panel of the Livewire screen.
             'quickDates' => true,
             'advancedSearch' => true,
+            // ptah.crud.responsive_cards = false: view mode `auto` stays a
+            // table on a narrow screen, as base-crud.blade.php does.
+            'responsiveCards' => (bool) config('ptah.crud.responsive_cards', true),
         ];
     }
 
@@ -547,6 +617,7 @@ final class CrudRuntime extends BaseCrud
                 'cells' => $cells,
                 'style' => $this->getRowStyle($row) ?: null,
                 'actions' => $this->rowActions($row),
+                'link' => $this->rowLink($row),
                 'trashed' => $row instanceof Model && method_exists($row, 'trashed') && $row->trashed(),
             ];
         }
@@ -606,10 +677,101 @@ final class CrudRuntime extends BaseCrud
         return $this->formPayload();
     }
 
-    /** @return array{data: array<string, mixed>, labels: array<string, mixed>} */
+    /**
+     * The form as it opens. `title`/`subtitle` are the Livewire modal's own
+     * ("Nova conta" follows `displayNameGender`, and a host's translation
+     * overrides apply); `previews` are the URLs of the stored images, which
+     * only the server can build (the upload disk is configuration).
+     *
+     * @return array{data: array<string, mixed>, labels: array<string, mixed>, title: string, subtitle: string, previews: array<string, string>}
+     */
     private function formPayload(): array
     {
-        return ['data' => $this->formData, 'labels' => $this->sdLabels];
+        $editing = $this->editingId !== null;
+
+        return [
+            'data' => $this->formData,
+            'labels' => $this->sdLabels,
+            'title' => trim(($editing ? (string) __('ptah::ui.modal_edit_prefix') : $this->modalNewPrefix()).' '.$this->humanTitle(singular: true)),
+            'subtitle' => (string) __($editing ? 'ptah::ui.modal_edit_subtitle' : 'ptah::ui.modal_create_subtitle'),
+            'previews' => $this->imagePreviews(),
+        ];
+    }
+
+    /**
+     * Preview URL of each image field that holds a stored value — the same
+     * `UploadDisk::url()` the Livewire modal draws its `<img>` with.
+     *
+     * @return array<string, string>
+     */
+    private function imagePreviews(): array
+    {
+        $out = [];
+        foreach ($this->getFormViewCols() as $col) {
+            $field = (string) ($col['colsNomeFisico'] ?? '');
+            $value = $this->formData[$field] ?? null;
+            if (($col['colsTipo'] ?? '') === 'image' && $field !== '' && is_scalar($value) && (string) $value !== '') {
+                $out[$field] = UploadDisk::url($col, (string) $value);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * What the form needs of a column beyond label and type: the section it
+     * opens (`colsFormBlock`), the file types an image accepts, and the
+     * searchdropdown's own placeholder, list direction and parent. Named keys
+     * only — never the dropdown's model, service or filters.
+     *
+     * @param  array<string, mixed>  $col
+     * @return array{block: string|null, accept: string|null, lookup: array{placeholder: string|null, startList: string, dependsOn: string|null, dependsOnLabel: string|null}|null, maskPlaceholder: string|null, inputMode: string|null, maxLength: int|null}
+     */
+    private function formFieldExtras(array $col): array
+    {
+        $type = (string) ($col['colsTipo'] ?? 'text');
+        $block = trim(Scalar::text($col['colsFormBlock'] ?? ''));
+
+        $accept = null;
+        if ($type === 'image') {
+            // As the Blade partial: `.png,.jpg` from colsUploadAllowedTypes, else any image.
+            $allowed = $col['colsUploadAllowedTypes'] ?? null;
+            $types = is_array($allowed) ? $allowed : (is_string($allowed) && $allowed !== '' ? explode(',', $allowed) : []);
+            $types = array_values(array_filter(array_map(fn ($t) => trim(Scalar::text($t)), $types), fn ($t) => $t !== ''));
+            $accept = $types === [] ? 'image/*' : implode(',', array_map(fn ($t) => '.'.ltrim($t, '.'), $types));
+        }
+
+        $lookup = null;
+        if ($type === 'searchdropdown') {
+            $settings = $this->sdSettings($col);
+            $parent = $col['colsSDDependsOn'] ?? null;
+            $parent = is_string($parent) && $parent !== '' ? $parent : null;
+            $parentLabel = null;
+            if ($parent !== null) {
+                $parentCol = $this->findColByField($parent);
+                $parentLabel = trim(Scalar::text($parentCol['colsNomeLogico'] ?? '')) ?: $parent;
+            }
+            $placeholder = $settings['placeholder'];
+            $lookup = [
+                'placeholder' => is_string($placeholder) && $placeholder !== '' ? $placeholder : null,
+                'startList' => $settings['startList'] === 'top' ? 'top' : 'bottom',
+                'dependsOn' => $parent,
+                'dependsOnLabel' => $parentLabel,
+            ];
+        }
+
+        // A registered mask's own hints, which the Blade input uses when the
+        // column names no placeholder.
+        $mask = PtahMask::get(is_string($col['colsMask'] ?? null) ? $col['colsMask'] : null);
+
+        return [
+            'block' => $block === '' ? null : $block,
+            'accept' => $accept,
+            'lookup' => $lookup,
+            'maskPlaceholder' => $mask !== null && $mask['placeholder'] !== '' ? $mask['placeholder'] : null,
+            'inputMode' => $mask !== null && $mask['inputmode'] !== '' ? $mask['inputmode'] : null,
+            'maxLength' => $mask['maxlength'] ?? null,
+        ];
     }
 
     /**
@@ -625,13 +787,39 @@ final class CrudRuntime extends BaseCrud
             $this->filters = array_merge($this->filters, $context);
             $query === '' ? $this->openFilterDropdown($field) : $this->filterSearchDropdown($field, $query);
 
-            return array_values((array) ($this->sdResults['filter_'.$field] ?? []));
+            return self::lookupItems($this->sdResults['filter_'.$field] ?? []);
         }
 
         $this->formData = $context;
         $query === '' ? $this->openDropdown($field) : $this->searchDropdown($field, $query);
 
-        return array_values((array) ($this->sdResults[$field] ?? []));
+        return self::lookupItems($this->sdResults[$field] ?? []);
+    }
+
+    /**
+     * The options as the Livewire dropdown draws them: value, label and the
+     * optional second and third lines. A service source may answer more keys;
+     * those stay on the server.
+     *
+     * @return list<array{value: mixed, label: string, labelTwo?: string, labelThree?: string}>
+     */
+    private static function lookupItems(mixed $results): array
+    {
+        $out = [];
+        foreach ((array) $results as $item) {
+            if (! is_array($item) || ! array_key_exists('value', $item)) {
+                continue;
+            }
+            $row = ['value' => is_scalar($item['value']) ? $item['value'] : Scalar::text($item['value']), 'label' => Scalar::text($item['label'] ?? $item['value'])];
+            foreach (['labelTwo', 'labelThree'] as $extra) {
+                if (array_key_exists($extra, $item)) {
+                    $row[$extra] = Scalar::text($item[$extra]);
+                }
+            }
+            $out[] = $row;
+        }
+
+        return $out;
     }
 
     /**
@@ -747,6 +935,68 @@ final class CrudRuntime extends BaseCrud
         return $out;
     }
 
+    /**
+     * Where a click on the row goes (`configLinkLinha`), as _table/_cards
+     * build it: only `%id%` is replaced, and a URL whose scheme could run
+     * something is dropped (SafeUrl) — null, no link, never `#`.
+     */
+    private function rowLink(mixed $row): ?string
+    {
+        $template = $this->crudConfig['configLinkLinha'] ?? null;
+        $id = $row instanceof Model ? $row->getKey() : ($row['id'] ?? null);
+
+        if (! is_string($template) || $template === '' || ! is_scalar($id) || (string) $id === '' || (string) $id === '0') {
+            return null;
+        }
+
+        $link = SafeUrl::sanitize(str_replace('%id%', (string) $id, $template), '');
+
+        return $link !== '' ? $link : null;
+    }
+
+    /**
+     * attachmentCount() of many rows at once: the same scoping (an id the
+     * screen does not reach — company, locks, pre-filter, host scope —
+     * counts 0), in two queries instead of two per id: the ids in scope, then
+     * one grouped count. Not one joined query: `subject_id` is a string
+     * column and the key usually an integer, a comparison PostgreSQL refuses.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, int> count by id
+     */
+    public function attachmentCounts(array $ids): array
+    {
+        $counts = array_fill_keys($ids, 0);
+        $model = $this->resolveEloquentModel();
+        $query = $this->attachmentsEnabled() ? $this->scopedQuery() : null;
+
+        if ($ids === [] || $model === null || $query === null) {
+            return $counts;
+        }
+
+        $reachable = $query->whereKey($ids)->pluck($model->getQualifiedKeyName())
+            ->map(fn ($key) => (string) $key)->all();
+
+        if ($reachable === []) {
+            return $counts;
+        }
+
+        $found = Attachment::query()
+            ->where('subject_type', $model->getMorphClass())
+            ->whereIn('subject_id', $reachable)
+            ->groupBy('subject_id')
+            ->selectRaw('subject_id, COUNT(*) as aggregate')
+            ->pluck('aggregate', 'subject_id');
+
+        foreach ($found as $subject => $count) {
+            if (array_key_exists((int) $subject, $counts)) {
+                $counts[(int) $subject] = (int) $count;
+            }
+        }
+
+        return $counts;
+    }
+
     private function modelSoftDeletes(): bool
     {
         $model = $this->resolveEloquentModel();
@@ -825,7 +1075,7 @@ final class CrudRuntime extends BaseCrud
         return ['ok' => $this->scopedQuery()?->find($id) !== null, 'messages' => $this->toastMessages()];
     }
 
-    /** @return array{ok: bool, id: mixed, errors: array<string, mixed>, messages: list<array<string, mixed>>} */
+    /** @return array{ok: bool, id: mixed, errors: array<string, mixed>, messages: list<array<string, mixed>>, redirect: string|null} */
     private function saveResult(): array
     {
         $ok = $this->formErrors === [] && $this->dispatched('crud-saved');
@@ -835,7 +1085,21 @@ final class CrudRuntime extends BaseCrud
             'id' => $ok ? $this->savedRecord?->getKey() : null,
             'errors' => $this->formErrors,
             'messages' => $this->toastMessages(),
+            'redirect' => $ok ? $this->saveRedirect() : null,
         ];
+    }
+
+    /**
+     * Where an `afterCreate`/`afterUpdate` hook sent the user: save() hands a
+     * returned RedirectResponse to Livewire's `redirect()`, which keeps it in
+     * the component store even without a Livewire request (as RunsHeadless
+     * reads it). A scheme that could run script never reaches the client.
+     */
+    private function saveRedirect(): ?string
+    {
+        $target = \Livewire\store($this)->get('redirect');
+
+        return is_string($target) && $target !== '' && SafeUrl::isSafe($target) ? $target : null;
     }
 
     private function dispatched(string $event): bool

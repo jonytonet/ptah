@@ -27,11 +27,18 @@ trait HasCrudColumns
 
     /**
      * Saves the width of a column resized by the user.
-     * Called via $wire.call('saveColumnWidth', 'field', 150) from JS.
+     * Called via $wire.call('saveColumnWidth', 'field', 150) from JS. A null
+     * width is the double-click on the resize edge (_scripts.blade.php): the
+     * column goes back to its natural width, so the saved one is forgotten —
+     * typed `int`, that call was a TypeError and the reset never persisted.
      */
-    public function saveColumnWidth(string $column, int $width): void
+    public function saveColumnWidth(string $column, ?int $width): void
     {
-        $this->columnWidths[$column] = max(60, $width);
+        if ($width === null) {
+            unset($this->columnWidths[$column]);
+        } else {
+            $this->columnWidths[$column] = max(60, $width);
+        }
         $this->savePreferences();
     }
 

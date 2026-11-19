@@ -128,8 +128,9 @@ class RecordsApiController extends Controller
 
     /**
      * Attachment counts of the rows of a page, in one request: `ids[]=1&ids[]=2`.
-     * Each id goes through attachmentCount(), i.e. through the screen's scope
-     * — an id out of reach counts 0, as on the Livewire screen.
+     * The ids go through the screen's scope, as attachmentCount() does — an
+     * id out of reach counts 0, as on the Livewire screen — in a fixed
+     * number of queries, whatever the page size.
      */
     public function counts(Request $request, string $screen): JsonResponse
     {
@@ -142,9 +143,11 @@ class RecordsApiController extends Controller
             static fn ($id) => is_int($id) || (is_string($id) && ctype_digit($id))
         ))), 0, self::MAX_COUNT_IDS);
 
+        // The scoping of attachmentCount(), in two queries for the whole page.
+        $byId = $crud->attachmentCounts(array_values(array_unique(array_map('intval', $ids))));
         $counts = [];
         foreach ($ids as $rowId) {
-            $counts[(string) $rowId] = $crud->attachmentCount((int) $rowId);
+            $counts[(string) $rowId] = $byId[(int) $rowId] ?? 0;
         }
 
         return response()->json(['counts' => (object) $counts]);

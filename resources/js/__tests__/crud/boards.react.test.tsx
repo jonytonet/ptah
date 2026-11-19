@@ -1,6 +1,8 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
+import { resolveView, rowNavigator } from '../../core/crud/boards';
 import { PtahCrudCalendar, PtahCrudCards, PtahCrudKanban, PtahCrudViewSwitch } from '../../react/crud/boards';
+import { PtahCrud } from '../../react/PtahCrud';
 import { fakeBoards, toasts } from './boards.fake';
 
 afterEach(cleanup);
@@ -213,5 +215,89 @@ describe('boards (React)', () => {
         const empty = await fakeBoards({ empty: true }).controller();
         render(<PtahCrudCards crud={empty} locale="pt_BR" />);
         expect(screen.getByText('Nenhum registro encontrado')).toBeTruthy();
+    });
+});
+
+describe('row link and responsive cards (React)', () => {
+    const go = rowNavigator.go;
+    const open = rowNavigator.open;
+    const narrowMedia = (matches: boolean) => {
+        window.matchMedia = ((query: string) => ({ matches, media: query, addEventListener: () => undefined, removeEventListener: () => undefined })) as unknown as typeof window.matchMedia;
+    };
+    afterEach(() => {
+        rowNavigator.go = go;
+        rowNavigator.open = open;
+        delete (window as { matchMedia?: unknown }).matchMedia;
+    });
+    const spy = () => {
+        const went: string[] = [];
+        const opened: string[] = [];
+        rowNavigator.go = (url) => void went.push(url);
+        rowNavigator.open = (url) => void opened.push(url);
+
+        return { went, opened };
+    };
+
+    it('a card with a link opens its record; its buttons, checkbox and alt+click do not', async () => {
+        const nav = spy();
+        const crud = await fakeBoards().controller();
+        render(<PtahCrudCards crud={crud} locale="pt_BR" />);
+        const card = screen.getByRole('article', { name: '#2' });
+        expect(card.getAttribute('tabindex')).toBe('0');
+
+        fireEvent.click(within(card).getByText('Nota'));
+        expect(nav.went).toEqual(['/tarefas/2']);
+        fireEvent.click(card, { ctrlKey: true });
+        expect(nav.opened).toEqual(['/tarefas/2']);
+
+        fireEvent.click(within(card).getByRole('checkbox'));
+        fireEvent.click(within(card).getByRole('button', { name: 'Excluir' }));
+        fireEvent.click(card, { altKey: true });
+        expect(nav.went).toHaveLength(1);
+
+        fireEvent.keyDown(card, { key: 'Enter' });
+        expect(nav.went).toEqual(['/tarefas/2', '/tarefas/2']);
+
+        // A row without a link is no link.
+        const plain = screen.getByRole('article', { name: '#1' });
+        expect(plain.getAttribute('tabindex')).toBeNull();
+        fireEvent.click(plain);
+        expect(nav.went).toHaveLength(2);
+    });
+
+    it('a table row with a link opens its record; its buttons do not', async () => {
+        const nav = spy();
+        const server = fakeBoards({ viewMode: 'table' });
+        render(<PtahCrud screen="tasks" api={server.api} locale="pt_BR" toastMs={0} remember={false} />);
+        const cell = await screen.findByText('Entregar pedido B');
+        const row = cell.closest('tr')!;
+        expect(row.getAttribute('tabindex')).toBe('0');
+
+        fireEvent.click(cell);
+        expect(nav.went).toEqual(['/tarefas/2']);
+        fireEvent(cell, new MouseEvent('auxclick', { bubbles: true, button: 1 }));
+        expect(nav.opened).toEqual(['/tarefas/2']);
+
+        fireEvent.click(within(row).getByRole('checkbox'));
+        fireEvent.click(within(row).getByRole('button', { name: 'Excluir' }));
+        expect(nav.went).toHaveLength(1);
+        expect(screen.getByText('Orçar cliente A').closest('tr')!.getAttribute('tabindex')).toBeNull();
+    });
+
+    it("keeps 'auto' a table on a narrow screen when responsive cards are off", async () => {
+        const features = { kanban: false, calendar: false };
+        expect(resolveView('auto', features, true)).toBe('cards');
+        expect(resolveView('auto', { ...features, responsiveCards: false }, true)).toBe('table');
+        expect(resolveView('cards', { ...features, responsiveCards: false }, true)).toBe('cards');
+
+        narrowMedia(true);
+        render(<PtahCrud screen="tasks" api={fakeBoards({ responsiveCards: false }).api} locale="pt_BR" toastMs={0} remember={false} />);
+        expect(await screen.findByRole('table')).toBeTruthy();
+        expect(screen.queryByRole('article')).toBeNull();
+        cleanup();
+
+        render(<PtahCrud screen="tasks" api={fakeBoards().api} locale="pt_BR" toastMs={0} remember={false} />);
+        expect(await screen.findByRole('article', { name: '#1' })).toBeTruthy();
+        expect(screen.queryByRole('table')).toBeNull();
     });
 });

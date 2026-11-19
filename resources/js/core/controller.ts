@@ -3,6 +3,7 @@ import { NO_FEATURES } from './types';
 import type {
     Features,
     Field,
+    FormPayload,
     ListState,
     LookupItem,
     Message,
@@ -30,6 +31,13 @@ export interface FormState {
     saving: boolean;
     /** Opened by "duplicate": a new record that starts from another one. */
     copy?: boolean;
+    /** Grows on every opening (Livewire's `formInstanceKey`): a new opening resets what the form tracks. */
+    instance?: number;
+    /** The modal title and subtitle the server built ("Nova conta"). */
+    title?: string;
+    subtitle?: string;
+    /** URLs of the stored images, by field. */
+    previews?: Record<string, string>;
 }
 
 export interface CrudState {
@@ -368,32 +376,101 @@ export class CrudController {
 
     // ── Form ────────────────────────────────────────────────────────────────
 
+    private opening: 'create' | 'edit' | null = null;
+    private instances = 0;
+    /** Closing while a form is on its way drops the answer. */
+    private openSeq = 0;
+
+    /**
+     * A form is on its way (the request of "New"/"Edit" is in flight): the
+     * screen can show the modal with its loading state at once, as the
+     * Livewire modal does. `state.form` stays null until the data arrives, so
+     * nothing that follows the form sees an empty one.
+     */
+    get formOpening(): 'create' | 'edit' | null {
+        return this.opening;
+    }
+
+    private startOpening(mode: 'create' | 'edit'): void {
+        // A form already open (save & new, draft clear/revert) stays until replaced.
+        if (!this.state.form) {
+            this.opening = mode;
+            this.set({});
+        }
+    }
+
+    private endOpening(): void {
+        if (this.opening !== null) {
+            this.opening = null;
+            this.set({});
+        }
+    }
+
+    private formFrom(payload: FormPayload, mode: 'create' | 'edit', id: RowId | null): FormState {
+        this.opening = null;
+
+        return {
+            mode,
+            id,
+            data: payload.data && !Array.isArray(payload.data) ? payload.data : {},
+            labels: this.labels(payload.labels),
+            files: {},
+            errors: {},
+            saving: false,
+            instance: ++this.instances,
+            title: typeof payload.title === 'string' ? payload.title : undefined,
+            subtitle: typeof payload.subtitle === 'string' ? payload.subtitle : undefined,
+            previews: this.labels(payload.previews),
+        };
+    }
+
     async openCreate(): Promise<void> {
+        this.startOpening('create');
+        const mine = ++this.openSeq;
         try {
             const blank = await this.api.blank(this.screen);
-            this.set({ form: { mode: 'create', id: null, data: blank.data ?? {}, labels: this.labels(blank.labels), files: {}, errors: {}, saving: false } });
+            if (mine !== this.openSeq) {
+                return;
+            }
+            this.set({ form: this.formFrom(blank, 'create', null) });
         } catch (error) {
+            this.endOpening();
             this.fail(error);
         }
     }
 
     async openEdit(id: RowId): Promise<void> {
+        this.startOpening('edit');
+        const mine = ++this.openSeq;
         try {
             const record = await this.api.show(this.screen, id);
-            this.set({ form: { mode: 'edit', id, data: record.data ?? {}, labels: this.labels(record.labels), files: {}, errors: {}, saving: false } });
+            if (mine !== this.openSeq) {
+                return;
+            }
+            this.set({ form: this.formFrom(record, 'edit', id) });
         } catch (error) {
+            this.endOpening();
             this.fail(error);
         }
     }
 
     async duplicate(id: RowId): Promise<void> {
+        this.startOpening('create');
+        const mine = ++this.openSeq;
         try {
             const copy = await this.api.duplicate(this.screen, id);
-            this.set({ form: { mode: 'create', id: null, data: copy.data ?? {}, labels: this.labels(copy.labels), files: {}, errors: {}, saving: false, copy: true } });
+            if (mine !== this.openSeq) {
+                return;
+            }
+            this.set({ form: { ...this.formFrom(copy, 'create', null), copy: true } });
         } catch (error) {
+            this.endOpening();
             this.fail(error);
         }
     }
+
+    /** Where a redirect answered by a save goes (an after-save hook). Replaceable, e.g. by a router. */
+    navigate: (url: string) => void = (url) => window.location.assign(url);
 
     private labels(labels: unknown): Record<string, string> {
         return labels && !Array.isArray(labels) && typeof labels === 'object' ? (labels as Record<string, string>) : {};
@@ -435,6 +512,8 @@ export class CrudController {
     }
 
     closeForm(): void {
+        this.openSeq++;
+        this.opening = null;
         this.set({ form: null });
     }
 
@@ -459,6 +538,14 @@ export class CrudController {
             }
 
             this.set({ form: null });
+
+            // An after-save hook sent the user elsewhere: the page goes, no reload.
+            if (typeof result.redirect === 'string' && result.redirect !== '') {
+                this.navigate(result.redirect);
+
+                return true;
+            }
+
             await this.reload();
 
             return true;

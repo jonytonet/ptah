@@ -9,6 +9,7 @@ import { createRoot } from 'react-dom/client';
 import { PtahApi, words } from '../core';
 import type { ControllerOptions } from '../core';
 import { PtahAudit, PtahUserPermissions } from './admin/access';
+import { PtahAiModels } from './admin/ai';
 import { PtahCompanies, PtahDepartments } from './admin/company';
 import { PtahMenuAdmin, PtahSettings } from './admin/menu';
 import { PtahPages, PtahPermissionGuide, PtahRoles } from './admin/roles';
@@ -31,10 +32,11 @@ const ADMIN = {
     menu: PtahMenuAdmin,
     settings: PtahSettings,
     exports: PtahExportsPanel,
+    'ai-models': PtahAiModels,
 } as const;
 
 export interface PtahAppProps {
-    /** `crud`, `login`, `forgot-password`, `reset-password`, `two-factor`, `profile`, `dashboard`, or an administration screen: `companies`, `departments`, `roles`, `pages`, `access-users`, `access-audit`, `permission-guide`, `menu`, `settings`, `exports`. */
+    /** `crud`, `login`, `forgot-password`, `reset-password`, `two-factor`, `profile`, `dashboard`, or an administration screen: `companies`, `departments`, `roles`, `pages`, `access-users`, `access-audit`, `permission-guide`, `menu`, `settings`, `exports`, `ai-models`. */
     page: string;
     /** The key of `CrudScreen::register()`, for a `crud` page. */
     screen?: string;

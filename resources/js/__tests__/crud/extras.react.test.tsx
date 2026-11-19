@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { CrudController } from '../../core/controller';
 import { applyFieldChange, startColumnResize } from '../../core/crud/extras';
 import { PtahCrudColumnResizer, PtahCrudColumnsMenu, PtahCrudDetailRow, PtahCrudDetailToggle, PtahCrudFormChanges, PtahCrudFormDraft, PtahCrudSaveAndNew } from '../../react/crud/extras';
+import { PtahCrud } from '../../react/PtahCrud';
 import { draftKey, fakeExtras } from './extras.fake';
 
 afterEach(() => {
@@ -186,7 +187,7 @@ function DetailTable({ crud }: { crud: CrudController }) {
                             </td>
                             <td>{String(row.cells.name.value)}</td>
                         </tr>
-                        <PtahCrudDetailRow crud={crud} row={row} colSpan={2} locale="pt_BR" />
+                        <PtahCrudDetailRow crud={crud} row={row} colSpan={2} locale="pt_BR" renderDetail={(detail) => <p>child:{detail.screen}</p>} />
                     </Fragment>
                 ))}
             </tbody>
@@ -195,23 +196,19 @@ function DetailTable({ crud }: { crud: CrudController }) {
 }
 
 describe('master/detail (React)', () => {
-    it('expands a row lazily, pages a grid and keeps it while collapsed', async () => {
+    it('expands a row lazily into the child screens the server named, and keeps them while collapsed', async () => {
         const { server, crud } = await setup();
         render(<DetailTable crud={crud} />);
         const toggles = screen.getAllByRole('button', { name: 'Ver detalhes' });
         // Rows are listed 1, 2, 3.
         const detailsCalls = () => server.calls.filter((call) => call.path.startsWith('/1/details')).length;
+        expect(detailsCalls()).toBe(0);
 
         fireEvent.click(toggles[0]);
         expect(toggles[0].getAttribute('aria-expanded')).toBe('true');
         expect(screen.getByRole('status', { name: 'Carregando…' })).toBeTruthy();
-        const grid = await screen.findByRole('region', { name: 'Linhas' });
-        expect(within(grid).getByText('L1').tagName).toBe('B');
-        expect(within(grid).getByText('36')).toBeTruthy();
-
-        fireEvent.click(within(grid).getByRole('button', { name: '2' }));
-        expect(await within(grid).findByText('L3')).toBeTruthy();
-        expect(server.calls.some((call) => call.path === '/1/details?detail=0&page=2')).toBe(true);
+        const region = await screen.findByRole('region', { name: 'Linhas' });
+        expect(region.textContent).toBe('child:items..1.0');
 
         const before = detailsCalls();
         fireEvent.click(toggles[0]);
@@ -221,24 +218,53 @@ describe('master/detail (React)', () => {
         expect(detailsCalls()).toBe(before);
     });
 
-    it('shows the empty, unavailable and error states', async () => {
+    it('shows the unavailable, empty and error states', async () => {
         const { crud } = await setup();
         render(<DetailTable crud={crud} />);
         const toggles = screen.getAllByRole('button', { name: 'Ver detalhes' });
 
         fireEvent.click(toggles[1]);
-        expect(await screen.findByText('Nenhum registro encontrado')).toBeTruthy();
-        expect(screen.getByText('Você não pode ver estes registros.')).toBeTruthy();
+        const notes = await screen.findByRole('region', { name: 'Notas' });
+        expect(within(notes).getByText('Você não pode ver estes registros.')).toBeTruthy();
+        expect(notes.textContent).not.toContain('child:');
 
         fireEvent.click(toggles[2]);
         expect((await screen.findByRole('alert')).textContent).toContain('Não foi possível carregar os detalhes.');
         expect(screen.getByRole('button', { name: 'Tentar novamente' })).toBeTruthy();
+
+        cleanup();
+        const empty = await setup({ emptyDetails: true });
+        render(<DetailTable crud={empty.crud} />);
+        fireEvent.click(screen.getAllByRole('button', { name: 'Ver detalhes' })[1]);
+        expect(await screen.findByText('Nenhum registro encontrado')).toBeTruthy();
     });
 
     it('draws nothing when the screen has no master/detail', async () => {
         const { crud } = await setup({ features: false });
         render(<DetailTable crud={crud} />);
         expect(screen.queryByRole('button', { name: 'Ver detalhes' })).toBeNull();
+    });
+
+    it('mounts a whole child PtahCrud under the expanded row of PtahCrud (no import cycle)', async () => {
+        const server = fakeExtras();
+        render(<PtahCrud screen="items" api={server.api} locale="pt_BR" remember={false} toastMs={0} />);
+        await screen.findByText('Alfa');
+
+        fireEvent.click(screen.getAllByRole('button', { name: 'Ver detalhes' })[0]);
+        const region = await screen.findByRole('region', { name: 'Linhas' });
+        // The child screen's own listing, title, search and create — on its own key.
+        expect(await within(region).findByText('L1')).toBeTruthy();
+        expect(within(region).getByText('L2')).toBeTruthy();
+        expect(within(region).queryByText('L3')).toBeNull();
+        expect(within(region).getByRole('heading', { name: 'Linhas' })).toBeTruthy();
+        expect(server.calls.some((call) => call.path === '..1.0/schema')).toBe(true);
+
+        fireEvent.click(within(region).getByRole('button', { name: /Novo/ }));
+        const dialog = await screen.findByRole('dialog');
+        fireEvent.change(await within(dialog).findByLabelText(/Linha/), { target: { value: 'L9' } });
+        fireEvent.click(within(dialog).getByRole('button', { name: /^(Criar|Salvar)$/ }));
+        await waitFor(() => expect(server.lines().some((line) => line.name === 'L9' && line.parent === 1)).toBe(true));
+        expect(await within(region).findByText('L9')).toBeTruthy();
     });
 });
 

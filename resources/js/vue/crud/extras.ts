@@ -22,11 +22,10 @@ import {
     saveAndNew,
     saveColumnOrder,
     setAllColumns,
-    styleMap,
     watchFormChanges,
 } from '../../core/crud/extras';
-import type { ColumnItem, DetailGrid, ExtrasWords } from '../../core/crud/extras';
-import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal, ForgePagination, ForgeSpinner } from '../forge';
+import type { ColumnItem, DetailScreen } from '../../core/crud/extras';
+import { ForgeAlert, ForgeButton, ForgeEmpty, ForgeModal, ForgeSpinner } from '../forge';
 import { usePtahCrud } from '../usePtahCrud';
 
 const pieceProps = {
@@ -49,7 +48,6 @@ function useStore<T>(store: { subscribe: (listener: () => void) => () => void; g
 const ROW = { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' };
 const MUTED = { color: 'var(--pc-text-muted)', fontSize: '13px' };
 const TITLE = { margin: '0 0 8px', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--pc-text-muted)' };
-const align = (value: string | null) => (value === 'right' ? 'pc-align-right' : value === 'center' ? 'pc-align-center' : undefined);
 
 // ── Form draft ──────────────────────────────────────────────────────────────
 
@@ -168,50 +166,31 @@ export const PtahCrudDetailToggle = defineComponent({
     },
 });
 
-function detailGrid(grid: DetailGrid, busy: boolean, t: ExtrasWords, onPage: (page: number) => void): VNode {
-    const totals = new Map(grid.totals.map((total) => [total.field, total]));
-
-    if (!grid.available) {
-        return h('section', { key: grid.index, 'aria-label': grid.title }, [h('p', { style: TITLE }, grid.title), h('p', { style: MUTED }, t.detailUnavailable)]);
-    }
-
-    return h('section', { key: grid.index, 'aria-label': grid.title }, [
-        h('p', { style: TITLE }, grid.title),
-        h('div', { class: 'pc-table-wrap', 'aria-busy': busy ? 'true' : 'false' }, [
-            h('table', { class: 'pc-table' }, [
-                h('thead', [h('tr', grid.columns.map((column) => h('th', { key: column.field, class: align(column.align) }, column.label)))]),
-                h('tbody', [
-                    grid.rows.length === 0 ? h('tr', [h('td', { class: 'pc-empty', colspan: Math.max(1, grid.columns.length) }, t.detailsEmpty)]) : null,
-                    ...grid.rows.map((detail) =>
-                        h(
-                            'tr',
-                            { key: String(detail.id), style: styleMap(detail.style, false) },
-                            // Rendered and escaped by the server, as the main table's cells.
-                            grid.columns.map((column) => h('td', { key: column.field, class: align(column.align), innerHTML: detail.cells[column.field]?.html ?? '' })),
-                        ),
-                    ),
-                ]),
-                grid.totals.length > 0 ? h('tfoot', [h('tr', grid.columns.map((column) => h('td', { key: column.field }, totals.has(column.field) ? String(totals.get(column.field)!.value ?? '') : '')))]) : null,
-            ]),
-        ]),
-        grid.meta && grid.meta.last_page > 1
-            ? h('div', { style: { ...ROW, justifyContent: 'flex-end', marginTop: '8px' } }, [
-                  busy ? h(ForgeSpinner, { size: 'sm', label: t.loading }) : null,
-                  h(ForgePagination, { page: grid.meta.page, lastPage: grid.meta.last_page, onChange: onPage }),
-              ])
-            : null,
-    ]);
-}
-
-/** The expanded content of a row: one small grid per detail, loaded on the first expansion. */
+/**
+ * The expanded content of a row, mounted on the first expansion: under each
+ * other, a full CRUD screen per detail of the row (search, filters, form,
+ * export, row actions — the child's own permissions), bound by the server to
+ * this row, as the nested BaseCrud of the Livewire table.
+ *
+ * Each detail is drawn by the `detail` slot (`{ detail }`) or `renderDetail`.
+ * PtahCrud.vue fills the slot with `<PtahCrud :screen="detail.screen" :remember="false">`
+ * — handed in, not imported, so this file never imports PtahCrud (which
+ * imports it).
+ */
 export const PtahCrudDetailRow = defineComponent({
     name: 'PtahCrudDetailRow',
-    props: { ...pieceProps, row: { type: Object as PropType<Row>, required: true as const }, colSpan: { type: Number, required: true as const } },
-    setup(props) {
+    props: {
+        ...pieceProps,
+        row: { type: Object as PropType<Row>, required: true as const },
+        colSpan: { type: Number, required: true as const },
+        renderDetail: { type: Function as PropType<(detail: DetailScreen) => VNode | VNode[] | null>, default: undefined },
+    },
+    setup(props, { slots }) {
         const t = extrasWords(props.locale);
         const state = usePtahCrud(props.crud);
         const store = detailsOf(props.crud);
         const view = useStore(store);
+        const draw = (detail: DetailScreen) => (slots.detail ? slots.detail({ detail }) : props.renderDetail ? props.renderDetail(detail) : null);
 
         return () => {
             const key = String(props.row.id);
@@ -222,17 +201,24 @@ export const PtahCrudDetailRow = defineComponent({
 
             return h('tr', { class: 'pc-detail-row' }, [
                 h('td', { colspan: props.colSpan, style: { padding: '12px 24px', background: 'var(--pc-bg-soft)' }, 'aria-busy': !entry || entry.status === 'loading' ? 'true' : 'false' }, [
-                    !entry || (entry.status === 'loading' && entry.grids.length === 0) ? h(ForgeSpinner, { label: t.loading }) : null,
+                    !entry || (entry.status === 'loading' && entry.details.length === 0) ? h(ForgeSpinner, { label: t.loading }) : null,
                     entry?.status === 'error'
                         ? h(ForgeAlert, { color: 'danger' }, () =>
                               h('div', { style: ROW }, [h('span', entry.error || t.detailsError), h(ForgeButton, { size: 'sm', color: 'danger', flat: true, onClick: () => void store.load(props.row.id) }, () => t.retry)]),
                           )
                         : null,
-                    entry && entry.status === 'ready' && entry.grids.length === 0 ? h(ForgeEmpty, { title: t.detailsEmpty }) : null,
+                    entry && entry.status === 'ready' && entry.details.length === 0 ? h(ForgeEmpty, { title: t.detailsEmpty }) : null,
                     h(
                         'div',
                         { style: { display: 'flex', flexDirection: 'column', gap: '16px' } },
-                        (entry?.grids ?? []).map((grid) => detailGrid(grid, entry?.paging === grid.index, t, (page) => void store.page(props.row.id, grid.index, page))),
+                        (entry?.details ?? []).map((detail) =>
+                            detail.available
+                                ? h('section', { key: detail.screen, class: 'pc-detail', 'aria-label': detail.title || undefined }, draw(detail) ?? undefined)
+                                : h('section', { key: detail.screen, 'aria-label': detail.title || undefined }, [
+                                      detail.title ? h('p', { style: TITLE }, detail.title) : null,
+                                      h('p', { style: MUTED }, t.detailUnavailable),
+                                  ]),
+                        ),
                     ),
                 ]),
             ]);

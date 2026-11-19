@@ -1,0 +1,518 @@
+/**
+ * The fields of the `<PtahCrud>` form, at parity with the Livewire modal
+ * (`_modal-form.blade.php`): read-only text, switch, select, dependent
+ * searchdropdown, image (file, URL, preview), colour, money, uppercase,
+ * masked and plain inputs, section headings and the "discard changes?"
+ * confirmation. The decisions live in core/crud/form; this only draws them.
+ * Mirrors vue/crud/form.ts.
+ */
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
+import { controlOf, debounce, fromInput, inputType, isWide, toInput } from '../../core/form';
+import type { CrudController, FormState } from '../../core/controller';
+import type { Words } from '../../core/i18n';
+import type { Field, LookupItem } from '../../core/types';
+import {
+    colorSwatch,
+    fillWord,
+    isRequired,
+    lookupLocked,
+    lookupOpensUp,
+    lookupPlaceholder,
+    moneyDisplay,
+    moneyFromTyping,
+    normalizeHex,
+    optionLines,
+    placeholderOf,
+    readonlyText,
+    savedPreview,
+    specialOf,
+    stepOf,
+} from '../../core/crud/form';
+
+export interface FormFieldProps {
+    crud: CrudController;
+    form: FormState;
+    field: Field;
+    t: Words;
+    /** A change the DOM does not announce (a dropdown pick, a file removed): the form is dirty. */
+    onTouch?: () => void;
+}
+
+/** A section of the form (`colsFormBlock`): a heading across the whole row. */
+export function PtahFormSection({ title }: { title: string }) {
+    return (
+        <div className="pc-form-block" role="presentation">
+            <span className="pc-form-block-label">{title}</span>
+            <span className="pc-form-block-line" aria-hidden="true" />
+        </div>
+    );
+}
+
+function Label({ htmlFor, field, required }: { htmlFor?: string; field: Field; required: boolean }) {
+    return (
+        <label className="pc-label" htmlFor={htmlFor}>
+            {field.label}
+            {required && (
+                <span className="pc-required" aria-hidden="true">
+                    {' '}
+                    *
+                </span>
+            )}
+        </label>
+    );
+}
+
+/** One field of the form, drawn as the Livewire modal draws it. */
+export function PtahFormField({ crud, form, field, t, onTouch }: FormFieldProps) {
+    const id = `pc-${crud.screen}-${field.field}`;
+    const error = form.errors[field.field];
+    const value = form.data[field.field];
+    const required = isRequired(field, form);
+    const control = controlOf(field);
+    const special = specialOf(field);
+    const errorId = `${id}-error`;
+    const common = {
+        id,
+        className: `pc-input${error ? ' pc-input--error' : ''}`,
+        'aria-invalid': error ? true : undefined,
+        'aria-describedby': error ? errorId : undefined,
+        'aria-required': required || undefined,
+    };
+    const set = (next: unknown, label?: string) => crud.setField(field.field, next, label);
+    let input: ReactNode;
+    let label: ReactNode = <Label htmlFor={id} field={field} required={required} />;
+
+    if (field.readonly) {
+        // Shown, never written: text, not a disabled input.
+        label = (
+            <span className="pc-label" id={`${id}-label`}>
+                {field.label}
+            </span>
+        );
+        input = (
+            <div className="pc-readonly" id={id} aria-labelledby={`${id}-label`} data-ptah-readonly={field.field}>
+                {readonlyText(field, form, t)}
+            </div>
+        );
+    } else if (control === 'switch') {
+        label = null;
+        input = (
+            <label className="pc-switch">
+                <input id={id} type="checkbox" checked={[true, 1, '1'].includes(value as never)} aria-describedby={common['aria-describedby']} onChange={(event) => set(event.target.checked)} />
+                <span className="pc-switch-track" />
+                <span>
+                    {field.label}
+                    {required && (
+                        <span className="pc-required" aria-hidden="true">
+                            {' '}
+                            *
+                        </span>
+                    )}
+                </span>
+            </label>
+        );
+    } else if (control === 'textarea') {
+        input = <textarea {...common} placeholder={placeholderOf(field, form, t)} value={toInput(field, value)} onChange={(event) => set(event.target.value)} />;
+    } else if (control === 'select' || control === 'yesno') {
+        const options = control === 'yesno' ? [{ label: t.yes, value: '1' }, { label: t.no, value: '0' }] : (field.options ?? []);
+        input = (
+            <select {...common} value={toInput(field, value)} onChange={(event) => set(event.target.value)}>
+                {/* Required: the empty choice is only the placeholder, it cannot be picked back. */}
+                {required ? (
+                    <option value="" disabled hidden>
+                        {t.choose}
+                    </option>
+                ) : (
+                    <option value="">{t.choose}</option>
+                )}
+                {options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                        {option.label}
+                    </option>
+                ))}
+            </select>
+        );
+    } else if (field.type === 'image') {
+        label = <Label htmlFor={`${id}-url`} field={field} required={required} />;
+        input = <ImageField crud={crud} form={form} field={field} t={t} id={id} invalid={Boolean(error)} describedBy={common['aria-describedby']} onTouch={onTouch} />;
+    } else if (control === 'file') {
+        input = (
+            <>
+                <input {...common} type="file" onChange={(event) => crud.setFile(field.field, event.target.files?.[0] ?? null)} />
+                {typeof value === 'string' && value !== '' && <p className="pc-help">{value}</p>}
+            </>
+        );
+    } else if (control === 'lookup') {
+        input = (
+            <PtahFormLookup
+                id={id}
+                value={value === null || value === undefined ? '' : String(value)}
+                label={form.labels[field.field] ?? ''}
+                disabled={lookupLocked(field, form)}
+                placeholder={lookupPlaceholder(field, form, t)}
+                opensUp={lookupOpensUp(field)}
+                invalid={Boolean(error)}
+                describedBy={common['aria-describedby']}
+                t={t}
+                search={(query) => crud.lookup(field.field, query)}
+                onPick={(item) => {
+                    onTouch?.();
+                    set(item?.value ?? '', item?.label ?? '');
+                }}
+            />
+        );
+    } else if (special === 'color') {
+        input = <ColorField {...common} field={field} value={value} required={required} t={t} onValue={(next) => set(next)} />;
+    } else if (special === 'money') {
+        input = (
+            <input
+                {...common}
+                type="text"
+                inputMode="numeric"
+                placeholder="R$ 0,00"
+                value={moneyDisplay(value)}
+                onFocus={(event) => event.target.setSelectionRange(event.target.value.length, event.target.value.length)}
+                onChange={(event) => set(moneyFromTyping(event.target.value))}
+            />
+        );
+    } else if (special === 'uppercase') {
+        input = <input {...common} type="text" style={{ textTransform: 'uppercase' }} value={toInput(field, value)} onChange={(event) => set(event.target.value.toUpperCase())} />;
+    } else {
+        const masked = Boolean(field.maskPatterns?.length);
+        input = (
+            <input
+                {...common}
+                type={masked || field.mask ? 'text' : inputType(field)}
+                step={stepOf(field)}
+                placeholder={placeholderOf(field, form, t)}
+                inputMode={masked ? ((field.inputMode ?? undefined) as HTMLAttributes<HTMLInputElement>['inputMode']) : undefined}
+                maxLength={masked ? (field.maxLength ?? undefined) : undefined}
+                // A password opens empty and, on an edit, empty means "keep it".
+                autoComplete={field.type === 'password' ? 'new-password' : masked ? 'off' : undefined}
+                value={toInput(field, value)}
+                onChange={(event) => set(fromInput(field, event.target.value))}
+            />
+        );
+    }
+
+    return (
+        <div className={`pc-form-field${isWide(field) ? ' pc-form-field--wide' : ''}`}>
+            {label}
+            {input}
+            {field.help && <p className="pc-help">{field.help}</p>}
+            {error && (
+                <p className="pc-error" id={errorId} role="alert">
+                    {error}
+                </p>
+            )}
+        </div>
+    );
+}
+
+// ── Colour: native picker + editable hex ────────────────────────────────────
+
+interface ColorProps {
+    id: string;
+    className: string;
+    'aria-invalid'?: boolean;
+    'aria-describedby'?: string;
+    'aria-required'?: boolean;
+    field: Field;
+    value: unknown;
+    required: boolean;
+    t: Words;
+    onValue: (value: string) => void;
+}
+
+function ColorField({ id, className, field, value, required, t, onValue, ...aria }: ColorProps) {
+    const text = value === null || value === undefined ? '' : String(value);
+
+    return (
+        <div className="pc-color">
+            {/* The picker has its own name: the label points at the hex field. */}
+            <input type="color" className="pc-color-pick" value={colorSwatch(text)} aria-label={fillWord(t.colorPick, { field: field.label })} onChange={(event) => onValue(event.target.value.toLowerCase())} />
+            <input
+                id={id}
+                type="text"
+                className={`${className} pc-color-hex`}
+                placeholder="#3b82f6"
+                spellCheck={false}
+                autoComplete="off"
+                maxLength={7}
+                aria-invalid={aria['aria-invalid']}
+                aria-describedby={aria['aria-describedby']}
+                aria-required={required || undefined}
+                value={text}
+                // Raw while typing (normalising each key would block `#abc`), normalised on leaving.
+                onChange={(event) => onValue(event.target.value)}
+                onBlur={() => {
+                    const normal = normalizeHex(text);
+                    if (normal !== null && normal !== text) {
+                        onValue(normal);
+                    }
+                }}
+            />
+            {!required && text !== '' && (
+                <button type="button" className="pc-btn pc-color-clear" aria-label={t.colorClear} title={t.colorClear} onClick={() => onValue('')}>
+                    ✕
+                </button>
+            )}
+        </div>
+    );
+}
+
+// ── Image: file, or a URL, with a preview ───────────────────────────────────
+
+interface ImageProps {
+    crud: CrudController;
+    form: FormState;
+    field: Field;
+    t: Words;
+    id: string;
+    invalid: boolean;
+    describedBy?: string;
+    onTouch?: () => void;
+}
+
+function ImageField({ crud, form, field, t, id, invalid, describedBy, onTouch }: ImageProps) {
+    const file = form.files[field.field] ?? null;
+    const value = form.data[field.field];
+    const saved = savedPreview(field, form);
+    const [typed, setTyped] = useState<string | null>(null);
+    const [picked, setPicked] = useState('');
+    const [broken, setBroken] = useState(false);
+    const fileInput = useRef<HTMLInputElement>(null);
+
+    // The chosen file shown before it is sent.
+    useEffect(() => {
+        if (!file) {
+            setPicked('');
+
+            return;
+        }
+        let live = true;
+        const reader = new FileReader();
+        reader.onload = () => live && setPicked(typeof reader.result === 'string' ? reader.result : '');
+        reader.readAsDataURL(file);
+
+        return () => {
+            live = false;
+        };
+    }, [file]);
+
+    const preview = file ? picked : (typed ?? saved);
+    useEffect(() => setBroken(false), [preview]);
+
+    return (
+        <div className="pc-image">
+            <div className="pc-image-row">
+                <label className="pc-btn pc-image-pick">
+                    {t.imagePickFile}
+                    <input
+                        ref={fileInput}
+                        id={`${id}-file`}
+                        type="file"
+                        className="pc-visually-hidden"
+                        accept={field.accept ?? 'image/*'}
+                        aria-label={`${field.label}: ${t.imagePickFile}`}
+                        aria-describedby={describedBy}
+                        onChange={(event) => crud.setFile(field.field, event.target.files?.[0] ?? null)}
+                    />
+                </label>
+                {file && form.saving && (
+                    <span className="pc-help pc-image-busy" role="status">
+                        {t.imageUploading}
+                    </span>
+                )}
+                {file && (
+                    <button
+                        type="button"
+                        className="pc-link pc-image-remove"
+                        onClick={() => {
+                            if (fileInput.current) {
+                                fileInput.current.value = '';
+                            }
+                            crud.setFile(field.field, null);
+                            onTouch?.();
+                        }}
+                    >
+                        {t.imageRemoveFile}
+                    </button>
+                )}
+            </div>
+            <p className="pc-help">{t.imageOrUrl}</p>
+            <input
+                id={`${id}-url`}
+                type="text"
+                className={`pc-input${invalid ? ' pc-input--error' : ''}`}
+                placeholder="https://..."
+                aria-invalid={invalid || undefined}
+                aria-describedby={describedBy}
+                value={typeof value === 'string' ? value : value === null || value === undefined ? '' : String(value)}
+                onChange={(event) => {
+                    // What is seen is what is saved: a typed URL replaces a chosen file.
+                    if (file) {
+                        if (fileInput.current) {
+                            fileInput.current.value = '';
+                        }
+                        crud.setFile(field.field, null);
+                    }
+                    setTyped(event.target.value);
+                    crud.setField(field.field, event.target.value);
+                }}
+            />
+            {preview && !broken && (
+                <div className="pc-image-preview">
+                    <img src={preview} alt={t.imagePreview} onError={() => setBroken(true)} />
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── Lookup (searchdropdown) ─────────────────────────────────────────────────
+
+export interface LookupProps {
+    id: string;
+    value: string;
+    label: string;
+    disabled?: boolean;
+    invalid?: boolean;
+    describedBy?: string;
+    placeholder?: string;
+    /** The options open above the field. */
+    opensUp?: boolean;
+    t: Words;
+    search: (query: string) => Promise<LookupItem[]>;
+    onPick: (item: LookupItem | null) => void;
+}
+
+export function PtahFormLookup({ id, value, label, disabled, invalid, describedBy, placeholder, opensUp, t, search, onPick }: LookupProps) {
+    const [text, setText] = useState(label || value);
+    const [items, setItems] = useState<LookupItem[] | null>(null);
+    const [active, setActive] = useState(-1);
+    const seq = useRef(0);
+    const ref = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => setText(label || value), [label, value]);
+    // Locked again (the parent was cleared): the list closes.
+    useEffect(() => {
+        if (disabled) {
+            setItems(null);
+        }
+    }, [disabled]);
+
+    const fetchNow = (query: string) => {
+        const mine = ++seq.current;
+        void search(query).then((found) => {
+            if (mine === seq.current) {
+                setItems(found);
+                setActive(-1);
+            }
+        });
+    };
+    const run = useMemo(() => debounce((query: string) => fetchNow(query), 250), [search]); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => () => run.cancel(), [run]);
+
+    useEffect(() => {
+        const close = (event: MouseEvent) => {
+            if (!ref.current?.contains(event.target as Node)) {
+                setItems(null);
+            }
+        };
+        document.addEventListener('mousedown', close);
+
+        return () => document.removeEventListener('mousedown', close);
+    }, []);
+
+    const pick = (item: LookupItem) => {
+        setText(String(item.label));
+        setItems(null);
+        onPick(item);
+    };
+
+    return (
+        <div className="pc-combo" ref={ref}>
+            <div className="pc-combo-field">
+                <input
+                    ref={inputRef}
+                    id={id}
+                    type="text"
+                    role="combobox"
+                    aria-expanded={items !== null}
+                    aria-controls={`${id}-list`}
+                    aria-autocomplete="list"
+                    aria-invalid={invalid || undefined}
+                    aria-describedby={describedBy}
+                    autoComplete="off"
+                    className={`pc-input pc-combo-input${invalid ? ' pc-input--error' : ''}`}
+                    placeholder={placeholder ?? t.typeToSearch}
+                    disabled={disabled}
+                    value={text}
+                    onFocus={() => run(text === (label || value) ? '' : text)}
+                    onChange={(event) => {
+                        setText(event.target.value);
+                        if (event.target.value === '') {
+                            onPick(null);
+                        }
+                        run(event.target.value);
+                    }}
+                    onKeyDown={(event) => {
+                        if (!items) {
+                            return;
+                        }
+                        if (event.key === 'ArrowDown') {
+                            event.preventDefault();
+                            setActive(Math.min(items.length - 1, active + 1));
+                        } else if (event.key === 'ArrowUp') {
+                            event.preventDefault();
+                            setActive(Math.max(0, active - 1));
+                        } else if (event.key === 'Enter' && active >= 0) {
+                            event.preventDefault();
+                            pick(items[active]);
+                        } else if (event.key === 'Escape') {
+                            event.stopPropagation();
+                            setItems(null);
+                        }
+                    }}
+                />
+                {/* The chevron opens or closes the list; out of the tab order, as in the Blade. */}
+                <button
+                    type="button"
+                    tabIndex={-1}
+                    className="pc-combo-toggle"
+                    aria-label={t.toggleOptions}
+                    disabled={disabled}
+                    onMouseDown={(event) => {
+                        event.preventDefault();
+                        if (items !== null) {
+                            setItems(null);
+                        } else {
+                            inputRef.current?.focus();
+                            fetchNow(text === (label || value) ? '' : text);
+                        }
+                    }}
+                >
+                    ▾
+                </button>
+            </div>
+            {items !== null && (
+                <ul className={`pc-combo-list${opensUp ? ' pc-combo-list--up' : ''}`} id={`${id}-list`} role="listbox">
+                    {items.length === 0 && <li className="pc-combo-note">{t.noResults}</li>}
+                    {items.map((item, index) => (
+                        <li key={String(item.value)} role="option" aria-selected={index === active} className="pc-combo-item" onMouseDown={(event) => event.preventDefault()} onClick={() => pick(item)}>
+                            {String(item.label)}
+                            {optionLines(item).map((line, n) => (
+                                <span key={n} className="pc-combo-line">
+                                    {line}
+                                </span>
+                            ))}
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+}

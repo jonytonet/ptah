@@ -18,6 +18,7 @@ import {
     writeCollapsed,
 } from '../core';
 import type { Me, MenuItem, MenuLink, Shell, Words } from '../core';
+import { PtahAiChat } from './admin/ai';
 import { PtahCompanySwitcher } from './admin/company';
 import { PtahNotificationBell } from './admin/shell';
 
@@ -225,6 +226,7 @@ export function PtahLayout({ children, brand, title, topbar, api, locale, path, 
                 </header>
                 <main className="pl-content">{children}</main>
             </div>
+            {shell.shell.ai_chat && <PtahAiChat api={client} locale={locale ?? me?.locale} />}
         </div>
     );
 }
