@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Ptah\Tests\Browser;
 
+use Facebook\WebDriver\WebDriverBy;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
 use Laravel\Dusk\Browser;
 use PHPUnit\Framework\Attributes\Test;
+use Throwable;
 
 /**
  * The Livewire layout's single-page navigation (`ptah.forge.spa_navigation`),
@@ -249,6 +251,134 @@ class SpaNavigationBrowserTest extends DuskTestCase
             $b->pause(300);
             $this->assertSame($was, $isDark());
             $this->assertNoSevereLog($b, 'frame');
+        });
+    }
+
+    /**
+     * 1.59.1 — reported from a production host: after menu clicks in quick
+     * succession, back/forward, a theme toggle and the same menu item twice,
+     * a click on the row's Edit threw "moreOpen is not defined" / "Illegal
+     * invocation" and the modal never opened.
+     *
+     * The cause was not the sequence but its last two steps: the page being
+     * left stays on screen while the next one is on its way, and the Edit was
+     * clicked THERE. Its answer arrived after the swap, and Livewire morphed a
+     * component that had already left the document.
+     */
+    #[Test]
+    public function a_click_on_the_page_being_left_is_not_taken_and_its_pending_answer_never_lands(): void
+    {
+        $this->beforeServingApplication('spaOn');
+
+        $this->browse(function (Browser $b) {
+            $this->start($b, '/dusk-test/draft');
+            $b->waitForText('Bia', 30);
+            $b->driver->manage()->getLog('browser');
+            // Holds the answer of a navigation (the document), so "on its way" lasts.
+            $b->script(<<<'JS'
+                window.__hold = 0;
+                const f = window.fetch;
+                window.fetch = function (input, init) {
+                    const url = typeof input === 'string' ? input : input.url;
+                    const p = f.apply(this, arguments);
+                    const page = !(init && init.method && init.method !== 'GET') && String(url).includes('/dusk-test/') && !String(url).includes('/update');
+                    return window.__hold && page ? p.then(r => new Promise(res => setTimeout(() => res(r), window.__hold))) : p;
+                };
+                window.__edit = () => [...document.querySelectorAll('main button')].find(x => (x.getAttribute('wire:click') || '').startsWith('openEdit('));
+                window.__menu = (path) => document.querySelector('aside.ptah-sidebar a[href="' + path + '"]').click();
+                window.__modalOpen = () => [...document.querySelectorAll('.ptah-modal-panel[aria-labelledby^="forge-modal-title-"]')].some(p => p.offsetParent !== null);
+            JS);
+            $inert = fn (): bool => (bool) $b->script("return !!document.querySelector('main') && document.querySelector('main').hasAttribute('inert');")[0];
+
+            // 1. An action in flight when the page is swapped: its answer is dropped.
+            //    (A script click reaches an inert element; a person's does not.)
+            $b->script("window.__hold = 1500; window.__edit().click(); window.__menu('/dusk-test/crud');");
+            $b->pause(200);
+            $this->assertTrue($inert(), 'O conteudo da pagina que sai devia estar inerte durante a navegacao.');
+            $this->landed($b, '/dusk-test/crud');
+            $b->pause(2500);
+            $this->assertFalse($inert(), 'A pagina que chegou ficou inerte.');
+            $this->assertSame(42, $this->marker($b));
+            $this->assertNoSevereLog($b, 'resposta pendente da pagina que saiu');
+
+            // 2. The same menu item again (the page is fetched anew), and a real
+            //    click on the Edit of the page still on screen: not taken.
+            $b->script('window.__hold = 0;');
+            $b->click(self::SIDEBAR.' a[href="/dusk-test/draft"]');
+            $this->landed($b, '/dusk-test/draft');
+            $b->waitForText('Bia', 30);
+            $b->script("window.__hold = 3000; document.body.setAttribute('data-old', ''); window.__edit().setAttribute('data-ptah-test', 'old-edit'); window.__menu('/dusk-test/draft');");
+            $b->pause(200);
+            $this->assertTrue($inert());
+            try {
+                $b->driver->findElement(WebDriverBy::cssSelector('[data-ptah-test="old-edit"]'))->click();
+            } catch (Throwable) {
+                // An inert element refuses the click: that is the point.
+            }
+            $b->waitUntil("!document.body.hasAttribute('data-old')", 30);
+            $this->landed($b, '/dusk-test/draft');
+            $b->waitForText('Bia', 30)->pause(1500);
+            $this->assertFalse((bool) $b->script('return window.__modalOpen();')[0], 'O clique na pagina que saia abriu o modal.');
+            $this->assertNoSevereLog($b, 'clique na pagina que saia');
+
+            // 3. On the page that arrived, Edit opens the modal.
+            $b->script('window.__hold = 0; window.__edit().setAttribute("data-ptah-test", "new-edit");');
+            $b->click('[data-ptah-test="new-edit"]');
+            $b->waitUntil('window.__modalOpen()', 20);
+            $this->assertNoSevereLog($b, 'editar na pagina que chegou');
+        });
+    }
+
+    /**
+     * The sequence of that report, with back/forward and the theme toggle in
+     * the middle: the CRUD that arrives is whole.
+     */
+    #[Test]
+    public function quick_menu_clicks_back_forward_and_a_theme_toggle_leave_the_crud_whole(): void
+    {
+        $this->beforeServingApplication('spaOn');
+
+        $this->browse(function (Browser $b) {
+            $this->start($b, '/dusk-test/other');
+            $b->driver->manage()->getLog('browser');
+            $toggle = "[...document.querySelectorAll('nav.ptah-navbar button')].find(x => x.getAttribute('@click') === 'toggleDark()').click();";
+            $go = function (string $path) use ($b): void {
+                $b->script("document.querySelector('aside.ptah-sidebar a[href=\"{$path}\"]').click();");
+                $b->waitUntil('window.location.pathname === '.json_encode($path), 30);
+                // Not waiting for the page to settle: the next click comes at once.
+                $b->pause(400);
+            };
+
+            $go('/dusk-test/draft');
+            $go('/dusk-test/crud');
+            $go('/dusk-test/header');
+            $go('/dusk-test/draft');
+
+            $b->script('history.back();');
+            $b->waitUntil("window.location.pathname === '/dusk-test/header'", 30)->pause(400);
+            $b->script('history.forward();');
+            $b->waitUntil("window.location.pathname === '/dusk-test/draft'", 30)->pause(400);
+
+            $b->script($toggle);
+            $b->pause(300);
+            $go('/dusk-test/crud');
+            $go('/dusk-test/draft');
+            $b->script($toggle);
+            $b->pause(300);
+            // The same item again: the page is fetched anew and swapped.
+            $this->landed($b, '/dusk-test/draft');
+            $b->script("document.body.setAttribute('data-old', '');");
+            $go('/dusk-test/draft');
+            $b->waitUntil("!document.body.hasAttribute('data-old')", 30);
+
+            $this->landed($b, '/dusk-test/draft');
+            $b->waitForText('Bia', 30);
+            $this->assertSame(42, $this->marker($b));
+
+            $b->script("[...document.querySelectorAll('main button')].find(x => (x.getAttribute('wire:click') || '').startsWith('openEdit(')).setAttribute('data-ptah-test', 'edit');");
+            $b->click('[data-ptah-test="edit"]');
+            $b->waitUntil("[...document.querySelectorAll('.ptah-modal-panel[aria-labelledby^=\"forge-modal-title-\"]')].some(p => p.offsetParent !== null)", 20);
+            $this->assertNoSevereLog($b, 'editar apos a sequencia do relato');
         });
     }
 
