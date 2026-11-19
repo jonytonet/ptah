@@ -18,7 +18,9 @@ instalar o Tailwind ao lado, e os dois entram em conflito.
 A proposta é o instalador perguntar qual CSS o projeto usa
 (`ptah:install --css=tailwind|bootstrap`) e o ptah se adaptar:
 
-- **Tailwind**: como é hoje. Nada muda para quem já usa.
+- **Tailwind**: é o padrão. `ptah:install` sem a opção instala com Tailwind,
+  como é hoje, e nada muda para quem já usa. Bootstrap só entra quando o
+  projeto opta por ele.
 - **Bootstrap**: o projeto não instala Tailwind. O ptah entrega o próprio CSS
   já compilado e isolado, e pega cores, fontes, raio e modo escuro do tema
   Bootstrap do projeto.
