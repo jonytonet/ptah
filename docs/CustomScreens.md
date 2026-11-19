@@ -1,5 +1,12 @@
 # Telas Customizadas — construindo fora do BaseCrud
 
+> **Stack React ou Vue (desde a 1.59.0):** este documento trata das telas em
+> Blade/Livewire. Numa aplicação instalada com `--stack=react` ou
+> `--stack=vue`, uma tela própria é um componente dentro do `PtahLayout`,
+> com `<PtahCrud>`, `usePtahCrud()` e o kit `pf-*` — veja
+> [Stacks.md](Stacks.md#using-the-components-yourself). Os tokens de tema e os
+> eixos de aparência descritos aqui valem nas três stacks.
+
 **Público:** devs de projetos consumidores (`petplace/` e afins) que criam uma tela
 própria — não gerada por `ptah:forge` nem baseada em `<x-base-crud>` — mas que
 ainda precisa parecer, e se comportar, como o resto do produto Ptah: mesmo tema,
