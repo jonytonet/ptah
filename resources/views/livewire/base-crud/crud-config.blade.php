@@ -1,6 +1,10 @@
 <div>
     {{-- ── Botão de abertura ────────────────────────────────────────────────── --}}
-    @ptahCan('configCrud', 'read')
+    {{-- The editor's own gate (ptah_can_manage_config: master, a `crud.config`
+         grant, or ptah.crud.config_editor with the module off). It asked for
+         `configCrud` here — a key nothing else knows — so who was granted
+         `crud.config` could open the editor but never saw the button. --}}
+    @if (ptah_can_manage_config())
     <x-forge-button
         wire:click="openModal"
         flat
@@ -19,7 +23,7 @@
         </x-slot>
         <span class="ptah-c-btn_label">Config</span>
     </x-forge-button>
-    @endptahCan
+    @endif
 
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     {{-- ── Modal Enterprise ─────────────────────────────────────────────────── --}}
@@ -3306,7 +3310,9 @@
     @endteleport
 
     @once
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js" defer></script>
+    {{-- data-navigate-once: com navegacao SPA, nao baixar/rodar a biblioteca de
+         novo a cada tela de CRUD (window.Sortable sobrevive a troca). --}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js" defer data-navigate-once></script>
     {{-- .cfg-label/.cfg-input/.cfg-input-sm/.tag moved to resources/css/ptah-components.css,
          scoped under .ptah-cfg and following the user's theme + dark mode (Onda 4 Parte A). --}}
 
@@ -3320,9 +3326,19 @@
             this.initSortable();
         },
 
-        initSortable() {
+        initSortable(attempt = 0) {
             const el = document.getElementById('cols-sortable');
-            if (!el || typeof Sortable === 'undefined') return;
+            if (!el || el.__ptahSortable) return;
+            {{-- Navegacao SPA: a primeira tela com o editor alcancada sem recarga
+                 injeta o Sortable de novo, e um <script src> injetado carrega
+                 assincrono — pode chegar depois deste init. Espera um pouco. --}}
+            if (typeof Sortable === 'undefined') {
+                if (attempt < 50) setTimeout(() => this.initSortable(attempt + 1), 100);
+                return;
+            }
+            {{-- init() roda duas vezes (Alpine chama init() sozinho e o x-init
+                 chama de novo): sem a marca, duas instancias no mesmo tbody. --}}
+            el.__ptahSortable = true;
 
             Sortable.create(el, {
                 animation: 150,

@@ -31,8 +31,25 @@
         }
         // Plain auxclick with another button (e.g. right) → ignore.
         if (event.type === 'auxclick') return;
+        // Navegacao SPA do layout ligada (<html data-ptah-spa>) e o registro e
+        // desta origem: troca a pagina no lugar, como os links da sidebar.
+        if (document.documentElement.hasAttribute('data-ptah-spa') && window.Livewire && window.Livewire.navigate) {
+            try {
+                if (new URL(url, window.location.href).origin === window.location.origin) {
+                    window.Livewire.navigate(url);
+
+                    return;
+                }
+            } catch (_) {}
+        }
         window.location = url;
     };
+
+    /* Navegacao SPA (wire:navigate): este script roda UMA vez por documento
+       (o guard acima), mas o <body> e trocado a cada pagina. Tudo o que ele
+       pendura no <body> some na troca; o que pendura em document/window fica.
+       Por isso: listeners globais so aqui dentro do guard, e elementos no body
+       sao re-anexados quando a troca os deixou de fora. */
 
     /* ─── arrastar para rolar a tabela na horizontal ──────────────────
        Uma tabela larga é difícil de rolar com mouse: a maioria não tem roda
@@ -175,9 +192,19 @@
 
         wrap.addEventListener('pointerup', endPan);
         wrap.addEventListener('pointercancel', endPan);
-        /* Se o botão for solto fora da janela, o pointerup não chega. */
-        window.addEventListener('blur', () => endPan(null));
+        /* Se o botão for solto fora da janela, o pointerup não chega. Um
+           ouvinte de blur so (abaixo) para todas as tabelas: um por wrapper
+           acumulava no window a cada morph e a cada troca de pagina. */
+        panEnders.set(wrap, endPan);
     }
+
+    const panEnders = new Map();
+    window.addEventListener('blur', () => {
+        panEnders.forEach((end, wrap) => {
+            if (!wrap.isConnected) { panEnders.delete(wrap); return; }
+            end(null);
+        });
+    });
 
     /* ─── copiar o conteudo de uma celula (1.46.0) ───────────────────
        Um botao so, para a pagina inteira, posicionado sobre a celula em que o
@@ -220,7 +247,12 @@
     }
 
     function copyButton() {
-        if (copyGroup) return copyGroup;
+        if (copyGroup) {
+            /* A navegacao SPA trocou o <body> e levou o grupo junto: o mesmo
+               elemento volta, nunca um segundo. */
+            if (!copyGroup.isConnected) document.body.appendChild(copyGroup);
+            return copyGroup;
+        }
         copyGroup = document.createElement('div');
         copyGroup.className = 'ptah-cell-actions ptah-no-print';
         copyBtn = cellButton(@js(__('ptah::ui.crud_copy_cell')), ICON_COPY, (td) => copyText(td.innerText.trim()));
@@ -465,6 +497,15 @@
      HIGHLIGHT DE BUSCA NAS CÉLULAS
     ══════════════════════════════════════════════════════════ --}}
 <script>
+/* Roda `cb` quando o Livewire estiver pronto para receber hooks/listeners —
+   ja, se ele ja iniciou (o script chegou por navegacao SPA, depois do
+   `livewire:init`), ou no `livewire:init` (carga completa: este script vem
+   antes do script do Livewire). Uma vez por chamada, nunca as duas. */
+window.ptahWhenLivewire = window.ptahWhenLivewire || function (cb) {
+    if (window.Livewire && window.Livewire.initialRenderIsFinished) { cb(); return; }
+    document.addEventListener('livewire:init', cb, { once: true });
+};
+
 (function () {
     if (window.__ptahHighlightInit) return;
     window.__ptahHighlightInit = true;
@@ -518,8 +559,11 @@
 
     document.addEventListener('livewire:navigated', runHighlight);
 
-    // Livewire 4: hook no commit para rodar após cada atualização de componente
-    document.addEventListener('livewire:initialized', () => {
+    // Livewire 4: hook no commit para rodar após cada atualização de componente.
+    // window.ptahWhenLivewire (abaixo): numa navegacao SPA que chega a primeira
+    // tela de CRUD, este script roda com o Livewire JA iniciado — esperar
+    // `livewire:initialized` seria esperar para sempre.
+    window.ptahWhenLivewire(() => {
         Livewire.hook('commit', ({ succeed }) => {
             succeed(() => { queueMicrotask(runHighlight); });
         });
@@ -553,7 +597,7 @@
         typed.set(componentId + '|' + field, { componentId, value, at: performance.now() });
     };
 
-    document.addEventListener('livewire:init', () => {
+    window.ptahWhenLivewire(() => {
         Livewire.hook('commit', ({ component, succeed }) => {
             const startedAt = performance.now();
             succeed(() => {
@@ -584,7 +628,11 @@
      EXPORT LISTENERS (Excel/PDF Download)
     ══════════════════════════════════════════════════════════ --}}
 <script>
-document.addEventListener('livewire:init', () => {
+/* Guard FORA do callback: na navegacao SPA este script roda a cada tela de
+   CRUD, e cada execucao pendurava mais um ouvinte de `livewire:init` (que
+   nunca mais dispara). ptahWhenLivewire cobre a primeira tela de CRUD
+   alcancada por navegacao SPA, quando o Livewire ja iniciou. */
+if (!window.__ptahExportInit) window.ptahWhenLivewire(() => {
     if (window.__ptahExportInit) return;
     window.__ptahExportInit = true;
 

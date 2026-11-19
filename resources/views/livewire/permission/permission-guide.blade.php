@@ -270,7 +270,7 @@
                         <h3 class="ptah-c-mod_hdg text-sm font-bold">{!! __('ptah::ui.guide_s1_title') !!}</h3>
                         <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s1_desc') }}</p>
                     </div>
-                    <a href="{{ route('ptah.acl.departments') }}" class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
+                    <a href="{{ route('ptah.acl.departments') }}"@ptahNavigate(route('ptah.acl.departments')) class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
                         {{ __('ptah::ui.guide_s1_btn') }}
                     </a>
                 </div>
@@ -296,7 +296,7 @@
                         <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_s2_title') }}</h3>
                         <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s2_desc') }}</p>
                     </div>
-                    <a href="{{ route('ptah.acl.pages') }}" class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
+                    <a href="{{ route('ptah.acl.pages') }}"@ptahNavigate(route('ptah.acl.pages')) class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
                         {{ __('ptah::ui.guide_s2_btn') }}
                     </a>
                 </div>
@@ -341,7 +341,7 @@
                         <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_s3_title') }}</h3>
                         <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s3_desc') }}</p>
                     </div>
-                    <a href="{{ route('ptah.acl.roles') }}" class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
+                    <a href="{{ route('ptah.acl.roles') }}"@ptahNavigate(route('ptah.acl.roles')) class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
                         {{ __('ptah::ui.guide_s3_btn') }}
                     </a>
                 </div>
@@ -394,7 +394,7 @@
                         <h3 class="ptah-c-mod_hdg text-sm font-bold">{{ __('ptah::ui.guide_s4_title') }}</h3>
                         <p class="ptah-c-mod_subttl text-xs mt-0.5">{{ __('ptah::ui.guide_s4_desc') }}</p>
                     </div>
-                    <a href="{{ route('ptah.acl.users') }}" class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
+                    <a href="{{ route('ptah.acl.users') }}"@ptahNavigate(route('ptah.acl.users')) class="ptah-c-btn ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md">
                         {{ __('ptah::ui.guide_s4_btn') }}
                     </a>
                 </div>

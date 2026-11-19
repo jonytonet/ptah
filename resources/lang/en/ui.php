@@ -281,6 +281,7 @@ return [
     'crud_load_error' => 'Failed to load data. Preferences reset.',
     'export_processing' => 'Processing... you will receive a notification.',
     'crud_save_error' => 'Error saving: :message',
+    'crud_save_error_generic' => 'The record could not be saved. Try again; if it happens again, tell the administrator.',
     'crud_hook_aborted' => 'Operation cancelled: :message',
     'crud_hook_after_failed' => 'The record was saved, but a post-save step failed: :message',
     'crud_hook_after_delete_failed' => 'The record was deleted, but a post-delete step failed: :message',

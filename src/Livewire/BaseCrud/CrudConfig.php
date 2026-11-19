@@ -750,7 +750,26 @@ class CrudConfig extends Component
         // Ensures items not present in the new array (for safety) are kept
         if (count($reordered) === count($this->formEditFields)) {
             $this->formEditFields = $reordered;
+
+            return;
         }
+
+        // The list that is dragged does not show the row actions (they have
+        // their own tab), so its order never names them: the data columns take
+        // the new order and each action stays in the slot it had. Before, a
+        // screen with one action could not have its columns reordered at all.
+        $isAction = fn (array $field): bool => ($field['colsTipo'] ?? '') === 'action';
+        $columns = array_values(array_filter($this->formEditFields, fn (array $field) => ! $isAction($field)));
+        $dragged = array_values(array_filter($reordered, fn (array $field) => ! $isAction($field)));
+
+        if (count($dragged) !== count($columns) || count($dragged) !== count($reordered) || count(array_unique(array_map('intval', $order))) !== count($order)) {
+            return;
+        }
+
+        $next = 0;
+        $this->formEditFields = array_map(function (array $field) use ($isAction, $dragged, &$next) {
+            return $isAction($field) ? $field : $dragged[$next++];
+        }, array_values($this->formEditFields));
     }
 
     // ── Actions — CRUD ─────────────────────────────────────────────────────────

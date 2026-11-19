@@ -7,6 +7,200 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.59.0] - 2026-11-18
+
+### Added
+
+- **Headless CRUD API** — the BaseCrud over JSON, for a React, Vue or any
+  other client. Opt-in (`PTAH_CRUD_API=true`); nothing changes for a project that
+  does not turn it on. It is the same engine as the Livewire screen
+  (`Ptah\Crud\CrudRuntime` runs the BaseCrud without Livewire), so the query,
+  the form, the hooks and every guard are the same code — no second
+  implementation to keep in step.
+  - Screens are registered on the server
+    (`Ptah\Crud\CrudScreen::register('products', Product::class)`, with
+    `lockedFilters`, `scope`, `whereHas`, `configRoute`, `authorize`): the
+    client never names a model and holds no state to lock.
+  - First increment: schema, listing (page, sort, search, filters, date
+    ranges, trash, totals), show, create, update, delete, restore.
+    Searchdropdown lookups, uploads, bulk and row actions, export and import
+    come next.
+  - Nothing of the Livewire screen's memory is lost: `?restore=1` reopens
+    where the user left (search, filters, sort, page) and `?remember=1` saves
+    it; column visibility, order and widths, density, view mode and named
+    filters have their own endpoints. It is the same preferences record, so
+    a user finds the same screen in Livewire and through the API.
+  - Config key `ptah.crud_api` (`ptah.api` belongs to the REST API that
+    `ptah:forge --api` generates).
+- **A choice of stack: Livewire, React or Vue.**
+  `php artisan ptah:install --stack=react|vue` (Livewire stays the default and
+  nothing changes for it). The back end — models, services, screen configs,
+  permissions, hooks, `ptah:config`, `ptah:check`, MCP — is the same in all
+  three; what changes is what draws the screen.
+  - `resources/js/react` and `resources/js/vue`: `<PtahCrud screen="…">`
+    (listing, search, filters, sort, pages, totals, form with every field
+    type, masks, searchdropdown, delete/restore, bulk and row actions, export,
+    column choices, toasts) and `<PtahLayout>` (the server's menu and the
+    signed-in user). Both draw the same `CrudController`
+    (`resources/js/core`), so the behaviour is written once. `ptah-ui.css` is
+    self-contained, follows ptah's colour tokens and has a dark theme.
+  - The sources ship in the Composer package and are compiled by the app's
+    Vite through the `@ptah` alias — one version, updated by
+    `composer update`.
+  - The installer turns the API on, writes the entry file
+    (`resources/js/ptah-app.jsx|js`) and `routes/ptah-screens.php`, prepares
+    `vite.config.js` (plugin, entry, alias, dedupe — only what is missing) and
+    adds the npm packages.
+  - **`ptah:forge` follows the stack** (`ptah.stack`): in React/Vue the page
+    of the entity mounts the front end and the screen is registered in
+    `routes/ptah-screens.php`; everything else it generates is unchanged.
+  - Checked in a real Laravel 13 app, both stacks: build, page in Chrome,
+    save over HTTP with CSRF (419 without the token, 401 signed out).
+  - **The administration screens too**: companies, departments, roles (with
+    the permission matrix), pages and objects, users and permissions, audit
+    log, permission guide, menu management and settings — plus the company
+    switcher, the notification bell and the exports panel. The URLs and
+    route names are the ones of the Livewire stack (`/ptah-roles`,
+    `ptah.acl.roles`…): in React/Vue they answer with the stack page, behind
+    the same lock (`ptah.master`, `ptah_can_manage_structure()`), and the
+    Livewire components stay the engine behind `ptah/api/admin/*`
+    (`Ptah\Http\Headless\*`). The account menu of the layout lists the
+    administration links this user may open; the top bar shows the company
+    switcher and the bell when their modules are on.
+  - Docs: [Stacks.md](docs/Stacks.md).
+  - Measured on the same screen (25 rows of 5,000, in-process): a page change
+    takes ~10 ms and ~11 KB through the API, ~70 ms and ~440 KB through
+    Livewire. The queries are the same; what is skipped is the snapshot round
+    trip, hydration and the HTML render.
+  - Docs: [HeadlessApi.md](docs/HeadlessApi.md). Design:
+    [docs/proposals/stacks-livewire-react-vue.md](docs/proposals/stacks-livewire-react-vue.md).
+- **React and Vue: what the Livewire table and toasts already did.**
+  - *Copy* and *Filter by this value* over a cell: the two small buttons that
+    show when the mouse rests on a cell (`uiPreferences.copyCell` turns them
+    off, as on Livewire).
+  - *Undo* on the toast of a delete: a soft delete answers the record with its
+    message (`messages[].undo`) and the toast offers to bring it back for 6 s.
+  - *Realtime*: a screen with `broadcast` on reloads on its websocket event,
+    and the bell on the user's private channel — the schema and the bell
+    answer the listener the Livewire component registers
+    (`BroadcastListener::describe()`); the app provides Laravel Echo on
+    `window.Echo`. See [Stacks.md](docs/Stacks.md#realtime-websocket).
+- **React and Vue stacks feel like a single-page app.**
+  - Pages swap without a document load: `mountPtah` takes over the links
+    inside `#ptah-app` (and back/forward); the navigator (`PtahNavigator`,
+    `core/navigate.ts`) fetches the target as HTML, reads its `#ptah-app` and
+    swaps only the content — the layout (sidebar scroll and open groups,
+    collapsed state, bell, assistant, company switcher) stays mounted. Any
+    answer that is not a stack page of the same kind (a host's Blade page, a
+    file, an error, a redirect elsewhere, login ↔ signed in) is a normal
+    load. Opt a link out with `data-ptah-reload`; a host router plugs in
+    with `onNavigate`.
+  - The old page stays on screen, with a thin progress bar, until the next
+    one has its first data (a CRUD screen's schema and listing, at most 8 s);
+    hovering or focusing a menu link fetches it ahead (`navigator.prefetch`).
+  - No blank first paint: the shell page embeds the menu, the user and the
+    company switcher (`data-boot`, built by `Ptah\Support\StackBoot`, the same
+    code as `GET {api}/menu` and `{api}/me`), so the layout paints complete on
+    F5 with no request; the bell is in the bar before its count arrives.
+  - `ControllerOptions.instant` (on in `PtahApp`): a screen draws the last
+    listing this tab saw at once (busy) and refreshes it — kept in
+    `sessionStorage` per user and company, never over ~200 KB, forgotten on
+    log out and company switch, dropped when the server refuses the screen.
+  - A screen never seen yet draws a skeleton of its shape (`pc-skeleton*`),
+    the dashboard placeholder cards, the administration screens a bar and
+    rows — no bare "Loading…".
+  - Docs: [Stacks.md](docs/Stacks.md#navigation).
+- **Single-page navigation for the Livewire layout** — the same feeling in
+  `<x-forge-dashboard-layout>`, as an opt-in: `PTAH_SPA_NAVIGATION=true`
+  (`ptah.forge.spa_navigation`, off by default — with it off the layout's HTML
+  is byte-identical to before). Livewire's own swap (`Livewire.navigate()`,
+  from one delegated listener over links marked `data-ptah-navigate` — not
+  `wire:navigate`, whose prefetch cache in Livewire 4.3.1 deletes a newer
+  in-flight prefetch of the same URL with a stale 30 s timer: "Cannot set
+  properties of undefined (setting 'html')" and a click that never lands),
+  the progress bar in the accent token (no animation under reduced motion).
+  - Every internal link the layout draws navigates in place: sidebar items and
+    sub-items, brand, administration gear, profile, page-header back,
+    breadcrumb, the "jump to a screen" results, the bell's "view all" and a
+    notification's "open" (redirect with `navigate`), dashboard widgets, the
+    permission guide and a BaseCrud row link. External, `target` other than
+    `_self`, `javascript:`/`mailto:`, downloads/exports/print, logout and
+    company switch stay full loads. One rule for all of it:
+    `Ptah\Support\SpaNavigation` (`@ptahNavigate($url, $target)` in Blade).
+  - Opting out: `'spa' => false` on a config-driver menu item, path patterns in
+    `ptah.forge.spa_navigation_except` for anything else.
+  - The frame does not blink: the assistant (an open conversation, a request in
+    flight, the draft) and the toasts are `@persist`; the sidebar is re-rendered
+    (active item and group follow the URL) with its scroll, the groups opened
+    by hand and the hover-expanded state restored; the theme is re-applied
+    before the new body paints and transitions are off while it settles.
+  - A swap that lands on a page that is not this layout (login after the
+    session expired, a host page with its own layout) or after a deploy changed
+    the Vite build reloads the document instead (`<meta name="ptah-build">`:
+    Livewire's `data-navigate-track` misses Vite's hashed file names).
+  - Back/forward restore a page from Livewire's snapshot, which it takes
+    without tearing Alpine down first: the copies rendered by `<template
+    x-for>`/`x-if` came back initialised outside their loop ("option is not
+    defined" on a CRUD screen). The layout drops those copies on
+    `livewire:navigating`, before the snapshot; the templates render them again.
+  - The env switch reaches a `config/ptah.php` published before the key existed
+    (the provider fills the missing `forge.spa_navigation*` keys — the shallow
+    merge never would).
+  - Scripts made correct in both modes: the BaseCrud cell copy/filter group is
+    re-attached to the new `<body>` instead of being lost; one `blur` listener
+    for every table's drag-to-scroll instead of one per wrapper (they piled up
+    on each morph); the search highlight, the typed-value keeper and the
+    export/print listeners also start when the first CRUD screen arrives by
+    navigation (they waited for a `livewire:init` that had already fired — the
+    export never downloaded); the form modal's document listener and commit
+    hook are removed when it is destroyed; the column editor's Sortable is
+    loaded once and waits for it if needed.
+  - Docs: [Configuration.md](docs/Configuration.md#single-page-navigation-of-the-livewire-layout-forgespa_navigation)
+    (what a host must check in its own scripts before turning it on).
+
+### Fixed
+
+Defects of the Livewire screens found while they were being ported — fixed in
+the engine, so the three stacks get them.
+
+- **"Uncaught (in promise)" in the console after opening the notification
+  bell** (and on the exports panel). A `wire:poll` tick that lands while the
+  component has a request in flight is cancelled by Livewire, and with
+  `wire:poll="$refresh"` (or a bare `wire:poll`) Livewire 4.3.1 leaves that
+  cancellation as an unhandled rejection — `$refresh` is an async wrapper
+  without the marker Livewire uses to swallow it. Both now poll a named no-op
+  method (`refreshBadge`, `refreshPending`). Happened with or without the
+  single-page navigation; a slow server made it frequent.
+
+- **The chip of an "is empty" / "has value" filter did not go away.** Removing
+  it cleared the value and left the operator, which is the whole filter: the
+  chip came back and the listing stayed filtered.
+- **Double click on a column's resize edge threw a TypeError**
+  (`saveColumnWidth(field, null)` on an `int` parameter): the saved width
+  could not be forgotten.
+- **Dragging a column in the visual editor did nothing on a screen with row
+  actions.** The dragged list does not show the actions, so its order never
+  had "all the fields" and was discarded. The columns take the new order and
+  each action keeps its slot.
+- **The gear of the visual editor was hidden from who could use it.** The
+  button asked for a `configCrud` grant nothing else knows, on top of the
+  editor's gate (`ptah_can_manage_config()`: master, a `crud.config` grant, or
+  `ptah.crud.config_editor`). The button follows the gate now.
+- **The role filter of Users & Permissions answered 500** in an app whose
+  User model has no `ptahUserRoles` relation — one ptah never defined or
+  documented. It queries the package's own table.
+- **A database error on save was shown with its SQL** ("Error saving:
+  SQLSTATE…", table and column names, values). Outside `app.debug` the user
+  reads a plain message and the exception goes to the log; a hook's own
+  message is still shown as it is.
+- **The date shortcuts of the filter panel did not show for a date column
+  saved as filterable with `1` or `'1'`** (the panel compared loosely with
+  `'S'`; the engine filtered by that column all along).
+- **"Set as default" on an unknown AI model id left the system without a
+  default model** (the flag was cleared before the lookup).
+
+---
+
 ## [1.58.6] - 2026-11-18
 
 From the PetPlace requests on 1.58.5 (a sweep of all its screens).

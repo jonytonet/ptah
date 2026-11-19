@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Tests\Feature\AI;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Models\AiConversation;
@@ -101,6 +102,21 @@ class AiProviderConfigServiceTest extends TestCase
 
         $this->assertFalse($a->fresh()->is_default);
         $this->assertTrue($b->fresh()->is_default);
+    }
+
+    #[Test]
+    public function set_default_on_an_unknown_id_keeps_the_current_default(): void
+    {
+        $a = $this->makeConfig(['name' => 'A']);
+        $this->service()->setDefault($a->id);
+
+        try {
+            $this->service()->setDefault(999999);
+            $this->fail('An unknown id must throw.');
+        } catch (ModelNotFoundException) {
+            // The flag was cleared before the lookup: the system lost its default.
+            $this->assertTrue($a->fresh()->is_default);
+        }
     }
 
     #[Test]

@@ -19,7 +19,7 @@
     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div class="flex items-center gap-3 min-w-0">
             @if($back)
-                <a href="{{ $back }}"
+                <a href="{{ $back }}"{!! \Ptah\Support\SpaNavigation::attr($back) !!}
                    class="ptah-c-phdr_back inline-flex items-center justify-center transition-colors duration-150 w-9 h-9 rounded-md">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>

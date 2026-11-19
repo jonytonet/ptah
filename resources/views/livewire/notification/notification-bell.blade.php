@@ -18,7 +18,7 @@
     <button
         type="button"
         wire:click="toggle"
-        @if($this->pollInterval()) wire:poll.{{ $this->pollInterval() }}="$refresh" @endif
+        @if($this->pollInterval()) wire:poll.{{ $this->pollInterval() }}="refreshBadge" @endif
         aria-haspopup="menu"
         aria-expanded="{{ $open ? 'true' : 'false' }}"
         aria-label="{{ __('ptah::ui.notif_bell_title') }}"
@@ -126,7 +126,7 @@
                 </button>
 
                 @if(\Illuminate\Support\Facades\Route::has('ptah.notifications'))
-                    <a href="{{ route('ptah.notifications') }}" role="menuitem" class="text-xs font-semibold">
+                    <a href="{{ route('ptah.notifications') }}"@ptahNavigate(route('ptah.notifications')) role="menuitem" class="text-xs font-semibold">
                         {{ __('ptah::ui.notif_view_all') }}
                     </a>
                 @endif

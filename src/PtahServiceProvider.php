@@ -8,6 +8,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
@@ -51,6 +52,7 @@ use Ptah\Commands\UpgradeCheckCommand;
 use Ptah\Commands\WhyEmptyCommand;
 use Ptah\Contracts\CompanyServiceContract;
 use Ptah\Contracts\PermissionServiceContract;
+use Ptah\Crud\CrudScreenRegistry;
 use Ptah\Events\PtahNotificationCreated;
 use Ptah\Http\Middleware\PtahMaster;
 use Ptah\Http\Middleware\PtahPermission;
@@ -154,6 +156,11 @@ class PtahServiceProvider extends ServiceProvider
             'ptah'
         );
 
+        // A switch a host turns on from .env alone must reach a config/ptah.php
+        // published before it existed — the merge above is shallow, so it never
+        // would (PTAH_SPA_NAVIGATION=true did nothing in such a host).
+        $this->fillMissingNestedConfig('forge', ['spa_navigation', 'spa_navigation_except']);
+
         $this->registerLaravelTranslations();
 
         // Arquivo SEPARADO, e nao uma chave dentro de ptah.php, por dois
@@ -192,6 +199,8 @@ class PtahServiceProvider extends ServiceProvider
         }
         $this->app->singleton(CacheService::class);
         $this->app->singleton(CrudConfigService::class);
+        // Screens of the headless CRUD API (1.59.0).
+        $this->app->singleton(CrudScreenRegistry::class);
         $this->app->singleton(SettingsService::class);
         $this->app->singleton(FilterService::class);
         $this->app->singleton(FormValidatorService::class);
@@ -508,6 +517,42 @@ class PtahServiceProvider extends ServiceProvider
     }
 
     /**
+     * Copies the package's default of each `ptah.{$block}.{$key}` that the
+     * host's (published) config lacks. Only keys listed here: the rest of a
+     * published block stays the host's. Skipped with a cached config, like
+     * mergeConfigFrom — `config:cache` already ran this and kept the result.
+     *
+     * @param  list<string>  $keys
+     */
+    private function fillMissingNestedConfig(string $block, array $keys): void
+    {
+        if ($this->app instanceof CachesConfiguration && $this->app->configurationIsCached()) {
+            return;
+        }
+
+        $config = $this->app->make('config');
+        $current = $config->get("ptah.{$block}");
+
+        if (! is_array($current)) {
+            return;
+        }
+
+        $defaults = null;
+
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $current)) {
+                continue;
+            }
+
+            $defaults ??= (array) ((require __DIR__.'/../config/ptah.php')[$block] ?? []);
+
+            if (array_key_exists($key, $defaults)) {
+                $config->set("ptah.{$block}.{$key}", $defaults[$key]);
+            }
+        }
+    }
+
+    /**
      * Registers Ptah Blade directives.
      *
      * @ptahCan's $objectKey may be a QUALIFIED key (`page::obj_key` /
@@ -526,6 +571,14 @@ class PtahServiceProvider extends ServiceProvider
 
         Blade::if('ptahCanManageConfig', function (mixed $user = null): bool {
             return ptah_can_manage_config($user);
+        });
+
+        // `<a href="{{ $url }}"@ptahNavigate($url, $target)>` — prints
+        // ` data-ptah-navigate` when the Livewire layout's SPA navigation is
+        // on and the link qualifies, nothing otherwise (so with the mode off
+        // the tag is byte-identical). The rule lives in SpaNavigation::attr().
+        Blade::directive('ptahNavigate', function (string $expression): string {
+            return '<?php echo \Ptah\Support\SpaNavigation::attr('.$expression.'); ?>';
         });
     }
 
@@ -878,6 +931,21 @@ class PtahServiceProvider extends ServiceProvider
 
         // /ptah-settings (the screen explains how to install when the table is missing)
         $this->loadRoutesFrom(__DIR__.'/../routes/ptah-settings.php');
+
+        // Headless CRUD API (1.59.0) — opt-in.
+        if (config('ptah.crud_api.enabled')) {
+            $this->loadRoutesFrom(__DIR__.'/../routes/ptah-api.php');
+
+            // One file per area of the API (companies, permissions, menu…).
+            foreach (glob(__DIR__.'/../routes/api/*.php') ?: [] as $file) {
+                $this->loadRoutesFrom($file);
+            }
+
+            // The host's screens (written by ptah:forge in the React/Vue stack).
+            if (is_file($screens = base_path('routes/ptah-screens.php'))) {
+                require $screens;
+            }
+        }
 
         if (config('ptah.modules.auth')) {
             $this->loadRoutesFrom(__DIR__.'/../routes/ptah-auth.php');

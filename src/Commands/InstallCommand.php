@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 use Ptah\Seeders\DefaultAdminSeeder;
 use Ptah\Seeders\PtahDemoSeeder;
 use Ptah\Support\BoostPackages;
+use Ptah\Support\ViteConfigPatcher;
 use Symfony\Component\Process\Process;
 
 /**
@@ -24,6 +25,7 @@ class InstallCommand extends Command
      */
     protected $signature = 'ptah:install
                             {--force    : Overwrite existing files}
+                            {--stack=   : What draws the screens: livewire (default), react or vue}
                             {--skip-npm : Skip npm install and npm run build}
                             {--demo     : Install demo data (companies, departments, roles and menu)}
                             {--boost    : Install Laravel Boost for AI agent integration (Copilot, Claude, Cursor)}';
@@ -43,7 +45,13 @@ class InstallCommand extends Command
      */
     public function handle(): int
     {
-        $this->components->info('Installing Ptah...');
+        $stack = $this->resolveStack();
+
+        if ($stack === null) {
+            return self::FAILURE;
+        }
+
+        $this->components->info("Installing Ptah ({$stack} stack)...");
 
         $this->publishConfig();
         $this->publishStubs();
@@ -51,6 +59,7 @@ class InstallCommand extends Command
         $this->publishLang();
         $this->publishMenuRegistry();
         $this->updateAppCss();
+        $this->installStack($stack);
         $this->runMigrations();
         $this->createStorageLink();
         $this->seedDefaultAdmin();
@@ -73,6 +82,9 @@ class InstallCommand extends Command
         $this->line('     <fg=green>php artisan ptah:module permissions</>  <fg=gray>(RBAC)</>');
         $this->line('  4. Sign in with: <fg=yellow>'.$adminEmail.'</>');
         $this->line('  5. Scaffold entities with: <fg=green>php artisan ptah:forge {Entity}</>');
+        if ($stack !== 'livewire') {
+            $this->line("     <fg=gray>({$stack} stack: each entity gets a page, a line in routes/ptah-screens.php and the same back end)</>");
+        }
         $this->line('  6. For AI agent integration:');
         $this->line('     <fg=green>php artisan ptah:install --boost</>');
         $this->line('  7. For Docker environment (Dockerfile, Nginx, docker-compose):');
@@ -80,6 +92,140 @@ class InstallCommand extends Command
         $this->newLine();
 
         return self::SUCCESS;
+    }
+
+    /**
+     * The stack to install: --stack, or the one already configured (re-running
+     * the installer keeps it), or livewire.
+     */
+    protected function resolveStack(): ?string
+    {
+        $stack = strtolower((string) ($this->option('stack') ?: config('ptah.stack', 'livewire')));
+
+        if (! in_array($stack, ['livewire', 'react', 'vue'], true)) {
+            $this->components->error("Unknown stack '{$stack}'. Use livewire, react or vue.");
+
+            return null;
+        }
+
+        return $stack;
+    }
+
+    /**
+     * The React or Vue stack: turns the API on, writes the front-end entry and
+     * the screens file, prepares vite.config and adds the npm packages. The
+     * Livewire stack needs none of it.
+     */
+    protected function installStack(string $stack): void
+    {
+        if ($stack === 'livewire') {
+            return;
+        }
+
+        $this->components->task("Enabling the {$stack} stack (.env)", function () use ($stack) {
+            $this->setEnv('PTAH_STACK', $stack);
+            $this->setEnv('PTAH_CRUD_API', 'true');
+            config(['ptah.stack' => $stack, 'ptah.crud_api.enabled' => true]);
+        });
+
+        $this->components->task('Publishing the front-end entry', function () use ($stack) {
+            $entry = base_path($stack === 'vue' ? 'resources/js/ptah-app.js' : 'resources/js/ptah-app.jsx');
+
+            if (! $this->files->exists($entry) || $this->option('force')) {
+                $this->files->ensureDirectoryExists(dirname($entry));
+                $this->files->copy(__DIR__."/../Stubs/stack/ptah-app.{$stack}.stub", $entry);
+            }
+
+            $screens = base_path('routes/ptah-screens.php');
+            if (! $this->files->exists($screens)) {
+                $this->files->ensureDirectoryExists(dirname($screens));
+                $this->files->copy(__DIR__.'/../Stubs/stack/ptah-screens.stub', $screens);
+            }
+        });
+
+        $this->patchViteConfig($stack);
+        $this->addStackPackages($stack);
+    }
+
+    protected function patchViteConfig(string $stack): void
+    {
+        $entry = $stack === 'vue' ? 'resources/js/ptah-app.js' : 'resources/js/ptah-app.jsx';
+        $path = collect(['vite.config.js', 'vite.config.ts', 'vite.config.mjs'])
+            ->map(fn (string $name) => base_path($name))
+            ->first(fn (string $candidate) => $this->files->exists($candidate));
+
+        if ($path === null) {
+            $this->components->warn('vite.config.js not found — add the '.$stack.' plugin, the entry and the @ptah alias by hand (docs/Stacks.md).');
+
+            return;
+        }
+
+        $result = ViteConfigPatcher::patch($this->files->get($path), $stack, $entry);
+        $this->files->put($path, $result['content']);
+
+        $this->components->task('Configuring '.basename($path), fn () => $result['missing'] === []);
+
+        foreach ($result['missing'] as $line) {
+            $this->components->warn('Add to '.basename($path)." by hand: {$line}");
+        }
+    }
+
+    /**
+     * Adds the stack's packages to package.json — `npm install` (below) fetches
+     * them. Only what is missing; a version the app already pins is kept.
+     */
+    protected function addStackPackages(string $stack): void
+    {
+        $path = base_path('package.json');
+
+        if (! $this->files->exists($path)) {
+            $this->components->warn('package.json not found — install the '.$stack.' packages by hand (docs/Stacks.md).');
+
+            return;
+        }
+
+        $package = json_decode($this->files->get($path), true);
+
+        if (! is_array($package)) {
+            return;
+        }
+
+        $wanted = $stack === 'vue'
+            ? ['vue' => '^3.5.0', '@vitejs/plugin-vue' => '^5.2.0 || ^6.0.0', 'typescript' => '^5.7.0']
+            : ['react' => '^19.0.0', 'react-dom' => '^19.0.0', '@vitejs/plugin-react' => '^4.3.0 || ^5.0.0', 'typescript' => '^5.7.0'];
+
+        $present = array_merge($package['dependencies'] ?? [], $package['devDependencies'] ?? []);
+        $added = array_diff_key($wanted, $present);
+
+        if ($added === []) {
+            return;
+        }
+
+        $package['devDependencies'] = array_merge($package['devDependencies'] ?? [], $added);
+        ksort($package['devDependencies']);
+
+        $this->components->task('Adding '.implode(', ', array_keys($added)).' to package.json', function () use ($path, $package) {
+            $this->files->put($path, json_encode($package, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n");
+        });
+    }
+
+    /** Sets (or replaces) a key in .env. */
+    protected function setEnv(string $key, string $value): void
+    {
+        $path = base_path('.env');
+
+        if (! $this->files->exists($path)) {
+            return;
+        }
+
+        $content = $this->files->get($path);
+        $line = "{$key}={$value}";
+
+        $content = preg_match("/^{$key}=.*$/m", $content)
+            ? (string) preg_replace("/^{$key}=.*$/m", $line, $content)
+            : rtrim($content)."\n".$line."\n";
+
+        $this->files->put($path, $content);
     }
 
     /**

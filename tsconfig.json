@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "types": ["vitest/globals", "node"]
+  },
+  "include": ["resources/js/core", "resources/js/react", "resources/js/__tests__/core", "resources/js/__tests__/react", "resources/js/__tests__/admin/*.react.test.tsx", "resources/js/__tests__/admin/*.ts", "resources/js/__tests__/crud/*.react.test.tsx", "resources/js/__tests__/crud/*.fake.ts", "resources/js/__tests__/*.ts"]
+}

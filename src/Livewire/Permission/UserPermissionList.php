@@ -342,7 +342,11 @@ class UserPermissionList extends Component
                 $q2->where('name', 'like', "%{$this->search}%")
                     ->orWhere('email', 'like', "%{$this->search}%");
             }))
-            ->when($this->filterRole, fn ($q) => $q->whereHas('ptahUserRoles', fn ($q2) => $q2->where('role_id', $this->filterRole)->active()
+            // By the package's own table: `whereHas('ptahUserRoles')` asked the
+            // host's User model for a relation ptah never defined (500 there).
+            ->when($this->filterRole, fn ($q) => $q->whereIn(
+                $q->getModel()->getQualifiedKeyName(),
+                UserRole::query()->where('role_id', $this->filterRole)->active()->select('user_id')
             ))
             ->orderBy('name')
             ->paginate(25);

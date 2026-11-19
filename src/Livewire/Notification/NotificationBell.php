@@ -11,6 +11,7 @@ use Livewire\Component;
 use Ptah\Events\PtahNotificationCreated;
 use Ptah\Models\Notification;
 use Ptah\Services\Notification\NotificationService;
+use Ptah\Support\SpaNavigation;
 use Ptah\Traits\ResolvesUser;
 
 /**
@@ -90,7 +91,9 @@ class NotificationBell extends Component
         $url = NotificationService::safeUrl($notification->url);
 
         if ($url !== null) {
-            $this->redirect($url);
+            // In place when the Livewire layout's SPA navigation is on and the
+            // url is this origin's (SpaNavigation decides; off = full load).
+            $this->redirect($url, navigate: SpaNavigation::allows($url));
         }
     }
 
@@ -111,6 +114,24 @@ class NotificationBell extends Component
         // dismiss() itself resolves the current user and scopes the WHERE
         // clause by it — no separate ownership check needed here.
         app(NotificationService::class)->dismiss($id);
+    }
+
+    /**
+     * What the `wire:poll` calls — a no-op: any action re-renders the bell.
+     *
+     * NOT `wire:poll="$refresh"` (nor a bare `wire:poll`, whose default is
+     * `$refresh`). In Livewire 4.3.1 `$refresh` is an async wrapper, so the
+     * promise the poll gets back lacks the marker Livewire uses to swallow a
+     * cancelled action's rejection; and a poll tick that lands while the
+     * component already has a request in flight (opening the dropdown,
+     * marking read) IS cancelled. Result: "Uncaught (in promise)" with
+     * {status: null, body: null, ...} in the console, on a slow server
+     * almost every time someone opened the bell (found in PetPlace). A named
+     * method returns Livewire's own action promise, which it catches.
+     */
+    public function refreshBadge(): void
+    {
+        // Intentionally empty.
     }
 
     /**

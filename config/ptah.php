@@ -254,6 +254,26 @@ return [
          */
         'sidebar_jump' => (bool) env('PTAH_SIDEBAR_JUMP', true),
         'sidebar_jump_min_items' => (int) env('PTAH_SIDEBAR_JUMP_MIN', 8),
+
+        /*
+         * Navegacao SPA do layout Livewire (Livewire.navigate): trocar de tela sem
+         * recarregar o documento — sidebar, navbar, chat de IA e toasts nao
+         * piscam. DESLIGADA por padrao: paginas e scripts do host podem contar
+         * com um carregamento completo (DOMContentLoaded, listeners globais).
+         * Leia o checklist em docs/Configuration.md antes de ligar.
+         *
+         * Lido sempre com default (Ptah\Support\SpaNavigation), entao funciona
+         * mesmo num config/ptah.php publicado antes desta chave existir — o
+         * mergeConfigFrom e raso e nao traria a chave para dentro de 'forge'.
+         *
+         * `spa_navigation_except`: padroes de caminho (Str::is, sem a barra
+         * inicial, ex.: ['relatorios/*', 'legado']) que continuam com
+         * carregamento completo. Um item de menu do driver config tambem sai
+         * com 'spa' => false.
+         */
+        'spa_navigation' => (bool) env('PTAH_SPA_NAVIGATION', false),
+        'spa_navigation_except' => [],
+
         'sidebar_items' => [
             // Use Boxicons (bx) or FontAwesome (fas/far/fab) CSS classes:
             // ['label' => 'Dashboard', 'url' => '/dashboard', 'icon' => 'bx bx-home-alt',  'match' => 'dashboard'],
@@ -323,6 +343,46 @@ return [
          */
         'themed_500_in_debug' => (bool) env('PTAH_ERROR_500_IN_DEBUG', false),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Headless CRUD API (1.59.0)
+    |--------------------------------------------------------------------------
+    |
+    | The BaseCrud over JSON, for a React, Vue or any other client — the same
+    | engine, permissions and hooks as the Livewire screen. Off by default.
+    | A screen exists for the API only after
+    | Ptah\Crud\CrudScreen::register('key', Model::class).
+    |
+    | middleware: session auth by default. With a guard of your own use
+    |             ['web', 'auth:admin']; for tokens, ['api', 'auth:sanctum'].
+    |
+    */
+    'crud_api' => [
+        'enabled' => env('PTAH_CRUD_API', false),
+        'prefix' => 'ptah/api',
+        'middleware' => ['web', 'auth'],
+        // The page of a screen carries its first API answers (schema, listing,
+        // filters), so opening it is one request. Only on a page whose route
+        // has every middleware above. false = the client asks for each.
+        'embed' => (bool) env('PTAH_CRUD_API_EMBED', true),
+        // The front-end entry the page of a screen loads (React/Vue stack).
+        'entry' => env('PTAH_STACK', 'livewire') === 'vue' ? 'resources/js/ptah-app.js' : 'resources/js/ptah-app.jsx',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Stack (1.59.0)
+    |--------------------------------------------------------------------------
+    |
+    | What draws the screens: 'livewire' (the default — Blade + Livewire),
+    | 'react' or 'vue' (components over the headless CRUD API above). Chosen
+    | by `php artisan ptah:install --stack=…`; `ptah:forge` generates the
+    | screen of an entity for the stack set here. The back end — models,
+    | services, screen configs, permissions, hooks — is the same in all three.
+    |
+    */
+    'stack' => env('PTAH_STACK', 'livewire'),
 
     /*
     |--------------------------------------------------------------------------

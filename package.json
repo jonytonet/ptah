@@ -1,0 +1,27 @@
+{
+  "name": "@jonytonet/ptah-ui",
+  "private": true,
+  "description": "React and Vue front ends of the ptah headless CRUD API. Development only: a host compiles resources/js from vendor/ with its own Vite.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit && vue-tsc --noEmit -p tsconfig.vue.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/vue": "^8.1.0",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "jsdom": "^25.0.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3",
+    "vitest": "^2.1.8",
+    "vue": "^3.5.13",
+    "vue-tsc": "^2.1.10"
+  }
+}

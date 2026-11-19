@@ -1,5 +1,5 @@
 {{-- ptah::livewire.exports.exports-panel --}}
-<div @if ($hasPending) wire:poll.5s @endif>
+<div @if ($hasPending) wire:poll.5s="refreshPending" @endif>
     <div class="mb-4">
         <h2 class="text-xl font-bold ptah-c-mod_hdg">{{ __('ptah::ui.exports_panel_title') }}</h2>
     </div>

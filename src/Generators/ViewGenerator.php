@@ -41,7 +41,10 @@ class ViewGenerator extends AbstractGenerator
         }
 
         try {
-            $content = $this->resolveStub("view.{$view}");
+            // The React/Vue stack (1.59.0): the page is a shell the front end
+            // mounts on, and the screen is registered for the API.
+            $app = $view === 'index' && self::usesAppStack();
+            $content = $this->resolveStub($app ? 'view.index.app' : "view.{$view}");
             $content = $this->replaceVars($content, [
                 'entity' => $context->entity,
                 'entity_lower' => $context->entityLower,
@@ -54,6 +57,10 @@ class ViewGenerator extends AbstractGenerator
 
             $this->files->put($path, $content);
 
+            if ($app) {
+                $this->registerScreen($context);
+            }
+
             return GeneratorResult::done($label, $path);
         } catch (\Throwable $e) {
             return GeneratorResult::error($label, $path, $e->getMessage());
@@ -63,6 +70,34 @@ class ViewGenerator extends AbstractGenerator
     public function shouldRun(EntityContext $context): bool
     {
         return $context->withViews;
+    }
+
+    public static function usesAppStack(): bool
+    {
+        return in_array(config('ptah.stack', 'livewire'), ['react', 'vue'], true);
+    }
+
+    /**
+     * Adds the entity to routes/ptah-screens.php — the screens the headless
+     * API serves. The key is the page's path, so the screen config of that
+     * path is the one loaded, exactly as the Livewire screen picks it.
+     */
+    private function registerScreen(EntityContext $context): void
+    {
+        $path = base_path('routes/ptah-screens.php');
+
+        if (! $this->files->exists($path)) {
+            $this->files->ensureDirectoryExists(dirname($path));
+            $this->files->put($path, $this->files->get(__DIR__.'/../Stubs/stack/ptah-screens.stub'));
+        }
+
+        $identifier = $context->subFolder ? $context->subFolder.'/'.$context->entity : $context->entity;
+        $line = "CrudScreen::register('{$context->entityLower}', '{$identifier}');";
+        $content = $this->files->get($path);
+
+        if (! str_contains($content, "CrudScreen::register('{$context->entityLower}'")) {
+            $this->files->put($path, rtrim($content)."\n".$line."\n");
+        }
     }
 
     protected function label(): string

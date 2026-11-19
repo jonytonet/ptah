@@ -29,6 +29,9 @@ Before any prompt, give the agent the necessary context. Ptah has a specific arc
 ```
 Package:   jonytonet/ptah
 Laravel:   11.x | 12.x | 13.x  |  PHP 8.2+  |  Livewire 4  |  Tailwind v4  |  Alpine.js 3
+Stack:     PTAH_STACK=livewire (default) | react | vue — same back end and screen configs;
+           React/Vue draw the screens with <PtahCrud screen="…"> over the headless API
+           (docs/Stacks.md). Tell the agent which stack the project uses.
 Icons:     Boxicons 2.1.4 + FontAwesome 6.7.2 (via CDN — never inline SVG)
 Dark mode: `.ptah-dark` class on the root element — CSS centralised in forge-dashboard-layout
 Locale:    PTAH_LOCALE=en (default) | pt_BR — UI strings via `__('ptah::ui.*')`

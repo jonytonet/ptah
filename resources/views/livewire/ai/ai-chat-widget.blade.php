@@ -2,6 +2,14 @@
     Ptah AI Chat Widget — Global floating button + chat panel
     Embedded via <livewire:ptah-ai-chat-widget /> in forge-dashboard-layout.
     Only rendered when at least one active AI provider is configured.
+
+    Navegacao SPA do layout (ptah.forge.spa_navigation): o widget e @persist,
+    o <body> nao. O <body> novo chega com a classe que reserva o espaco do
+    lancador estampada pelo servidor, que nao sabe se a pessoa o escondeu — o
+    ouvinte de livewire:navigated na raiz a corrige. Ele e impresso por um echo
+    e NAO por @if: dentro de um componente Livewire, @if ganha marcadores de
+    morph (<!--[if BLOCK]-->) que, no meio de uma tag, quebravam a raiz inteira
+    (a classe `fixed` sumia e o chat ia parar no rodape da pagina).
 --}}
 <div>
 @if($available)
@@ -224,7 +232,7 @@
     }"
     @ai-message-sent.window="scrollToBottom()"
     @ai-draft-clear.window="draft = ''; resetGrow()"
-    @keydown.escape.window="if (open) open = false"
+    @keydown.escape.window="if (open) open = false"{!! \Ptah\Support\SpaNavigation::enabled() ? ' x-on:livewire:navigated.document="'.e("document.body.classList.toggle('ptah-has-ai-launcher', !launcherHidden)").'"' : '' !!}
     class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3"
 >
 

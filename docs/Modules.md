@@ -46,6 +46,12 @@
 
 ## Overview
 
+> **Stacks (since 1.59.0).** The modules are back-end features: they work the
+> same in the Livewire, React and Vue stacks. Their screens — sign-in, profile,
+> companies, departments, roles, pages, users, audit, menu, settings, AI models —
+> keep the same URLs and route names in every stack and are drawn by the stack
+> the project installed. See [Stacks.md](Stacks.md#administration-screens).
+
 The **Auth** and **Menu** modules are optional Ptah subsystems that can be activated independently in any project.
 
 | Module | Features |

@@ -355,9 +355,48 @@
     @include('ptah::livewire.base-crud.partials._modal-attachments')
 
     {{-- Loading overlay apenas para ações pesadas (salvar, deletar, exportar) --}}
-    <div wire:loading.delay.long wire:target="save,deleteRecord,export"
-        class="fixed inset-0 z-40 flex items-center justify-center bg-black/20">
-        <x-forge-spinner color="primary" size="lg" />
+    {{-- O Livewire mostra um wire:loading como inline-block: centralizar com
+         flex no proprio bloco nao funciona (o spinner ia para o canto, atras
+         da navbar — so o fundo escurecia). O spinner se centraliza sozinho
+         (position:fixed). NAO usar `wire:loading.flex.delay.*`: essa
+         combinacao nao esta no CSS que o Livewire injeta para esconder o
+         bloco em repouso, e ele ficaria sempre visivel. --}}
+    <div wire:loading.delay.long wire:target="save,deleteRecord,export" role="status"
+        aria-label="{{ __('ptah::ui.spinner_loading') }}" data-ptah-busy
+        class="fixed inset-0 z-40 bg-black/20">
+        {{-- Spinner autossuficiente (SVG + SMIL): centraliza-se sozinho e nao
+             depende de classe do build de CSS do host. Sem cor no atributo
+             style (CrudStylePlaceholderTest varre todo style da tela): a cor
+             vem de text-primary/currentColor e o disco, do CSS do layout. --}}
+        <span class="ptah-busy-spin text-primary" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);line-height:0">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                <circle class="ptah-busy-disc" cx="32" cy="32" r="31" fill="white"/>
+                <circle cx="32" cy="32" r="15" stroke="currentColor" stroke-width="4" opacity=".25"/>
+                <path d="M47 32a15 15 0 0 0-15-15" stroke="currentColor" stroke-width="4" stroke-linecap="round">
+                    <animateTransform attributeName="transform" type="rotate" from="0 32 32" to="360 32 32" dur="0.8s" repeatCount="indefinite"/>
+                </path>
+            </svg>
+        </span>
+    </div>
+
+    {{-- Editar / duplicar: o modal so abre quando o servidor responde; ate la,
+         um carregando sobre a tela desde o clique (50 ms), em vez de nada. --}}
+    <div wire:loading.delay.shortest wire:target="openEdit,duplicateRecord" role="status"
+        aria-label="{{ __('ptah::ui.form_loading') }}" data-ptah-opening="edit"
+        class="fixed inset-0 z-40 bg-black/20">
+        {{-- Spinner autossuficiente (SVG + SMIL): centraliza-se sozinho e nao
+             depende de classe do build de CSS do host. Sem cor no atributo
+             style (CrudStylePlaceholderTest varre todo style da tela): a cor
+             vem de text-primary/currentColor e o disco, do CSS do layout. --}}
+        <span class="ptah-busy-spin text-primary" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);line-height:0">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                <circle class="ptah-busy-disc" cx="32" cy="32" r="31" fill="white"/>
+                <circle cx="32" cy="32" r="15" stroke="currentColor" stroke-width="4" opacity=".25"/>
+                <path d="M47 32a15 15 0 0 0-15-15" stroke="currentColor" stroke-width="4" stroke-linecap="round">
+                    <animateTransform attributeName="transform" type="rotate" from="0 32 32" to="360 32 32" dur="0.8s" repeatCount="indefinite"/>
+                </path>
+            </svg>
+        </span>
     </div>
 
     @include('ptah::livewire.base-crud.partials._scripts')

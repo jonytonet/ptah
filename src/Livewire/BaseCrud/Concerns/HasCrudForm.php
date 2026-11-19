@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use PDOException;
 use Ptah\Exceptions\CrudHookAbort;
 use Ptah\Support\CrudHookTarget;
 use Ptah\Support\CrudPermission;
@@ -376,7 +377,8 @@ trait HasCrudForm
                 ['message' => $e->getMessage()]
             );
         } catch (\Throwable $e) {
-            $this->formErrors['_general'] = trans('ptah::ui.crud_save_error', ['message' => $e->getMessage()]);
+            report($e);
+            $this->formErrors['_general'] = $this->saveErrorMessage($e);
         }
 
         $this->creating = false;
@@ -681,6 +683,22 @@ trait HasCrudForm
      *
      * Errors are logged and never break the form.
      */
+    /**
+     * What the user reads when saving failed with something that is not a
+     * validation or a hook's own message. A database error carries the SQL,
+     * table and column names and the values: it goes to the log (the caller
+     * reports it), not to the screen — unless the app is in debug.
+     */
+    protected function saveErrorMessage(\Throwable $e): string
+    {
+        // PDOException covers Laravel's QueryException, which extends it.
+        if ($e instanceof PDOException && ! config('app.debug')) {
+            return trans('ptah::ui.crud_save_error_generic');
+        }
+
+        return trans('ptah::ui.crud_save_error', ['message' => $e->getMessage()]);
+    }
+
     public function applyFieldOnChange(string $field): void
     {
         $col = $this->findColByField($field);

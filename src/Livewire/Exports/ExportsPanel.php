@@ -56,6 +56,17 @@ class ExportsPanel extends Component
     }
 
     /**
+     * What the `wire:poll` calls — a no-op: any action re-renders the panel.
+     * Not `$refresh` (a bare `wire:poll`): in Livewire 4.3.1 a cancelled
+     * `$refresh` poll leaves an unhandled promise rejection in the console —
+     * see NotificationBell::refreshBadge() for the mechanism.
+     */
+    public function refreshPending(): void
+    {
+        // Intentionally empty.
+    }
+
+    /**
      * Whether any row is still queued/processing — drives the conditional
      * wire:poll in the view (no point polling once everything has settled).
      */

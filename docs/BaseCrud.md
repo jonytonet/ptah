@@ -5,6 +5,14 @@
 **Livewire:** 4+
 **Laravel:** 11+
 
+> **React or Vue (since 1.59.0).** This document describes the engine and its
+> Livewire screen. The same engine also answers the React and Vue stacks
+> through the headless API: every option here — columns, filters, renderers,
+> hooks, permissions, views, master/detail, import/export — is configured the
+> same way and behaves the same there. See [Stacks.md](Stacks.md) for the
+> `<PtahCrud>` component and what differs, and [HeadlessApi.md](HeadlessApi.md)
+> for the endpoints.
+
 ---
 
 ## Table of Contents

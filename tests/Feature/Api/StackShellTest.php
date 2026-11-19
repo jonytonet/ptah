@@ -1,0 +1,196 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Ptah\Tests\Feature\Api;
+
+use Illuminate\Auth\GenericUser;
+use PHPUnit\Framework\Attributes\Test;
+use Ptah\Models\UserPreference;
+use Ptah\Support\StackBoot;
+use Ptah\Tests\TestCase;
+
+/**
+ * What the React/Vue layout needs to behave like the Livewire one (1.59.0):
+ * the menu with its search list, and the page carrying the user's appearance.
+ */
+class StackShellTest extends TestCase
+{
+    protected function getEnvironmentSetUp($app): void
+    {
+        parent::getEnvironmentSetUp($app);
+        $app['config']->set('ptah.modules.auth', true);
+        $app['config']->set('ptah.crud_api.enabled', true);
+        $app['config']->set('ptah.crud_api.middleware', ['web']);
+        $app['config']->set('ptah.stack', 'vue');
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+        $this->actingAs(new GenericUser(['id' => 9, 'name' => 'Ana', 'email' => 'ana@example.test']));
+    }
+
+    #[Test]
+    public function the_menu_comes_with_the_search_list_the_rule_for_showing_it_and_the_brand(): void
+    {
+        config([
+            'app.name' => 'ERP',
+            'ptah.brand.logo' => 'img/logo.svg',
+            'ptah.forge.sidebar_items' => [
+                ['label' => 'Início', 'url' => '/inicio', 'type' => 'menuLink'],
+                ['label' => 'Compras', 'type' => 'menuGroup', 'children' => [
+                    ['label' => 'Cotação', 'url' => '/compras/cotacao'],
+                    ['label' => 'Perigo', 'url' => 'javascript:alert(1)'],
+                ]],
+                ['label' => 'Relatórios', 'url' => '/relatorios', 'type' => 'menuLink'],
+            ],
+        ]);
+
+        $json = $this->getJson('/ptah/api/menu')->assertOk()->json();
+
+        $this->assertSame(['Início', 'Compras', 'Relatórios'], array_column($json['data'], 'label'));
+        // The flat list: only real links, with the trail and the folded text.
+        $flat = array_column($json['flat'], null, 'label');
+        $this->assertSame(['Compras', 'Cotação'], $flat['Cotação']['breadcrumb']);
+        $this->assertSame('compras cotacao', $flat['Cotação']['search']);
+        $this->assertArrayNotHasKey('Perigo', $flat);
+        // Three links, one inside a group: the search is offered.
+        $this->assertTrue($json['jump']);
+        $this->assertSame('ERP', $json['brand']['name']);
+        $this->assertStringEndsWith('/img/logo.svg', $json['brand']['logo']);
+        $this->assertNull($json['brand']['logo_dark']);
+    }
+
+    #[Test]
+    public function a_small_flat_menu_does_not_offer_the_search(): void
+    {
+        config(['ptah.forge.sidebar_items' => [
+            ['label' => 'Um', 'url' => '/um', 'type' => 'menuLink'],
+            ['label' => 'Dois', 'url' => '/dois', 'type' => 'menuLink'],
+            ['label' => 'Três', 'url' => '/tres', 'type' => 'menuLink'],
+        ]]);
+
+        $this->assertFalse($this->getJson('/ptah/api/menu')->json('jump'));
+    }
+
+    #[Test]
+    public function the_page_carries_the_users_appearance_like_the_livewire_layout(): void
+    {
+        UserPreference::set(9, 'theme', ['mode' => 'dark', 'accent' => 'verde', 'density' => 'compacta', 'fontsize' => 'grande'], 'appearance');
+
+        $html = $this->get(route('ptah.dashboard'))->assertOk()->getContent();
+
+        $this->assertStringContainsString('data-ptah-accent="verde"', $html);
+        $this->assertStringContainsString('data-ptah-density="compacta"', $html);
+        $this->assertStringContainsString('data-ptah-fontsize="grande"', $html);
+        $this->assertStringContainsString('data-ptah-light="puro"', $html);
+        // The anti-flash script of the Livewire layouts, with the user's mode.
+        $this->assertStringContainsString('ptah_dark_mode', $html);
+        $this->assertMatchesRegularExpression('/serverTheme = .{0,40}dark/', $html);
+        // Where the light/dark switch saves the choice.
+        $this->assertStringContainsString('data-theme-mode="'.route('ptah.appearance.theme-mode').'"', $html);
+    }
+
+    #[Test]
+    public function a_visitor_gets_the_defaults_on_the_sign_in_page(): void
+    {
+        // Back to a visitor (GenericUser has no remember token to cycle on logout()).
+        $this->app['auth']->forgetGuards();
+
+        $html = $this->get(route('ptah.auth.login'))->assertOk()->getContent();
+
+        $this->assertStringContainsString('data-ptah-accent="azul"', $html);
+        $this->assertStringNotContainsString('data-theme-mode=', $html);
+    }
+
+    #[Test]
+    public function the_page_carries_the_brand_palette_like_the_livewire_layout(): void
+    {
+        config(['ptah.theme.colors' => ['primary' => '#0f766e']]);
+
+        $html = $this->get(route('ptah.dashboard'))->assertOk()->getContent();
+
+        $this->assertStringContainsString('id="ptah-theme-colors"', $html);
+        $this->assertStringContainsString('--color-primary: #0f766e', $html);
+    }
+
+    #[Test]
+    public function the_bell_follows_the_navbar_slot(): void
+    {
+        // Unset slot, notifications off: the plain bell of forge-navbar.
+        $shell = $this->getJson('/ptah/api/menu')->assertOk()->json('shell');
+        $this->assertFalse($shell['notifications']);
+        $this->assertTrue($shell['static_bell']);
+
+        // Notifications on: the live bell, not the plain one.
+        config(['ptah.notifications.enabled' => true]);
+        $shell = $this->getJson('/ptah/api/menu')->json('shell');
+        $this->assertTrue($shell['notifications']);
+        $this->assertFalse($shell['static_bell']);
+
+        // The slot switched off hides every bell, as in the navbar.
+        config(['ptah.navbar.notifications' => false]);
+        $shell = $this->getJson('/ptah/api/menu')->json('shell');
+        $this->assertFalse($shell['notifications']);
+        $this->assertFalse($shell['static_bell']);
+    }
+
+    #[Test]
+    public function the_page_embeds_the_very_menu_and_me_the_endpoints_answer(): void
+    {
+        config(['ptah.forge.sidebar_items' => [
+            ['label' => 'Início <b>&"\'', 'url' => '/inicio', 'type' => 'menuLink'],
+            ['label' => 'Compras', 'type' => 'menuGroup', 'children' => [['label' => 'Cotação', 'url' => '/compras/cotacao']]],
+        ]]);
+
+        $html = $this->get(route('ptah.dashboard'))->assertOk()->getContent();
+        $boot = $this->bootOf($html);
+
+        $this->assertNotNull($boot);
+        $this->assertSame($this->getJson('/ptah/api/menu')->assertOk()->json(), $boot['menu']);
+        $this->assertSame($this->getJson('/ptah/api/me')->assertOk()->json(), $boot['me']);
+        $this->assertSame('Ana', $boot['me']['user']['name']);
+        // The switcher is embedded exactly when the top bar shows it.
+        $this->assertSame($boot['menu']['shell']['company_switcher'], $boot['switcher'] !== null);
+        // Escaped as an attribute: the label's markup never reaches the page as markup.
+        $this->assertStringNotContainsString('Início <b>', $html);
+    }
+
+    #[Test]
+    public function a_swap_in_place_and_a_guest_page_carry_no_boot_data(): void
+    {
+        // The front end swapping pages: its layout is already on screen.
+        $html = $this->get(route('ptah.dashboard'), ['X-Ptah-Navigate' => '1'])->assertOk()->getContent();
+        $this->assertStringContainsString('id="ptah-app"', $html);
+        $this->assertNull($this->bootOf($html));
+
+        // A visitor on the sign-in page.
+        $this->app['auth']->forgetGuards();
+        $this->assertNull($this->bootOf($this->get(route('ptah.auth.login'))->assertOk()->getContent()));
+
+        // The API off: nothing to boot from.
+        config(['ptah.crud_api.enabled' => false]);
+        $this->assertNull(StackBoot::forPage('dashboard'));
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function bootOf(string $html): ?array
+    {
+        if (preg_match('/data-boot="([^"]*)"/', $html, $match) !== 1) {
+            return null;
+        }
+        $decoded = json_decode(html_entity_decode($match[1], ENT_QUOTES | ENT_HTML5), true);
+
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    #[Test]
+    public function me_carries_the_photo_for_the_account_menu(): void
+    {
+        $this->getJson('/ptah/api/me')->assertOk()->assertJsonPath('user.name', 'Ana')->assertJsonStructure(['user' => ['photo_url']]);
+    }
+}

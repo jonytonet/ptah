@@ -136,9 +136,14 @@ class AiProviderConfigService
      */
     public function setDefault(int $id): void
     {
-        $this->clearDefaultFlag();
+        // Found first: an id that does not exist must not leave the system
+        // without a default model.
+        $config = AiModelConfig::findOrFail($id);
 
-        AiModelConfig::findOrFail($id)->update(['is_default' => true]);
+        // The others only: the model just read may already carry the flag,
+        // and an update with nothing dirty would write nothing back.
+        AiModelConfig::where('is_default', true)->whereKeyNot($config->getKey())->update(['is_default' => false]);
+        $config->update(['is_default' => true]);
         $this->clearCache();
     }
 

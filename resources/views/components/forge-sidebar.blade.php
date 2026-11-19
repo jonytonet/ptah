@@ -66,6 +66,21 @@
         && count($menuFlat) >= 3
         && (count($menuFlat) >= max(2, $menuJumpMin) || $menuIsNested);
 
+    // Navegacao SPA (ptah.forge.spa_navigation). Desligada, nada abaixo muda
+    // um byte do HTML. Ligada, a sidebar e RE-RENDERIZADA a cada pagina (nao
+    // @persist — ver partials/spa-navigation) e o que o re-render perderia vem
+    // de window.ptahSpa: o hover-expandido e os grupos que a pessoa abriu.
+    $ptahSpa = \Ptah\Support\SpaNavigation::enabled();
+    $spaHovered = $ptahSpa ? '!!(window.ptahSpa && window.ptahSpa.hovered)' : 'false';
+    if ($ptahSpa) {
+        // O atalho navega por JS: cada link leva a decisao junto.
+        $spaOptedOut = \Ptah\Support\SpaNavigation::optedOutUrls($menuItems);
+        $menuFlat = array_map(
+            fn (array $l): array => $l + ['spa' => \Ptah\Support\SpaNavigation::allows($l['url'], $l['target'], ! in_array($l['url'], $spaOptedOut, true))],
+            $menuFlat
+        );
+    }
+
     /**
      * Renderiza ícone: aceita classes CSS Boxicons ("bx bx-home") ou FontAwesome ("fas fa-user").
      * Ícones desconhecidos ou vazios fazem fallback para bx bx-circle.
@@ -106,7 +121,7 @@
 --}}
 <aside
     x-data="{
-        hovered: false,
+        hovered: {!! $spaHovered !!},
         peek: false,
         isMd: window.innerWidth >= 768,
         isLg: window.innerWidth >= 1024,
@@ -211,7 +226,9 @@
             },
 
             go(it) {
-                if (!it) return;
+                if (!it) return;@if($ptahSpa)
+                if (it.spa && window.Livewire && window.Livewire.navigate) { this.reset(); window.Livewire.navigate(it.url); return; }@endif
+
                 if (it.target === '_blank') { window.open(it.url, '_blank'); return; }
                 window.location.href = it.url;
             },
@@ -338,7 +355,7 @@
 
                 {{-- ── menuGroup com filhos → acordeon Alpine ── --}}
                 @if($itemType === 'menuGroup' && $hasKids)
-                    <li x-data="{ open: {{ $groupActive ? 'true' : 'false' }} }">
+                    <li x-data="{ open: {{ $groupActive ? 'true' : 'false' }}@if($ptahSpa) || !!(window.ptahSpa && window.ptahSpa.open.indexOf({{ \Illuminate\Support\Js::from($itemLabel) }}) !== -1)@endif }"@if($ptahSpa) data-ptah-group="{{ $itemLabel }}" @endif>
                         {{-- Botão do grupo. Colapsada (iconOnly): expande a sidebar E abre o
                              grupo (decisão documentada no comentário acima do <aside>) em vez
                              de apenas alternar `open` — sem isso o grupo abriria escondido
@@ -395,7 +412,7 @@
                                 <li>
                                     <a
                                         href="{{ $childUrl }}"
-                                        target="{{ $childTarget }}"
+                                        target="{{ $childTarget }}"{!! \Ptah\Support\SpaNavigation::attr($childUrl, $childTarget, ! \Ptah\Support\SpaNavigation::optsOut($child)) !!}
                                         @if ($childActive) aria-current="page" @endif
                                         class="ptah-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200
                                             {{ $childActive
@@ -437,7 +454,7 @@
                     <li>
                         <a
                             href="{{ $itemUrl }}"
-                            target="{{ $itemTarget }}"
+                            target="{{ $itemTarget }}"{!! \Ptah\Support\SpaNavigation::attr($itemUrl, $itemTarget, ! \Ptah\Support\SpaNavigation::optsOut($item)) !!}
                             :title="iconOnly() ? @js($itemLabel) : null"
                             @if ($isActive) aria-current="page" @endif
                             :class="iconOnly() ? 'justify-center' : ''"

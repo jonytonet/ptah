@@ -443,7 +443,11 @@ class ScaffoldCommand extends Command
         if ($context->withViews) {
             $this->line("  <fg=yellow>Access:</> <fg=gray>/{$context->entityLower}</>");
             $this->newLine();
-            $this->line('  <fg=blue>→ The screen uses Livewire BaseCrud. Configuration saved in <fg=gray>crud_configs</> and can be adjusted directly in the database.</>');
+            $stack = (string) config('ptah.stack', 'livewire');
+            $engine = $stack === 'livewire'
+                ? 'The screen uses Livewire BaseCrud.'
+                : 'The screen uses the '.ucfirst($stack).' <PtahCrud> over the headless API (registered in routes/ptah-screens.php; run npm run build or npm run dev).';
+            $this->line("  <fg=blue>→ {$engine} Configuration saved in <fg=gray>crud_configs</> and can be adjusted directly in the database.</>");
         } else {
             $this->line("  <fg=yellow>API Endpoint:</> <fg=gray>/api/{$context->entityPlural}</>");
         }

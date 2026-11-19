@@ -242,7 +242,8 @@ trait HasCrudBoards
             $this->afterUpdate($record);
             $this->executeDynamicHook('afterUpdate', $data, $record);
         } catch (\Throwable $e) {
-            $this->dispatch('ptah-toast', title: trans('ptah::ui.crud_save_error', ['message' => $e->getMessage()]), color: 'danger');
+            report($e);
+            $this->dispatch('ptah-toast', title: $this->saveErrorMessage($e), color: 'danger');
 
             return;
         }

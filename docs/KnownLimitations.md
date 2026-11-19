@@ -17,7 +17,8 @@
 4. [FK Fields With Non-Standard Table Names](#4-fk-fields-with-non-standard-table-names)
 5. [`ptah:config` CLI — Column Types and Renderers](#5-ptahconfig-cli--column-types-and-renderers)
 6. [Theming — Partial Coverage (1.26.0)](#6-theming--partial-coverage-1260)
-7. [Summary: What ptah does vs. what the developer does](#summary-what-ptah-does-vs-what-the-developer-does)
+7. [React and Vue stacks — known differences (1.59.0)](#7-react-and-vue-stacks--known-differences-1590)
+8. [Summary: What ptah does vs. what the developer does](#summary-what-ptah-does-vs-what-the-developer-does)
 
 ---
 
@@ -573,6 +574,18 @@ a 1.00:1 chart title and a 1.9:1 switch track ship with a green suite.
   enforces this.
 - Do not patch over package views with host CSS: your selectors break the day
   the package migrates the view.
+
+## 7. React and Vue stacks — known differences (1.59.0)
+
+The React and Vue stacks have every feature of the Livewire screens, with
+these differences: background export (`asyncExport`) and its "Limit" badge
+are not in the export menu; an image field uploads with the save, not when
+the file is picked; each screen draws its own toasts (there is no global
+toast host); and the AI chat panel and a few administration fields are
+plainer. Realtime needs Laravel Echo on `window.Echo`, provided by the app.
+The list is kept in [Stacks.md](Stacks.md#what-differs-from-the-livewire-stack).
+
+---
 
 ## Summary: What ptah does vs. what the developer does
 

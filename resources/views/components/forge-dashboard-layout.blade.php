@@ -51,6 +51,12 @@
     $ptahHasAiLauncher = auth()->check()
         && config('ptah.modules.ai_agent')
         && class_exists(\Livewire\Livewire::class);
+
+    // Navegacao SPA (ptah.forge.spa_navigation, desligada por padrao). Tudo o
+    // que ela acrescenta abaixo e condicional e colado a uma linha existente
+    // (`...>@if($ptahSpa)`), para que com o modo desligado o HTML saia
+    // byte a byte igual ao de antes — ver SpaNavigationLayoutTest.
+    $ptahSpa = \Ptah\Support\SpaNavigation::enabled();
 @endphp
 
 <!DOCTYPE html>
@@ -60,11 +66,14 @@
     data-ptah-accent="{{ $ptahAppearance['accent'] }}"
     data-ptah-text="{{ $ptahAppearance['text'] }}"
     data-ptah-density="{{ $ptahAppearance['density'] }}"
-    data-ptah-fontsize="{{ $ptahAppearance['fontsize'] }}">
+    data-ptah-fontsize="{{ $ptahAppearance['fontsize'] }}"@if($ptahSpa) data-ptah-spa @endif>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">@if($ptahSpa)
+    {{-- Ver SpaNavigation::buildId(): um deploy novo forca recarga completa. --}}
+    <meta name="ptah-build" content="{{ \Ptah\Support\SpaNavigation::buildId() }}">@endif
+
     <title>{{ $appName }}{{ isset($title) ? ' — ' . $title : '' }}</title>
 
     {{--
@@ -116,6 +125,9 @@
          Why it matters: a literal written here is invisible to the user's theme choice, so the
          sidebar and navbar would stay slate no matter which tone the user picks. --}}
     <style>
+        /* Overlay de carregando do BaseCrud (editar, salvar...): disco na cor da superficie. */
+        .ptah-busy-spin { filter: drop-shadow(0 4px 12px rgba(0, 0, 0, .18)); }
+        .ptah-busy-disc { fill: var(--ptah-surface); }
         [x-cloak] { display: none !important; }
         .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
         .scrollbar-none::-webkit-scrollbar { display: none; }
@@ -222,7 +234,10 @@
          partial for the full precedence rules. --}}
     @include('ptah::partials.appearance-boot')
 </head>
-<body class="font-sans antialiased {{ $ptahHasAiLauncher ? 'ptah-has-ai-launcher' : '' }}">
+<body class="font-sans antialiased {{ $ptahHasAiLauncher ? 'ptah-has-ai-launcher' : '' }}">@if($ptahSpa)
+    {{-- Primeiro filho do <body>: roda a cada visita antes de qualquer outro script. --}}
+    @include('ptah::partials.spa-navigation')@endif
+
 
     {{--
         x-data raiz:
@@ -347,16 +362,21 @@
                 </div>
             </main>
 
-            {{-- Pilha global de toasts: escuta `ptah-toast` no window, serve qualquer tela --}}
-            <x-forge-toast-host />
+            {{-- Pilha global de toasts: escuta `ptah-toast` no window, serve qualquer tela.
+                 Navegacao SPA: @persist — um toast disparado logo antes de trocar de
+                 tela (salvou e navegou) continua visivel. Seguro mesmo dentro do x-data
+                 raiz: o host nao le nada do escopo da raiz, so o proprio. --}}
+            @if($ptahSpa)@persist('ptah-toasts')@endif<x-forge-toast-host />@if($ptahSpa)@endpersist @endif
         </div>
     </div>
 
     {{-- Notification area --}}
     <x-forge-notification />
 
-    @if ($ptahHasAiLauncher)
-        <livewire:ptah-ai-chat-widget />
+    @if ($ptahHasAiLauncher){{-- Navegacao SPA: @persist — uma conversa aberta sobrevive a troca
+         de tela (o componente Livewire segue vivo, com a requisicao em voo). Fica fora
+         do x-data raiz, entao nao herda escopo que a troca deixaria para tras. --}}
+        @if($ptahSpa)@persist('ptah-ai-chat')@endif<livewire:ptah-ai-chat-widget />@if($ptahSpa)@endpersist @endif
     @endif
 
     @if(class_exists(\Livewire\Livewire::class))

@@ -265,6 +265,12 @@ device/browser; it never leaks credentials or any other account data.
 
 | Key | ENV | Default | Reference |
 |-----|-----|---------|-----------|
+| `stack` | `PTAH_STACK` | `livewire` | What draws the screens: `livewire`, `react` or `vue`. Set by `ptah:install --stack=…`; `ptah:forge` follows it. Since 1.59.0. [Stacks.md](Stacks.md) |
+| `crud_api.entry` | — | `resources/js/ptah-app.jsx` (`.js` for Vue) | The front-end entry the page of a screen loads (React/Vue stack) |
+| `crud_api.enabled` | `PTAH_CRUD_API` | `false` | Turns on the headless CRUD API (the BaseCrud over JSON). Since 1.59.0. [HeadlessApi.md](HeadlessApi.md) |
+| `crud_api.prefix` | — | `ptah/api` | URL prefix of the API routes |
+| `crud_api.embed` | `PTAH_CRUD_API_EMBED` | `true` | The page of a screen carries the screen's first API answers, so opening it is one request. Only on a page whose route has every middleware of `crud_api.middleware`. [Stacks.md](Stacks.md#navigation) |
+| `crud_api.middleware` | — | `['web', 'auth']` | Middleware of the API routes — e.g. `['web', 'auth:admin']`, or `['api', 'auth:sanctum']` for tokens |
 | `crud.cache_enabled` | — | `true` | This document — [General Settings](#general-settings) |
 | `crud.cache_ttl` | — | `3600` | This document — [General Settings](#general-settings) |
 | `crud.per_page` | — | `25` | This document — [General Settings](#general-settings) |
@@ -617,6 +623,98 @@ the bar and focuses the input — the same gesture the menu groups already use.
 
 ---
 
+### Single-page navigation of the Livewire layout (`forge.spa_navigation`)
+
+**Off by default.** Turned on, moving between screens of `<x-forge-dashboard-layout>`
+no longer reloads the document: Livewire's own SPA swap (`Livewire.navigate()`)
+fetches the next page, swaps the `<body>` and keeps `window`/`document`. The sidebar,
+navbar, assistant and toasts do not blink.
+
+```dotenv
+PTAH_SPA_NAVIGATION=true
+```
+
+```bash
+php artisan config:clear && php artisan view:clear
+```
+
+It works in a `config/ptah.php` published before the key existed — the package fills
+the missing `forge.spa_navigation*` keys from its defaults (the config merge is
+shallow and would not), so the `.env` line is enough; no republish needed. No
+`npm run build` is needed either: everything the mode adds is in the views.
+
+**What navigates in place** — every internal link the layout draws: sidebar items and
+sub-items, the brand link, the administration gear links, the profile link, the
+page-header back button and the breadcrumb, the "jump to a screen" results
+(`Livewire.navigate()`), the notification bell's "view all" and a notification's
+"open", dashboard widget links, the permission guide's shortcuts and a BaseCrud row
+link (`ptahRowNav`). The progress bar is Livewire's own, in the accent token, without
+animation under `prefers-reduced-motion`.
+
+The links carry `data-ptah-navigate`, and one click listener of the layout sends them
+through `Livewire.navigate()` — **not** `wire:navigate`. Livewire 4.3.1's prefetch
+cache (fed by `wire:navigate` on mousedown and by `.hover`) expires entries with a 30 s
+timer keyed by URL: revisiting a screen within that window could delete a newer
+in-flight prefetch, logging `Cannot set properties of undefined (setting 'html')` and
+leaving a click that waited on it without navigating. So there is no hover prefetch.
+Avoid `wire:navigate` on your own links in this layout for the same reason (or keep
+them on screens you do not revisit quickly); use `@ptahNavigate($url)`.
+
+**What stays a full load** — another origin, `javascript:`/`mailto:`/`tel:`, a
+`target` other than `_self`, downloads/exports/print views (they are `download`
+links, `_blank` tabs or server responses), the logout form, anything that changes
+the session (company switch, sign-in), and every link of yours that does not carry
+the attribute. And whenever the page that arrives is not this layout with the mode
+on (the login after the session expired, a host page with its own layout) or a
+deploy changed the Vite build: the layout reloads the document instead of running
+old scripts against it.
+
+**The frame, element by element:**
+
+| Element | Across a navigation | Why |
+|---|---|---|
+| Sidebar | Re-rendered; scroll, groups the person opened and hover-expanded state restored | It lives in the layout's root `x-data` (`sidebarCollapsed`, `sidebarOpen`). A `@persist`ed element keeps the Alpine scope of the OLD root, so the navbar's collapse button would drive a root it no longer listens to. Re-rendered, the active item and its group come from the server for the new URL. |
+| Navbar (company switcher, bell, theme toggle, account menu) | Re-rendered | The bell's count and the switcher come fresh from the server; nothing open survives a click anyway. |
+| Assistant (chat) | `@persist('ptah-ai-chat')` | An open conversation, a request in flight and the draft survive. It sits outside the root `x-data`, so it inherits nothing the swap leaves behind. |
+| Toasts | `@persist('ptah-toasts')` | A toast fired right before the swap ("saved") stays on screen. The host reads only its own scope. |
+| Theme / appearance presets | Re-applied before the new body paints | The swap rewrites `<html>`'s attributes with the server's (`data-ptah-*`, so a preset saved in the profile follows); the dark class is restored from `localStorage` before any script runs. Transitions are off while the page settles, so widths and colours never animate on a swap. |
+
+**Excluding a link or a menu item.** A plain `<a>` without the attribute is already a
+full load. In your own views, `@ptahNavigate($url)` (or
+`{!! \Ptah\Support\SpaNavigation::attr($url, $target) !!}`) prints the attribute
+only when the mode is on and the link qualifies. A menu item of the config driver
+opts out with `'spa' => false`; for the database driver (and any URL) list path
+patterns in `forge.spa_navigation_except` (`Str::is`, no leading slash):
+
+```php
+'spa_navigation_except' => ['relatorios/*', 'legado'],
+```
+
+**Before turning it on, check your own scripts** (pages rendered in this layout):
+
+- `DOMContentLoaded` / `window.onload` never fire again after the first page — use
+  `document.addEventListener('livewire:navigated', …)` (it also fires on the first
+  load).
+- Inline `<script>`s in the body run again on every visit. A listener added to
+  `document`/`window` there piles up: guard it with a flag on `window`
+  (`if (window.__myInit) return; window.__myInit = true;`) or mark the script
+  `data-navigate-once`. Top-level `const`/`let` in a classic script throw
+  "already declared" on the second visit — wrap the code in an IIFE.
+- Timers and intervals keep running after the page is gone — clear them on
+  `livewire:navigating`.
+- Elements you append to `<body>` are dropped by the swap; re-append on demand.
+- A third-party widget that initialises on load (chat bubbles, analytics, maps)
+  needs its re-init on `livewire:navigated`, or its page in `spa_navigation_except`.
+- `<script src>` tags in `<head>` that differ between pages are injected (and run)
+  once; libraries loaded in the body need `data-navigate-once`.
+
+The React and Vue stacks have their own navigator with the same goal
+([Stacks.md → Navigation](Stacks.md#navigation)); it is always on there, because
+those pages are the package's own. This switch is only for the Livewire layout,
+where the pages are often the host's.
+
+---
+
 ### AI Agent module (`ai_agent.*`)
 
 | Key | ENV | Default | Reference |
@@ -638,6 +736,8 @@ the bar and focuses the input — the same gesture the menu groups already use.
 | `ai_agent.tools` | — | `[]` | [AiAgent.md](AiAgent.md) |
 | `forge.sidebar_jump` | `PTAH_SIDEBAR_JUMP` | `true` | this section |
 | `forge.sidebar_jump_min_items` | `PTAH_SIDEBAR_JUMP_MIN` | `8` | this section |
+| `forge.spa_navigation` | `PTAH_SPA_NAVIGATION` | `false` | [Single-page navigation](#single-page-navigation-of-the-livewire-layout-forgespa_navigation) |
+| `forge.spa_navigation_except` | — | `[]` | Path patterns that stay full loads — same section |
 | `ai_agent.normalize_tool_schema` | `PTAH_AI_NORMALIZE_TOOL_SCHEMA` | `true` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.attachments.enabled` | `PTAH_AI_ATTACHMENTS` | `true` | [AiAgent.md](AiAgent.md) |
 | `ai_agent.attachments.max_size_kb` | `PTAH_AI_ATTACH_MAX_KB` | `8192` | [AiAgent.md](AiAgent.md) |

@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "jsx": "preserve" },
+  "include": ["resources/js/core", "resources/js/vue", "resources/js/__tests__/vue", "resources/js/__tests__/admin/*.vue.test.ts", "resources/js/__tests__/admin/*.ts", "resources/js/__tests__/crud/*.vue.test.ts", "resources/js/__tests__/crud/*.fake.ts", "resources/js/__tests__/*.ts", "resources/js/env.d.ts"]
+}

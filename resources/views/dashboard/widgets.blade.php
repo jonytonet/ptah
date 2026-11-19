@@ -11,7 +11,7 @@
             $wide = in_array($w['type'], ['trend', 'latest', 'breakdown'], true);
             $tag = $w['link'] ? 'a' : 'div';
         @endphp
-        <{{ $tag }} @if ($w['link']) href="{{ $w['link'] }}" @endif
+        <{{ $tag }} @if ($w['link']) href="{{ $w['link'] }}"@ptahNavigate($w['link']) @endif
             class="block rounded-md border p-4 transition-colors {{ $wide ? 'sm:col-span-2' : '' }} {{ $w['link'] ? 'hover:underline-offset-2' : '' }}"
             style="border-color: var(--ptah-line-strong); background: var(--ptah-surface)">
             <p class="text-xs font-semibold uppercase tracking-wide ptah-c-muted">{{ $w['label'] }}</p>

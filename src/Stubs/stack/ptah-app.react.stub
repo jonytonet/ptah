@@ -1,0 +1,12 @@
+// Ptah — React entry. Mounts the page the server describes on #ptah-app
+// (ptah::stack.app): a CRUD screen, the dashboard, the profile, the sign-in
+// pages. A page ptah adds later arrives with `composer update`.
+//
+// Yours to change:
+//   mountPtah(el, { onAction: (name, row) => … })      row actions of the config
+//   mountPtah(el, { pages: { reports: <Reports /> } })  your own pages (data-page="reports")
+// or import { PtahCrud, PtahLayout, ForgeButton… } from '@ptah/react' in any page of yours.
+import { mountPtah } from '@ptah/react';
+import '@ptah/ptah-ui.css';
+
+mountPtah(document.getElementById('ptah-app'));

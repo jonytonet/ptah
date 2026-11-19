@@ -358,6 +358,13 @@ trait HasCrudFilters
             $this->quickDateFilter = '';
         } else {
             unset($this->filters[$field]);
+
+            // A chip of "is empty" / "has value" is the operator alone: left
+            // behind, the chip and the filter stayed after the click.
+            $operator = $this->filterOperators[$field] ?? null;
+            if (FilterService::isNullOperator(is_string($operator) ? $operator : null)) {
+                unset($this->filterOperators[$field]);
+            }
         }
 
         $this->buildTextFilter();
