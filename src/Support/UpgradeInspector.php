@@ -24,7 +24,8 @@ use Ptah\Commands\PreferencesRealignCommand;
  *  - stubs published to stubs/ptah → ptah:forge keeps generating the old code;
  *  - the user_preferences FK vs the configured identity (1.34.6);
  *  - migrations of the package not yet run;
- *  - the structure editor, closed by default since 1.34.8.
+ *  - the structure editor, closed by default since 1.34.8;
+ *  - in Bootstrap mode, a published ptah.css older than the installed package.
  *
  * Findings are `level` warn (needs an action) or info, with the action.
  */
@@ -46,7 +47,39 @@ final class UpgradeInspector
             ...self::structureEditor(),
             ...self::boost(),
             ...self::composerConstraint(),
+            ...self::stylesheet(),
         ];
+    }
+
+    /**
+     * Bootstrap mode (ptah.css.framework): public/vendor/ptah/ptah.css is a
+     * COPY of the package's stylesheet, and `composer update` does not refresh
+     * it — a view of the new version with a class the old copy lacks renders
+     * unstyled. The copy's header carries the hash of its build.
+     *
+     * @return list<array<string, string>>
+     */
+    public static function stylesheet(): array
+    {
+        if (! CssFramework::isBootstrap()) {
+            return [];
+        }
+
+        $published = public_path(CssFramework::PUBLIC_PATH);
+        $head = is_file($published) ? (string) file_get_contents($published, false, null, 0, 1024) : null;
+
+        if ($head !== null && str_contains($head, 'inputs-hash: '.CssFramework::distHash())) {
+            return [];
+        }
+
+        return [[
+            'check' => 'stylesheet',
+            'level' => 'warn',
+            'message' => $head === null
+                ? 'PTAH_CSS=bootstrap, but public/'.CssFramework::PUBLIC_PATH.' does not exist: ptah\'s screens render unstyled'
+                : 'public/'.CssFramework::PUBLIC_PATH.' is not the stylesheet of the installed ptah: screens of this version can render unstyled',
+            'action' => 'php artisan vendor:publish --tag=ptah-assets --force',
+        ]];
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Generators;
 
+use Ptah\Support\CssFramework;
 use Ptah\Support\EntityContext;
 use Ptah\Support\LabelHumanizer;
 
@@ -55,6 +56,10 @@ class ViewGenerator extends AbstractGenerator
                     : $context->entity,
             ]);
 
+            if (! $app && CssFramework::isBootstrap()) {
+                $content = self::scopePageHeader($content);
+            }
+
             $this->files->put($path, $content);
 
             if ($app) {
@@ -70,6 +75,24 @@ class ViewGenerator extends AbstractGenerator
     public function shouldRun(EntityContext $context): bool
     {
         return $context->withViews;
+    }
+
+    /**
+     * Bootstrap mode (ptah.css.framework): the page header the stub writes is
+     * Tailwind markup sitting in the layout's slot, which is host territory
+     * there — the scope marker puts it back under ptah's stylesheet. A
+     * published stub without that header is left as written.
+     */
+    public static function scopePageHeader(string $content): string
+    {
+        $header = '<div class="flex items-center justify-between mb-6">';
+        $position = strpos($content, $header);
+
+        if ($position === false) {
+            return $content;
+        }
+
+        return substr_replace($content, '<div '.CssFramework::SCOPE_ATTRIBUTE.' class="flex items-center justify-between mb-6">', $position, strlen($header));
     }
 
     public static function usesAppStack(): bool

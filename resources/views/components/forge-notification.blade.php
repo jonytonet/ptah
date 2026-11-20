@@ -90,7 +90,7 @@
                 <p class="text-sm opacity-90">{{ $text }}</p>
             @endif
             @if ($slot->isNotEmpty())
-                <div class="text-sm opacity-90">{{ $slot }}</div>
+                <div class="text-sm opacity-90">{{ \Ptah\Support\CssFramework::slot($slot, $attributes) }}</div>
             @endif
         </div>
 

@@ -40,7 +40,7 @@
     $wireModel = $attributes->wire('model')->value();
 @endphp
 
-<label
+<label{{ \Ptah\Support\CssFramework::hostScope($attributes) }}
     @if ($wireModel)
         x-data="{ get checked() { return !! this.$wire.get({{ \Illuminate\Support\Js::from($wireModel) }}) } }"
     @else

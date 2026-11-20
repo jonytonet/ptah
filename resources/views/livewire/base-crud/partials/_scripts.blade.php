@@ -255,6 +255,10 @@
         }
         copyGroup = document.createElement('div');
         copyGroup.className = 'ptah-cell-actions ptah-no-print';
+@if (\Ptah\Support\CssFramework::isBootstrap())
+        {{-- Appended to <body>, outside the BaseCrud root: its own ptah scope. --}}
+        copyGroup.setAttribute(@js(\Ptah\Support\CssFramework::SCOPE_ATTRIBUTE), '');
+@endif
         copyBtn = cellButton(@js(__('ptah::ui.crud_copy_cell')), ICON_COPY, (td) => copyText(td.innerText.trim()));
         filterBtn = cellButton(@js(__('ptah::ui.crud_filter_by_cell')), ICON_FILTER, filterByCell);
         copyGroup.append(copyBtn, filterBtn);

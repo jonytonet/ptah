@@ -71,6 +71,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | CSS framework of the host
+    |--------------------------------------------------------------------------
+    |
+    | 'tailwind' (default): the host compiles ptah's classes with its own
+    | Tailwind (`ptah:install` wires app.css).
+    | 'bootstrap': the host has no Tailwind. ptah links its pre-compiled,
+    | scoped stylesheet (`vendor:publish --tag=ptah-assets` →
+    | public/vendor/ptah/ptah.css) before the host's CSS, and its colours follow
+    | the host's Bootstrap theme. `ptah:install --css=bootstrap` sets it.
+    | See docs/Css.md.
+    |
+    | Read with a default (Ptah\Support\CssFramework), so a config/ptah.php
+    | published before this key existed keeps working.
+    |
+    */
+    'css' => [
+        'framework' => env('PTAH_CSS', 'tailwind'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Brand logo
     |--------------------------------------------------------------------------
     |

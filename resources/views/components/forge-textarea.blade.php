@@ -47,7 +47,7 @@
     $wireModel = $attributes->wire('model')->value();
 @endphp
 
-<div
+<div{{ \Ptah\Support\CssFramework::hostScope($attributes) }}
     @if ($wireModel)
         x-data="{ get chars() { return String(this.$wire.get({{ \Illuminate\Support\Js::from($wireModel) }}) ?? '').length } }"
     @else

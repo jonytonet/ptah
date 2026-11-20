@@ -34,5 +34,5 @@
     type="button"
     {{ $attributes->merge(['class' => "px-4 py-3 text-sm font-medium transition-all duration-200 whitespace-nowrap focus:outline-none {$stateClass}"]) }}
 >
-    {{ $slot }}
+    {{ \Ptah\Support\CssFramework::slot($slot, $attributes) }}
 </button>

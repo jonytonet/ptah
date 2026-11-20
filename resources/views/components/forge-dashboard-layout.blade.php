@@ -80,8 +80,18 @@
         Tailwind CSS:
         - Se o projeto usa Vite com @tailwindcss/vite, os estilos já vêm via @vite abaixo.
         - Fallback para CDN apenas quando não há assets compilados (desenvolvimento sem build).
+        Bootstrap (ptah.css.framework): no Tailwind at all — ptah's pre-compiled
+        stylesheet, then the host's own Vite entries that exist. ptah.css FIRST,
+        like ptah-components.css inside a Tailwind host's app.css: a host rule
+        overriding a ptah token with the same selector wins by source order in
+        both. Its isolation from Bootstrap does not depend on order (docs/Css.md).
     --}}
-    @if(file_exists(public_path('build/manifest.json')))
+    @if(\Ptah\Support\CssFramework::isBootstrap())
+        {{ \Ptah\Support\CssFramework::stylesheetTag() }}
+        @if(($ptahViteEntries = \Ptah\Support\CssFramework::viteEntries()) !== [])
+            @vite($ptahViteEntries)
+        @endif
+    @elseif(file_exists(public_path('build/manifest.json')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
         <script src="https://cdn.tailwindcss.com"></script>
@@ -234,7 +244,7 @@
          partial for the full precedence rules. --}}
     @include('ptah::partials.appearance-boot')
 </head>
-<body class="font-sans antialiased {{ $ptahHasAiLauncher ? 'ptah-has-ai-launcher' : '' }}">@if($ptahSpa)
+<body{{ \Ptah\Support\CssFramework::scopeAttribute() }} class="font-sans antialiased {{ $ptahHasAiLauncher ? 'ptah-has-ai-launcher' : '' }}">@if($ptahSpa)
     {{-- Primeiro filho do <body>: roda a cada visita antes de qualquer outro script. --}}
     @include('ptah::partials.spa-navigation')@endif
 
@@ -312,6 +322,9 @@
             applyTheme(isDark) {
                 document.documentElement.classList.toggle('ptah-dark', isDark);
                 document.documentElement.classList.toggle('dark', isDark);
+@if(\Ptah\Support\CssFramework::isBootstrap())
+                document.documentElement.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+@endif
             },
 
             init() {
@@ -358,7 +371,7 @@
             {{-- Page --}}
             <main class="pt-16 min-h-screen">
                 <div class="p-4 md:p-6 lg:p-8">
-                    {{ $slot }}
+                    {{ \Ptah\Support\CssFramework::slot($slot, $attributes) }}
                 </div>
             </main>
 

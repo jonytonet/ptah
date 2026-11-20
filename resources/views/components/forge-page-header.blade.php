@@ -36,7 +36,7 @@
 
         @if($slot->isNotEmpty())
             <div class="flex flex-wrap items-center gap-2 min-w-0 sm:shrink-0">
-                {{ $slot }}
+                {{ \Ptah\Support\CssFramework::slot($slot, $attributes) }}
             </div>
         @endif
     </div>

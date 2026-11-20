@@ -20,6 +20,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Translation\FileLoader;
 use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Server\Tool;
+use Livewire\Drawer\Utils;
 use Livewire\Exceptions\MethodNotFoundException;
 use Livewire\Livewire;
 use Ptah\Commands\AttachmentsInstallCommand;
@@ -256,6 +257,24 @@ class PtahServiceProvider extends ServiceProvider
                 if (Support\ServerOnly::marks($component, $method)) {
                     throw new MethodNotFoundException($method);
                 }
+            });
+
+            // Bootstrap mode: the root of each of the package's Livewire
+            // components opens a ptah scope — the pre-compiled stylesheet
+            // applies there even when the component sits in a host's own
+            // Bootstrap layout (Ptah\Support\CssFramework). A host class
+            // extending one of them (a BaseCrud subclass) renders the
+            // package's view, so it counts too.
+            \Livewire\on('render', function ($component) {
+                if (! Support\CssFramework::isBootstrap() || ! Support\CssFramework::isPackageComponent($component)) {
+                    return null;
+                }
+
+                return function (string $html, callable $replaceHtml): void {
+                    $replaceHtml(Utils::insertAttributesIntoHtmlRoot($html, [
+                        Support\CssFramework::SCOPE_ATTRIBUTE => '',
+                    ]));
+                };
             });
         }
 
@@ -583,6 +602,19 @@ class PtahServiceProvider extends ServiceProvider
         Blade::directive('ptahNavigate', function (string $expression): string {
             return '<?php echo \Ptah\Support\SpaNavigation::attr('.$expression.'); ?>';
         });
+
+        // `@ptahAssets` — the same as `<x-ptah-assets />`: what a host layout
+        // needs to render ptah screens (docs/Css.md).
+        Blade::directive('ptahAssets', function (): string {
+            return "<?php echo \$__env->make('ptah::partials.ptah-assets')->render(); ?>";
+        });
+
+        // Bootstrap mode: an <x-forge-*> written in a host view carries the
+        // scope marker and fences its slots (Ptah\Support\CssFramework).
+        // Before component tags are compiled — a precompiler runs after.
+        Blade::prepareStringsForCompilationUsing(function (string $value): string {
+            return Support\CssFramework::markHostComponents($value, Blade::getPath());
+        });
     }
 
     /**
@@ -733,10 +765,11 @@ class PtahServiceProvider extends ServiceProvider
                 __DIR__.'/../resources/views/livewire/ai' => resource_path('views/vendor/ptah/livewire/ai'),
             ], 'ptah-views-ai');
 
-            // Publish Forge CSS assets
+            // Publish the Forge CSS sources. Was the `ptah-assets` tag until the
+            // Bootstrap mode, which needs that tag to carry only ptah.css.
             $this->publishes([
                 __DIR__.'/../resources/css' => resource_path('css/vendor/ptah'),
-            ], 'ptah-assets');
+            ], 'ptah-css-sources');
 
             // Publish translations (allows per-project customisation).
             // ⚠ This copies the WHOLE file (1400+ keys) → those keys freeze to the
@@ -824,6 +857,13 @@ class PtahServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../resources/boost/skills' => base_path('.claude/skills'),
             ], 'ptah-skills');
+
+            // The pre-compiled stylesheet of a host without Tailwind
+            // (ptah.css.framework = bootstrap, docs/Css.md). Re-publish with
+            // --force after upgrading ptah; the layout versions the link.
+            $this->publishes([
+                __DIR__.'/../resources/dist/ptah.css' => public_path(Support\CssFramework::PUBLIC_PATH),
+            ], 'ptah-assets');
 
             // Publish Docker base environment (Dockerfile, Nginx, php.ini, docker-compose, .env.docker)
             $this->publishes([

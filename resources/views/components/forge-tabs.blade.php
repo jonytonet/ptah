@@ -96,7 +96,7 @@
                 @endisset
             </div>
         @endforeach
-        {{ $slot }}
+        {{ \Ptah\Support\CssFramework::slot($slot, $attributes) }}
     </div>
 </div>
 @else
@@ -104,11 +104,11 @@
 <div {{ $attributes }}>
     <div class="relative border-b ptah-c-tabs_rail overflow-x-auto scrollbar-none">
         <div class="flex min-w-max" role="tablist">
-            {{ $tabs }}
+            {{ \Ptah\Support\CssFramework::slot($tabs, $attributes) }}
         </div>
     </div>
     <div class="mt-4">
-        {{ $slot }}
+        {{ \Ptah\Support\CssFramework::slot($slot, $attributes) }}
     </div>
 </div>
 @endif

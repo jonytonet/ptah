@@ -29,7 +29,7 @@
     {{-- ── Modal Enterprise ─────────────────────────────────────────────────── --}}
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     @teleport('body')
-    <div x-data="crudConfigApp(@js($formEditFields), @js($customFilters), @js($conditionStyles))" x-init="init()"
+    <div{{ \Ptah\Support\CssFramework::scopeAttribute() }} x-data="crudConfigApp(@js($formEditFields), @js($customFilters), @js($conditionStyles))" x-init="init()"
         x-show="$wire.showModal" x-cloak
         x-on:keydown.escape.window="if ($wire.showModal) { $wire.showModal = false; $wire.closeModal(); }"
         class="fixed inset-0 z-[9999] flex items-center justify-center ptah-cfg">

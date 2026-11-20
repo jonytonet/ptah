@@ -55,7 +55,7 @@
     $initials        = $text ? mb_strtoupper(mb_substr($text, 0, 2)) : '';
 @endphp
 
-<span class="relative inline-flex shrink-0 {{ $attributes->get('class', '') }}">
+<span{{ \Ptah\Support\CssFramework::hostScope($attributes) }} class="relative inline-flex shrink-0 {{ $attributes->get('class', '') }}">
     @if ($src)
         <img src="{{ $src }}" alt="{{ $alt }}" class="rounded-full object-cover {{ $s['container'] }} ring-2 ring-white" />
     @else

@@ -31,6 +31,13 @@
 <script>
     (function () {
         try {
+@if (\Ptah\Support\CssFramework::isBootstrap())
+            {{-- Bootstrap mode: a page whose <html> already says data-bs-theme
+                 (a host layout) keeps the host's choice — ptah.css reads it
+                 as dark/light. Otherwise ptah resolves the theme as usual and
+                 writes it there too, so host markup on the page follows. --}}
+            if (document.documentElement.hasAttribute('data-bs-theme')) return;
+@endif
             var serverTheme = @js($theme);
             var isDark;
             if (serverTheme === 'dark' || serverTheme === 'light') {
@@ -42,6 +49,9 @@
             }
             if (isDark) {
                 document.documentElement.classList.add('ptah-dark', 'dark');
+@if (\Ptah\Support\CssFramework::isBootstrap())
+                document.documentElement.setAttribute('data-bs-theme', 'dark');
+@endif
             }
         } catch (e) {}
     })();
