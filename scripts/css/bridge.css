@@ -22,12 +22,14 @@
       --ptah-surface with color-mix(), so they already follow the bridged
       values below and keep the contrast they were calibrated for.
 
-   2. Stacking. Bootstrap's fixed navbar is 1030 and its modal 1055; ptah's
-      overlays (modals, menus, toasts, the busy overlay, the chat) used
-      40–70. The build adds 1010 to every z-index utility from 40 up; the
-      layout chrome below is set back under Bootstrap's modal, so a
-      Bootstrap modal opened from host content in the ptah layout still
-      covers the sidebar and the navbar.
+   2. Stacking. Bootstrap's fixed navbar is 1030, its modal backdrop 1050
+      and its modal 1055; ptah used 40–70 (and 999 for a dropdown). The
+      build adds the SAME 1000 to every z-index utility from 40 up, so the
+      order among ptah's own layers is exactly Tailwind's (the busy veil,
+      40, stays under the navbar, 50) and lands as: sidebar, veil, bulk bar
+      1040 — above a host's fixed navbar; navbar, modals, menus 1050 — under
+      Bootstrap's modal (1055), whose backdrop comes later in the DOM; toasts
+      1060; the search dropdown 1999.
    ============================================================ */
 
 @layer ptah-bridge {
@@ -83,10 +85,7 @@
         --radius-lg:            var(--bs-border-radius-lg, .5rem);
     }
 
-    .ptah-sidebar-overlay.z-30 { z-index: 1028; }
-    .ptah-sidebar.z-40         { z-index: 1029; }
-    .ptah-navbar.z-50          { z-index: 1030; }
-    .ptah-cell-actions         { z-index: 1070; }
+    .ptah-cell-actions         { z-index: 1060; }
 
     /* The lower boundary of the scope (host content inside a ptah slot):
        a wrapper that must not exist for layout purposes. */
@@ -136,4 +135,11 @@
 @keyframes ptah-wave {
     0%, 100% { transform: scaleY(0.4); }
     50%      { transform: scaleY(1.0); }
+}
+
+/* Bootstrap's reboot turns on `:root { scroll-behavior: smooth }`; a Tailwind
+   host has none. On ptah's own layouts (<body> is a scope) the page scrolls
+   as it does there. Unlayered, and heavier than Bootstrap's selector. */
+:root:has(> body:is(.ptah-scope, [data-ptah-scope])) {
+    scroll-behavior: auto;
 }

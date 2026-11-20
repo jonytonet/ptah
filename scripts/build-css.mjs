@@ -45,7 +45,7 @@ const SCOPE = '.ptah-scope, [data-ptah-scope]';
 const LIMIT = '.ptah-slot, [data-ptah-slot]';
 const SUBJECT_IN_SCOPE = ':where(:scope, :scope *)';
 const DARK_ALIAS = ':is(.ptah-dark, :where(:root[data-bs-theme=dark]))';
-const Z_LIFT = 1010;
+const Z_LIFT = 1000;
 const PRESET = /^\s*html(\.ptah-dark)?\[data-ptah-(light|dark|accent|text|density|fontsize)=/;
 
 const OUT = path.join(root, 'resources/dist/ptah.css');
@@ -176,6 +176,91 @@ function aliasDark(selectorText) {
     }).processSync(selectorText);
 }
 
+const inKeyframes = (rule) => rule.parent?.type === 'atrule' && /keyframes$/.test(rule.parent.name);
+const isCustom = (decl) => decl.prop.startsWith('--');
+
+/**
+ * `.ptah-dark` also answers :root[data-bs-theme=dark] — for TOKENS. A rule that
+ * paints the dark element itself (`.ptah-dark { background-color }`, the
+ * <html> of ptah's layouts) keeps `.ptah-dark` only: aliased, it would paint the
+ * <html> of a host page that is merely in Bootstrap's dark theme.
+ */
+function aliasDarkTokens(container) {
+    container.walkRules((rule) => {
+        if (inKeyframes(rule) || !rule.selector.includes('ptah-dark')) {
+            return;
+        }
+        const paintsDarkRoot = rule.selectors.some((s) => selectorParser().astSync(s).nodes.some(
+            (sel) => subjectNodes(sel).some((n) => n.type === 'class' && n.value === 'ptah-dark'),
+        ));
+        const props = rule.nodes.filter((n) => n.type === 'decl');
+        if (!paintsDarkRoot || props.every(isCustom)) {
+            rule.selector = aliasDark(rule.selector);
+
+            return;
+        }
+        if (props.some(isCustom)) {
+            const tokens = rule.clone();
+            tokens.each((n) => {
+                if (n.type === 'decl' && !isCustom(n)) {
+                    n.remove();
+                }
+            });
+            tokens.selector = aliasDark(tokens.selector);
+            rule.each((n) => {
+                if (n.type === 'decl' && isCustom(n)) {
+                    n.remove();
+                }
+            });
+            rule.before(tokens);
+        }
+    });
+}
+
+/**
+ * Nothing in ptah.css may style a HOST element. Rules of ptah-components.css
+ * and the bridge whose selector names no ptah class or attribute (`*`, `html`,
+ * `main`, `.scrollbar-none`, the reduced-motion block…) are confined: the
+ * root ones (`html`, `:root`) to pages whose <body> is a ptah scope (ptah's
+ * own layouts), the rest to the @scope of the utilities. Custom properties
+ * and `[x-cloak]` (Alpine's own contract) stay global.
+ */
+const ROOT_SELECTOR = /^\s*(html|:root)\s*$/;
+const BODY_IS_SCOPE = ':has(> body:is(.ptah-scope, [data-ptah-scope]))';
+
+function isolate(container) {
+    const rules = [];
+    container.walkRules((rule) => {
+        if (!inKeyframes(rule)) {
+            rules.push(rule);
+        }
+    });
+    for (const rule of rules) {
+        if (rule.nodes.filter((n) => n.type === 'decl').every(isCustom)) {
+            continue;
+        }
+        const generic = rule.selectors.filter((s) => !/ptah/.test(s) && s.trim() !== '[x-cloak]');
+        if (generic.length === 0) {
+            continue;
+        }
+        const keep = rule.selectors.filter((s) => !generic.includes(s));
+        const roots = generic.filter((s) => ROOT_SELECTOR.test(s)).map((s) => `${s.trim()}${BODY_IS_SCOPE}`);
+        const inner = generic.filter((s) => !ROOT_SELECTOR.test(s));
+
+        if (inner.length > 0) {
+            const scoped = rule.clone({ selector: scopeSelector(inner.join(', ')) });
+            const scope = postcss.atRule({ name: 'scope', params: `(${SCOPE}) to (${LIMIT})`, nodes: [] });
+            scope.append(scoped);
+            rule.after(scope);
+        }
+        if (keep.length + roots.length > 0) {
+            rule.selectors = [...keep, ...roots];
+        } else {
+            rule.remove();
+        }
+    }
+}
+
 /** Classes the subject compound REQUIRES (outside :not()/:is()/…). */
 function requiredSubjectClasses(selector) {
     return subjectNodes(selector).filter((n) => n.type === 'class').map((n) => n.value);
@@ -190,9 +275,11 @@ function ptahTokens() {
             continue;
         }
         const content = fs.readFileSync(path.join(root, rel), 'utf8');
-        for (const token of content.split(/[^A-Za-z0-9_-]+/)) {
-            if (token !== '') {
-                tokens.add(token);
+        // Twice: plain words, and words that keep a decimal point (`px-2.5`).
+        for (const token of [...content.split(/[^A-Za-z0-9_-]+/), ...content.split(/[^A-Za-z0-9_.-]+/)]) {
+            const trimmed = token.replace(/^\.+|\.+$/g, '');
+            if (trimmed !== '') {
+                tokens.add(trimmed);
             }
         }
     }
@@ -221,7 +308,7 @@ function scopeLayer(layer, { rootAliases = false, liftZ = false } = {}) {
         if (liftZ) {
             rule.walkDecls('z-index', (decl) => {
                 const n = Number(decl.value);
-                if (Number.isInteger(n) && n >= 40 && n < 1000) {
+                if (Number.isInteger(n) && n >= 40 && n < 9999) {
                     decl.value = String(n + Z_LIFT);
                 }
             });
@@ -254,9 +341,8 @@ css.each((node) => {
                 presets.push(child);
             }
         });
-        node.walkRules((rule) => {
-            rule.selector = aliasDark(rule.selector);
-        });
+        aliasDarkTokens(node);
+        isolate(node);
         presets.reverse().forEach((rule) => node.after(rule.remove()));
     }
 });
@@ -319,22 +405,104 @@ function revertContainer(source, target) {
 }
 
 revertContainer(bootstrap, revert);
+
+// A project's own Sass build extends Bootstrap's utility families ($spacers 6
+// → `.p-6 { padding: 3.5rem !important }`, $utilities maps…). Such a class is
+// not in stock Bootstrap but can carry the name of a ptah utility. So every
+// ptah class named like a member of a stock !important family is reverted
+// too, with that family's properties. Only spacing, gap, radius, shadow,
+// opacity and z-index: a colour or display family would also override the
+// layout's own repaint rules and Alpine's inline `display: none`, and a
+// size family the widths Alpine and the column resize set inline (the
+// sidebar is `w-64` + :style width).
+const FAMILY_PROPS = /^(margin|padding|gap|row-gap|column-gap|z-index|opacity|box-shadow|border(-(top|bottom)-(left|right))?-radius|border-(top|bottom|left|right|start|end)-(start|end|left|right)?-?radius)(-.*)?$/;
+const familyKey = (cls) => cls.replace(/-[^-]+$/, '');
+const families = new Map();
+const stockClasses = new Set();
+bootstrap.each((node) => {
+    if (node.type !== 'rule') {
+        return;
+    }
+    for (const sel of node.selectors) {
+        const m = /^\.([a-z][\w-]*)$/.exec(sel.trim());
+        if (!m) {
+            continue;
+        }
+        stockClasses.add(m[1]);
+        const props = [];
+        let important = true;
+        node.walkDecls((d) => {
+            if (!isCustom(d)) {
+                props.push(d.prop);
+                important &&= d.important;
+            }
+        });
+        if (props.length === 0 || !important || !m[1].includes('-')) {
+            continue;
+        }
+        const key = familyKey(m[1]);
+        const set = families.get(key) ?? new Set();
+        props.forEach((p) => set.add(p));
+        families.set(key, set);
+    }
+});
+for (const [key, props] of families) {
+    if (![...props].every((p) => FAMILY_PROPS.test(p))) {
+        families.delete(key);
+    }
+}
+let extendedRules = 0;
+for (const token of [...tokens].sort()) {
+    if (token.includes(':') || stockClasses.has(token) || !token.includes('-') || !families.has(familyKey(token))) {
+        continue;
+    }
+    const selector = selectorParser.className({ value: token }).toString();
+    const rule = postcss.rule({ selector: scopeSelector(selector) });
+    families.get(familyKey(token)).forEach((prop) => rule.append(postcss.decl({ prop, value: 'revert-layer', important: true })));
+    revert.append(rule);
+    extendedRules++;
+}
+
 css.append(revert);
 
 // ── 5. bridge + header ─────────────────────────────────────────────────────
 
 const bridge = postcss.parse(fs.readFileSync(path.join(root, 'scripts/css/bridge.css'), 'utf8'));
-bridge.walkRules((rule) => {
-    rule.selector = aliasDark(rule.selector);
-});
+aliasDarkTokens(bridge);
+isolate(bridge);
 css.append(bridge);
+
+// ── guard: nothing outside a scope styles an element that is not ptah's ────
+
+const leaks = [];
+css.walkRules((rule) => {
+    if (inKeyframes(rule) || rule.nodes.filter((n) => n.type === 'decl').every(isCustom)) {
+        return;
+    }
+    for (let p = rule.parent; p && p.type !== 'root'; p = p.parent) {
+        if (p.type === 'atrule' && (p.name === 'scope' || (p.name === 'layer' && ['theme', 'properties'].includes(p.params)))) {
+            return;
+        }
+    }
+    for (const sel of rule.selectors) {
+        if (!/ptah/.test(sel) && sel.trim() !== '[x-cloak]') {
+            leaks.push(sel);
+        }
+        if (/data-bs-theme=dark/.test(sel) && !/:where\(:root\[data-bs-theme=dark\]\)|:root\[data-bs-theme=dark\]/.test(sel)) {
+            leaks.push(sel);
+        }
+    }
+});
+if (leaks.length > 0) {
+    throw new Error(`ptah.css would style host elements outside a ptah scope:\n  ${leaks.join('\n  ')}`);
+}
 
 const bootstrapVersion = JSON.parse(fs.readFileSync(path.join(path.dirname(bootstrapPath), '../../package.json'), 'utf8')).version;
 const tailwindVersion = JSON.parse(fs.readFileSync(require.resolve('tailwindcss/package.json'), 'utf8')).version;
 const header = [
     '/*! ptah.css — ptah for hosts without Tailwind (ptah.css.framework = bootstrap).',
     ` * GENERATED by scripts/build-css.mjs (npm run build:css) — do not edit.`,
-    ` * tailwindcss ${tailwindVersion}, bootstrap ${bootstrapVersion} reverted in ${revertedRules} rules.`,
+    ` * tailwindcss ${tailwindVersion}, bootstrap ${bootstrapVersion} reverted in ${revertedRules} rules, + ${extendedRules} same-named ptah utilities.`,
     ` * inputs-hash: ${inputsHash()}`,
     ' */',
 ].join('\n');
@@ -342,4 +510,4 @@ const header = [
 const body = css.toString().replace(/\r\n/g, '\n').replace(/^\/\*! tailwindcss[^*]*\*\/\n?/, '');
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, `${header}\n${body.trim()}\n`);
-console.log(`resources/dist/ptah.css: ${(fs.statSync(OUT).size / 1024).toFixed(1)} KiB, ${revertedRules} Bootstrap rules reverted`);
+console.log(`resources/dist/ptah.css: ${(fs.statSync(OUT).size / 1024).toFixed(1)} KiB, ${revertedRules} Bootstrap rules reverted, ${extendedRules} extended-family utilities`);

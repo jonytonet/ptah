@@ -104,13 +104,39 @@ class PtahCssDistTest extends TestCase
         $this->assertStringContainsString('.px-3:where(:scope,:scope *)', $css);
     }
 
+    /**
+     * One lift for every layer from 40 up: the order among ptah's own layers
+     * stays Tailwind's (the busy veil, 40, under the navbar, 50 — a per-element
+     * exception once put the veil over the chrome), above a Bootstrap fixed
+     * navbar (1030). The dropdown that was inline `z-index: 999` is a utility
+     * now, lifted with the rest.
+     */
     #[Test]
-    public function the_overlays_sit_above_bootstraps_navbar_and_modal(): void
+    public function the_overlays_keep_tailwinds_order_above_bootstraps_navbar(): void
     {
         $css = self::dist();
 
-        $this->assertMatchesRegularExpression('/\.z-50:where\(:scope,:scope \*\) \{\s*z-index: 1060;/', $css);
-        $this->assertDoesNotMatchRegularExpression('/\.z-50:where\(:scope,:scope \*\) \{\s*z-index: 50;/', $css);
-        $this->assertStringContainsString('.ptah-navbar.z-50          { z-index: 1030; }', $css);
+        // Selectors as written in the file (`.z-\[60\]`).
+        foreach (['.z-40' => 1040, '.z-50' => 1050, '.z-\[60\]' => 1060, '.z-\[999\]' => 1999, '.z-\[9999\]' => 9999] as $class => $z) {
+            $this->assertMatchesRegularExpression('/'.preg_quote($class, '/').':where\(:scope,:scope \*\) \{\s*z-index: '.$z.';/', $css, $class);
+        }
+        $this->assertStringNotContainsString('.ptah-navbar.z-50', $css, 'No per-element exception: it breaks the order.');
+    }
+
+    /**
+     * Nothing outside a ptah scope styles a host element (the build also
+     * refuses to write such a file): the root rules only on pages whose <body>
+     * is a scope, `dark:` only for Bootstrap's page-level theme.
+     */
+    #[Test]
+    public function no_rule_reaches_the_host_page(): void
+    {
+        $css = self::dist();
+
+        $this->assertDoesNotMatchRegularExpression('/^\s*html \{\s*scrollbar-gutter/m', $css);
+        $this->assertStringContainsString('html:has(> body:is(.ptah-scope, [data-ptah-scope])) {', $css);
+        $this->assertDoesNotMatchRegularExpression('/^\s*\*, :before, :after \{/m', $css, 'The reduced-motion reset must be scoped.');
+        $this->assertDoesNotMatchRegularExpression('/(?<!:root)\[data-bs-theme=dark\] \*/', $css, 'dark: must answer :root[data-bs-theme=dark] only, like the token alias.');
+        $this->assertMatchesRegularExpression('/:root:has\(> body:is\(\.ptah-scope, \[data-ptah-scope\]\)\) \{\s*scroll-behavior: auto;/', $css);
     }
 }
