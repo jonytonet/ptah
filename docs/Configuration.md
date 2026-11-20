@@ -2635,7 +2635,7 @@ keys that the runtime does not read.)
 | `colsReverse` | bool | `false` | Reverse value order (for arrays) |
 | `colsMetodoCustom` | string | `''` | `Class\method(%field%, 'literal')` — calls `method` on `App\Services\Class` (the `App\Services\` prefix is always added; `/` also separates namespaces) with the row's field values; the result is shown as text (`colsMetodoRaw: true` for HTML). A column with it cannot be sorted |
 | `colsPlaceholder` | string | `''` | Input placeholder |
-| `colsDefaultValue` | mixed | `null` | Default value on create |
+| `colsDefaultValue` | mixed | `null` | Default value on create. Unset on a `boolean` NOT NULL column (a switch), the column's own `DEFAULT` is used, so a switch on a `DEFAULT 1` column opens on (1.59.2) |
 
 ---
 
