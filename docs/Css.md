@@ -1,7 +1,7 @@
 # CSS — Tailwind or Bootstrap
 
-ptah's screens are written with Tailwind utility classes. A project chooses at
-install time which CSS framework **it** uses; ptah adapts:
+ptah's screens are written with Tailwind utility classes. Since 1.60.0 a project
+chooses at install time which CSS framework **it** uses; ptah adapts:
 
 | | Tailwind (default) | Bootstrap 5.3 |
 |---|---|---|

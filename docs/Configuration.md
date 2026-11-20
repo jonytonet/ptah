@@ -112,7 +112,7 @@ column means the key has no `.env` override (edit the published file instead).
 | `theme.colors.warn` | `PTAH_COLOR_WARN` | `#f59e0b` | `config/ptah.php` comments |
 | `theme.colors.dark` | `PTAH_COLOR_DARK` | `#1e293b` | `config/ptah.php` comments |
 
-### CSS framework of the host (`css.framework`)
+### CSS framework of the host (`css.framework`, since 1.60.0)
 
 | Key | ENV | Default | Reference |
 |-----|-----|---------|-----------|
