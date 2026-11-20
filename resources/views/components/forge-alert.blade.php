@@ -82,7 +82,7 @@
         @if ($title)
             <p class="font-semibold text-sm mb-0.5 {{ $c['title'] }}">{{ $title }}</p>
         @endif
-        <div class="text-sm {{ $c['text'] }}">{{ $slot }}</div>
+        <div class="text-sm {{ $c['text'] }}">{{ \Ptah\Support\CssFramework::slot($slot, $attributes) }}</div>
     </div>
 
     @if ($closable)

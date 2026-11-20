@@ -32,7 +32,7 @@
                  @click="ptahRowNav($event, {{ \Illuminate\Support\Js::from($rowLink) }})"
                  @auxclick="ptahRowNav($event, {{ \Illuminate\Support\Js::from($rowLink) }})"
              @endif
-             class="flex flex-col border rounded-lg p-4 transition-shadow ptah-c-card hover:shadow-md
+             class="flex flex-col border-[1px] rounded-[var(--radius-lg)] p-[calc(var(--spacing)*4)] transition-shadow ptah-c-card hover:shadow-md
                     {{ $rowLink ? 'cursor-pointer' : '' }}
                     {{ $isSelected ? 'ptah-c-tr_selected' : '' }}">
 

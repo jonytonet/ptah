@@ -8,7 +8,7 @@
         @else
             <ol class="space-y-4">
                 @foreach ($historyItems as $i => $item)
-                    <li wire:key="history-{{ $i }}" class="rounded-md border p-3" style="border-color: var(--ptah-line); background: var(--ptah-surface)">
+                    <li wire:key="history-{{ $i }}" class="rounded-md border p-3 border-(--ptah-line)" style="background: var(--ptah-surface)">
                         <div class="flex flex-wrap items-baseline justify-between gap-2">
                             <p class="text-sm font-semibold" style="color: var(--ptah-text-strong)">
                                 {{ __('ptah::ui.history_event_'.$item['event']) }}

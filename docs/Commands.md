@@ -38,10 +38,12 @@ php artisan ptah:install --demo
 php artisan ptah:install --boost
 php artisan ptah:install --stack=react
 php artisan ptah:install --stack=vue
+php artisan ptah:install --css=bootstrap
 ```
 
 **Options:**
 - ``--stack=livewire|react|vue`` — What draws the screens (default ``livewire``; since 1.59.0). For ``react``/``vue`` it also sets ``PTAH_STACK`` and ``PTAH_CRUD_API=true`` in ``.env``, writes the entry file (``resources/js/ptah-app.jsx`` or ``.js``) and ``routes/ptah-screens.php``, and prepares ``vite.config.js`` and ``package.json``. Safe to run again; running it with another value switches the stack. See [Stacks.md](Stacks.md)
+- ``--css=tailwind|bootstrap`` — The host's CSS framework (default ``tailwind``, or the one already configured). With ``bootstrap`` it sets ``PTAH_CSS=bootstrap`` in ``.env``, publishes ptah's pre-compiled stylesheet (tag ``ptah-assets`` → ``public/vendor/ptah/ptah.css``) and clears the compiled views — and does **not** touch ``app.css``, ``vite.config.js`` or ``package.json`` (step 5 below is skipped). See [Css.md](Css.md)
 - ``--force`` — Overwrites existing files without asking
 - ``--skip-npm`` — Does not run ``npm install`` and ``npm run build``
 - ``--demo`` — Installs demo data (companies, departments, roles, menu)
@@ -53,7 +55,7 @@ php artisan ptah:install --stack=vue
 2. **Publishes stubs** → ``stubs/ptah/`` (for customization)
 3. **Publishes migrations** → ``database/migrations/``
 4. **Publishes translations** → ``lang/vendor/ptah/``
-5. **Configures Tailwind CSS** → Injects design tokens into ``resources/css/app.css``
+5. **Configures Tailwind CSS** → Injects design tokens into ``resources/css/app.css`` (with ``--css=bootstrap``: publishes ``public/vendor/ptah/ptah.css`` instead)
 6. **Runs migrations** → Creates ``ptah_*`` tables
 7. **Creates storage symlink** → ``php artisan storage:link``
 8. **Default admin seed** → Creates company and admin user (if migrations ran)
@@ -1043,7 +1045,8 @@ Ptah exposes several groups of publishable files via ``vendor:publish``. Each ta
 | ``ptah-views-base-crud`` | BaseCrud views only | ``resources/views/vendor/ptah/livewire/base-crud/`` |
 | ``ptah-views-auth`` | Auth views and the ``forge-auth`` layout | ``resources/views/vendor/ptah/livewire/auth/``, ``…/layouts/forge-auth.blade.php`` |
 | ``ptah-views-ai`` | AI agent views only | ``resources/views/vendor/ptah/livewire/ai/`` |
-| ``ptah-assets`` | Forge CSS | ``resources/css/vendor/ptah/`` |
+| ``ptah-assets`` | The pre-compiled stylesheet of a host without Tailwind ([Css.md](Css.md)) — re-publish with ``--force`` after upgrading ptah | ``public/vendor/ptah/ptah.css`` |
+| ``ptah-css-sources`` | Forge CSS sources (``forge.css``, ``ptah-components.css``) — was ``ptah-assets`` before the Bootstrap mode | ``resources/css/vendor/ptah/`` |
 | ``ptah-menu-registry`` | MenuRegistry.php (auto-menu) | ``database/seeders/MenuRegistry.php`` |
 | ``ptah-api`` | BaseResponse, BaseApiController, SwaggerInfo | ``app/Responses/``, ``app/Http/Controllers/API/`` |
 | ``ptah-auth`` | 2FA migration | ``database/migrations/`` |

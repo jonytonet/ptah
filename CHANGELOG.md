@@ -7,6 +7,68 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Bootstrap projects: `ptah:install --css=bootstrap`** (`PTAH_CSS`,
+  `ptah.css.framework`). A project on Bootstrap 5.3 uses ptah without
+  installing Tailwind: the installer leaves `app.css`, `vite.config.js` and
+  `package.json` alone and publishes a pre-compiled stylesheet,
+  `public/vendor/ptah/ptah.css` (tag `ptah-assets`), which every ptah layout
+  links before the project's own CSS (a project rule overriding a ptah token
+  wins by source order, as in a Tailwind project). The whole Livewire front is covered —
+  layout (sidebar, navbar, bell, company switcher, assistant, toasts), BaseCrud
+  in every view, the config editor, administration screens, login/profile,
+  error pages, the `<x-forge-*>` kit and the screens `ptah:forge` generates —
+  with the same look as in a Tailwind project (identical pixels in ptah's
+  layout apart from the stacking order, measured in Chrome).
+  The stylesheet only applies inside ptah's own markup (CSS `@scope`), and
+  neutralises Bootstrap's reboot and `!important` utilities there; the
+  project's Bootstrap markup keeps Bootstrap's meaning everywhere else —
+  including in the layout's slot and in the slots of an `<x-forge-*>` written
+  in the project's views. ptah's modals, menus and toasts sit above
+  Bootstrap's fixed navbar and modal. See [docs/Css.md](docs/Css.md).
+- **`<x-ptah-assets />` / `@ptahAssets`**: a BaseCrud (or any ptah screen)
+  inside a layout of the project's own. It brings what only ptah's layout gave
+  a screen: the stylesheet (Bootstrap mode), the icon fonts, the brand colours,
+  the dark/light boot and the toast host. In a Bootstrap layout the screen
+  follows the project's theme — `--bs-primary`, the body/border/secondary
+  colours, font and radius, and `data-bs-theme="dark"` — unless `PTAH_COLOR_*`
+  or the project's own `:root { --ptah-… }` say otherwise.
+- `npm run build:css` builds `resources/dist/ptah.css` from the package's
+  views, stubs and renderers (Tailwind 4.3.5, Bootstrap 5.3.9 pinned as
+  devDependencies); `PtahCssDistTest` fails when a source changed without the
+  rebuild.
+
+### Changed
+
+- **The `ptah-assets` publish tag now publishes only
+  `public/vendor/ptah/ptah.css`.** The Forge CSS sources it used to copy to
+  `resources/css/vendor/ptah/` moved to the new tag `ptah-css-sources`
+  (`php artisan vendor:publish --tag=ptah-css-sources`).
+- Bootstrap mode, after review: one z-index lift (+1000) keeps Tailwind's
+  order among ptah's layers (the busy veil stays under the navbar); the
+  stylesheet link is versioned by the PUBLISHED file and a stale copy is
+  logged; `dark:` answers only `:root[data-bs-theme=dark]`; nothing of
+  ptah.css reaches the host page (`html` rules only on ptah's layouts, the
+  reduced-motion reset scoped, the build refuses leaks); Bootstrap's smooth
+  scroll is off on ptah's layouts; classes a custom Bootstrap build adds to the
+  spacing/gap/radius/shadow/opacity/z-index families are neutralised too; the
+  Blade compile step acts only in bootstrap mode, skips `@verbatim` and
+  comments and only marks the package's `<x-forge-*>`; a host subclass of a
+  Livewire component rendering its own view gets no scope; the pagination
+  view and the dashboard widgets open their own scope when a host renders
+  them; inline border colours moved to utilities (they were lost under
+  Bootstrap's `.border !important`), guarded by
+  `BootstrapImportantInlineStyleTest`; `ptah:upgrade-check` also lists
+  published components, generated page headers and published translations
+  that predate the mode; a `console.warn` in browsers without CSS `@scope`.
+- The dashboard widget tone `primary` uses `--ptah-primary-strong` (AA on the
+  dark surface) and `<x-forge-tab>` shows a focus ring to the keyboard.
+
+---
+
 ## [1.59.2] - 2026-11-20
 
 Reported by a production host (PetPlace) on 1.59.1.

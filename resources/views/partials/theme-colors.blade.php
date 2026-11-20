@@ -5,7 +5,7 @@
      in ptah-components.css (via --ptah-primary + color-mix). One source of truth,
      no view publishing, survives composer update.
      ═══════════════════════════════════════════════════════════════════════ --}}
-@php $ptahColors = config('ptah.theme.colors', []); @endphp
+@php $ptahColors = \Ptah\Support\CssFramework::themeColors(config('ptah.theme.colors', []), $ptahEmbedded ?? false); @endphp
 @if (! empty($ptahColors))
 <style id="ptah-theme-colors">
     :root {

@@ -24,7 +24,8 @@ use Ptah\Commands\PreferencesRealignCommand;
  *  - stubs published to stubs/ptah → ptah:forge keeps generating the old code;
  *  - the user_preferences FK vs the configured identity (1.34.6);
  *  - migrations of the package not yet run;
- *  - the structure editor, closed by default since 1.34.8.
+ *  - the structure editor, closed by default since 1.34.8;
+ *  - in Bootstrap mode, a published ptah.css older than the installed package.
  *
  * Findings are `level` warn (needs an action) or info, with the action.
  */
@@ -46,7 +47,113 @@ final class UpgradeInspector
             ...self::structureEditor(),
             ...self::boost(),
             ...self::composerConstraint(),
+            ...self::stylesheet(),
+            ...self::bootstrapViews(),
         ];
+    }
+
+    /**
+     * Bootstrap mode: views the host owns that predate it. Components published
+     * to resources/views/vendor/ptah/components lack the scope markers (they
+     * shadow the package's); `ptah:forge` screens generated before the switch
+     * have a page header outside ptah's scope (in dark its title is #212529 on
+     * the dark canvas); a published translation that carries markup can use a
+     * class ptah.css was never compiled with.
+     *
+     * @return list<array<string, string>>
+     */
+    public static function bootstrapViews(): array
+    {
+        if (! CssFramework::isBootstrap()) {
+            return [];
+        }
+
+        $findings = [];
+
+        $components = resource_path('views/vendor/ptah/components');
+        $stale = is_dir($components)
+            ? array_values(array_filter(self::files($components, '.blade.php'), fn (string $f): bool => ! str_contains((string) file_get_contents($components.'/'.$f), 'CssFramework')))
+            : [];
+        if ($stale !== []) {
+            $findings[] = [
+                'check' => 'stylesheet',
+                'level' => 'warn',
+                'message' => 'Published components without the Bootstrap-mode scope markers (they shadow the package\'s): '.self::list($stale),
+                'action' => 'delete them from resources/views/vendor/ptah/components, or re-apply your changes over the current ones (vendor:publish --tag=ptah-views-components --force)',
+            ];
+        }
+
+        $views = (string) config('ptah.paths.views', resource_path('views'));
+        $headers = is_dir($views)
+            ? array_values(array_filter(self::files($views, '.blade.php'), function (string $f) use ($views): bool {
+                $content = (string) file_get_contents($views.'/'.$f);
+
+                return ! str_starts_with($f, 'vendor/') && str_contains($content, 'ptah-page-title') && ! str_contains($content, CssFramework::SCOPE_ATTRIBUTE);
+            }))
+            : [];
+        if ($headers !== []) {
+            $findings[] = [
+                'check' => 'stylesheet',
+                'level' => 'warn',
+                'message' => 'Screens generated before Bootstrap mode, page header outside ptah\'s scope (unstyled; its title is unreadable in dark): '.self::list($headers),
+                'action' => 'add data-ptah-scope to the header <div> of each, or regenerate it (ptah:forge … --force)',
+            ];
+        }
+
+        $dist = (string) @file_get_contents(CssFramework::distPath());
+        $missing = [];
+        foreach (glob(lang_path('vendor/ptah/*/ui.php')) ?: [] as $file) {
+            preg_match_all('/class=\\\\?["\']([^"\'\\\\]+)/', (string) file_get_contents($file), $m);
+            foreach (preg_split('/\s+/', implode(' ', $m[1])) ?: [] as $class) {
+                $escaped = (string) preg_replace('/[^A-Za-z0-9_-]/', '\\\\$0', $class);
+                if ($class !== '' && preg_match('/\.'.preg_quote($escaped, '/').'(?![\w-])/', $dist) !== 1) {
+                    $missing[] = $class;
+                }
+            }
+        }
+        if ($missing !== []) {
+            $findings[] = [
+                'check' => 'stylesheet',
+                'level' => 'warn',
+                'message' => 'Published translations (lang/vendor/ptah) use classes ptah.css does not have: '.self::list(array_values(array_unique($missing))),
+                'action' => 'use in the published line the classes of the package\'s own line, or style that text with a --ptah-* token',
+            ];
+        }
+
+        return $findings;
+    }
+
+    /**
+     * Bootstrap mode (ptah.css.framework): public/vendor/ptah/ptah.css is a
+     * COPY of the package's stylesheet, and `composer update` does not refresh
+     * it — a view of the new version with a class the old copy lacks renders
+     * unstyled. The copy's header carries the hash of its build.
+     *
+     * @return list<array<string, string>>
+     */
+    public static function stylesheet(): array
+    {
+        if (! CssFramework::isBootstrap()) {
+            return [];
+        }
+
+        $published = public_path(CssFramework::PUBLIC_PATH);
+        $head = is_file($published) ? (string) file_get_contents($published, false, null, 0, 1024) : null;
+
+        $dist = CssFramework::distHash();
+
+        if ($head !== null && $dist !== '' && CssFramework::publishedHash() === $dist) {
+            return [];
+        }
+
+        return [[
+            'check' => 'stylesheet',
+            'level' => 'warn',
+            'message' => $head === null
+                ? 'PTAH_CSS=bootstrap, but public/'.CssFramework::PUBLIC_PATH.' does not exist: ptah\'s screens render unstyled'
+                : 'public/'.CssFramework::PUBLIC_PATH.' is not the stylesheet of the installed ptah: screens of this version can render unstyled',
+            'action' => 'php artisan vendor:publish --tag=ptah-assets --force',
+        ]];
     }
 
     /**

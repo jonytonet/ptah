@@ -48,8 +48,16 @@
          dos presets de aparência. Sem este ramo, os atributos data-ptah-* que o cookie
          acabou de colocar no <html> não têm nenhuma regra para casar nesta tela, e o
          tema escolhido simplesmente não aparece no login. O CDN abaixo continua sendo
-         o fallback para projeto sem build (onde o pacote já não tem CSS de componente). --}}
-    @if(file_exists(public_path('build/manifest.json')))
+         o fallback para projeto sem build (onde o pacote já não tem CSS de componente).
+         Bootstrap (ptah.css.framework): sem Tailwind — o CSS pré-compilado do ptah
+         e depois as entradas Vite do host que existirem (mesma ordem do
+         forge-dashboard-layout; docs/Css.md). --}}
+    @if(\Ptah\Support\CssFramework::isBootstrap())
+        {{ \Ptah\Support\CssFramework::stylesheetTag() }}
+        @if(($ptahViteEntries = \Ptah\Support\CssFramework::viteEntries()) !== [])
+            @vite($ptahViteEntries)
+        @endif
+    @elseif(file_exists(public_path('build/manifest.json')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
     <script src="https://cdn.tailwindcss.com"></script>
@@ -92,7 +100,7 @@
 
     @stack('styles')
 </head>
-<body class="min-h-screen ptah-c-auth_bg flex flex-col items-center justify-center p-4 font-sans antialiased">
+<body{{ \Ptah\Support\CssFramework::scopeAttribute() }} class="min-h-screen ptah-c-auth_bg flex flex-col items-center justify-center p-4 font-sans antialiased">
 
     {{-- Branding --}}
     <div class="mb-8 text-center">

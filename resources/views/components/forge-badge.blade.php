@@ -34,8 +34,8 @@
     $badgeSize = $dot ? 'h-3 w-3' : 'min-w-[1.25rem] h-5 px-1 text-[10px] font-bold';
 @endphp
 
-<span class="relative inline-flex {{ $attributes->get('class', '') }}">
-    {{ $slot }}
+<span{{ \Ptah\Support\CssFramework::hostScope($attributes) }} class="relative inline-flex {{ $attributes->get('class', '') }}">
+    {{ \Ptah\Support\CssFramework::slot($slot, $attributes) }}
     <span class="absolute {{ $posClass }} inline-flex items-center justify-center rounded-full {{ $colorClass }} {{ $badgeSize }}">
         @if ($dot)
             <span class="absolute inline-flex h-full w-full rounded-full {{ $colorMap[$color] ?? $colorMap['danger'] }} opacity-75 animate-ping"></span>

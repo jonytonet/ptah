@@ -95,7 +95,7 @@
     $isInvalid = $error !== null && $error !== '';
 @endphp
 
-<div class="ptah-input-wrapper w-full" @if($isPassword) x-data="{ _show: false }" @endif>
+<div{{ \Ptah\Support\CssFramework::hostScope($attributes) }} class="ptah-input-wrapper w-full" @if($isPassword) x-data="{ _show: false }" @endif>
     @if ($label)
         <label for="{{ $inputId }}" class="block text-xs font-medium mb-1">
             {{ $label }}@if ($required) <span class="text-red-500 ml-0.5">*</span>@endif

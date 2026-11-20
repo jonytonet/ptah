@@ -127,13 +127,13 @@
 
         {{-- Body --}}
         <div class="flex-1 overflow-y-auto px-6 py-5 text-sm text-gray-700 dark:text-slate-300">
-            {{ $slot }}
+            {{ \Ptah\Support\CssFramework::slot($slot, $attributes) }}
         </div>
 
         {{-- Footer --}}
         @if (isset($footer))
             <div class="shrink-0 px-6 py-4 border-t border-gray-100 dark:border-slate-700 flex justify-end gap-3">
-                {{ $footer }}
+                {{ \Ptah\Support\CssFramework::slot($footer, $attributes) }}
             </div>
         @endif
     </div>

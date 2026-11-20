@@ -34,22 +34,22 @@
 <div {{ $attributes->merge(['class' => "rounded-md {$ptahCardClass} {$typeClass} {$shadowClass} {$hoverClass}"]) }}>
 
     @if (isset($img))
-        <div class="w-full overflow-hidden rounded-t-md">{{ $img }}</div>
+        <div class="w-full overflow-hidden rounded-t-md">{{ \Ptah\Support\CssFramework::slot($img, $attributes) }}</div>
     @endif
 
     @if (isset($header))
         <div class="px-5 pt-5 pb-3 border-b {{ $type === 'dark' ? 'border-dark-dark' : ($type === 'default' ? '' : 'border-gray-100') }}">
-            {{ $header }}
+            {{ \Ptah\Support\CssFramework::slot($header, $attributes) }}
         </div>
     @endif
 
     @if ($slot->isNotEmpty())
-        <div class="p-5">{{ $slot }}</div>
+        <div class="p-5">{{ \Ptah\Support\CssFramework::slot($slot, $attributes) }}</div>
     @endif
 
     @if (isset($footer))
         <div class="px-5 py-3 border-t {{ $type === 'dark' ? 'border-dark-dark' : ($type === 'default' ? '' : 'border-gray-100') }}">
-            {{ $footer }}
+            {{ \Ptah\Support\CssFramework::slot($footer, $attributes) }}
         </div>
     @endif
 </div>

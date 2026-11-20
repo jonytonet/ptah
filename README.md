@@ -235,6 +235,19 @@ navigation. `ptah:forge` generates each entity's screen for the stack you
 chose, and you can switch later by running the installer with the other
 `--stack`. See **[Stacks →](docs/Stacks.md)**.
 
+### Tailwind or Bootstrap
+
+```bash
+php artisan ptah:install                  # Tailwind (default) — wires your app.css
+php artisan ptah:install --css=bootstrap  # Bootstrap 5.3 — no Tailwind in your project
+```
+
+With `--css=bootstrap` ptah ships its own pre-compiled stylesheet
+(`public/vendor/ptah/ptah.css`), isolated from your Bootstrap: ptah's screens
+keep their look, your Bootstrap markup keeps its meaning — even next to them.
+A BaseCrud can also live in your own Bootstrap layout (`<x-ptah-assets />` in
+the `<head>`) and follows your theme there. See **[CSS →](docs/Css.md)**.
+
 ### From GitHub (latest dev version)
 
 Add to your `composer.json` before requiring:

@@ -112,6 +112,12 @@ column means the key has no `.env` override (edit the published file instead).
 | `theme.colors.warn` | `PTAH_COLOR_WARN` | `#f59e0b` | `config/ptah.php` comments |
 | `theme.colors.dark` | `PTAH_COLOR_DARK` | `#1e293b` | `config/ptah.php` comments |
 
+### CSS framework of the host (`css.framework`, since 1.60.0)
+
+| Key | ENV | Default | Reference |
+|-----|-----|---------|-----------|
+| `css.framework` | `PTAH_CSS` | `tailwind` | `tailwind`: the host compiles ptah's classes with its own Tailwind (`ptah:install` wires `app.css`). `bootstrap`: the host has no Tailwind; ptah links its pre-compiled, scoped stylesheet (`public/vendor/ptah/ptah.css`, tag `ptah-assets`) after the host's CSS, and screens embedded in a host layout with `<x-ptah-assets />` follow the host's Bootstrap theme. Set by `ptah:install --css=bootstrap`; read with a default, so a `config/ptah.php` published before the key works. Any other value counts as `tailwind` — [Css.md](Css.md) |
+
 ### Neutral CSS tokens (`resources/css/ptah-components.css`)
 
 Besides the brand/semantic colors above (config-driven, injected via `theme-colors` partial), the BaseCrud UI's own neutral chrome (backgrounds, borders, text) is tokenized as CSS custom properties, declared once in `:root` (light defaults) with dark-mode overrides in a `.ptah-dark` block right after it. These are **not** exposed through `config/ptah.php` — they are pure CSS, overridable by any host app that loads its own stylesheet after Ptah's `@import`.

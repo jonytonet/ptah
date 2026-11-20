@@ -112,7 +112,7 @@
         : \Illuminate\Support\Js::from($resolvedSelected, JSON_INVALID_UTF8_SUBSTITUTE);
 @endphp
 
-<div class="ptah-select-wrapper w-full">
+<div{{ \Ptah\Support\CssFramework::hostScope($attributes) }} class="ptah-select-wrapper w-full">
     @if ($label)
         <label class="block text-xs font-medium mb-1">
             {{ $label }}@if ($required) <span class="ptah-c-field_err ml-0.5">*</span>@endif

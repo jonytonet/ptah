@@ -94,8 +94,8 @@
                 x-cloak
                 id="sd-result-{{ $key }}"
                 role="listbox"
-                class="absolute mt-1 w-full min-w-[200px] max-w-[600px] max-h-[400px] overflow-y-auto border rounded-md ptah-c-dd"
-                style="z-index: 999; {{ $startList }}: 100%;"
+                class="absolute z-[999] mt-1 w-full min-w-[200px] max-w-[600px] max-h-[400px] overflow-y-auto border rounded-md ptah-c-dd"
+                style="{{ $startList }}: 100%;"
             >
                 <template x-for="(item, i) in results" :key="String(item._value) + '-' + i">
                     <span

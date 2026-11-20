@@ -96,8 +96,10 @@
          required: every rule below has a literal fallback. No JS, no CDN, no
          webfont — this page must render when the rest of the app cannot.
          See the @php block above for why the manifest ENTRY, not just the
-         manifest file, has to be confirmed first. --}}
-    @if ($ptahErrHasCss)
+         manifest file, has to be confirmed first.
+         Bootstrap mode (ptah.css.framework): the tokens come from ptah's own
+         pre-compiled stylesheet, linked before the host's CSS. --}}
+    {{ \Ptah\Support\CssFramework::stylesheetTag() }}@if ($ptahErrHasCss)
         @vite([$ptahErrCssEntry])
     @endif
 
@@ -130,7 +132,10 @@
 
         html, body { height: 100%; }
 
-        body {
+        /* `html body`, not `body`: in Bootstrap mode ptah.css neutralises
+           Bootstrap's `body` rule inside the ptah scope with a selector of
+           the same weight, which would take this one along (docs/Css.md). */
+        html body {
             margin: 0;
             display: flex;
             align-items: center;
@@ -247,7 +252,7 @@
         }
     </style>
 </head>
-<body>
+<body{{ \Ptah\Support\CssFramework::scopeAttribute() }}>
     <main class="err">
         @hasSection('glyph')
             <div class="err-glyph" aria-hidden="true">@yield('glyph')</div>

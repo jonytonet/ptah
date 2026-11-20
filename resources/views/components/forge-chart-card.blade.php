@@ -16,7 +16,7 @@
     @if($title || isset($header))
         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             @isset($header)
-                {{ $header }}
+                {{ \Ptah\Support\CssFramework::slot($header, $attributes) }}
             @else
                 <div>
                     @if($title)
@@ -28,16 +28,16 @@
                 </div>
             @endisset
             @isset($legend)
-                <div>{{ $legend }}</div>
+                <div>{{ \Ptah\Support\CssFramework::slot($legend, $attributes) }}</div>
             @endisset
         </div>
     @endif
 
-    <div class="p-5">{{ $slot }}</div>
+    <div class="p-5">{{ \Ptah\Support\CssFramework::slot($slot, $attributes) }}</div>
 
     @isset($footer)
         <div class="px-5 py-3 border-t border-gray-100 ptah-c-chart_footer">
-            {{ $footer }}
+            {{ \Ptah\Support\CssFramework::slot($footer, $attributes) }}
         </div>
     @endisset
 </div>

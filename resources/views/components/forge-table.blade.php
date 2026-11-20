@@ -125,7 +125,7 @@
                     </div>
                 @endforeach
                 @isset($actions)
-                    <div class="pt-2 border-t border-gray-100">{{ $actions }}</div>
+                    <div class="pt-2 border-t border-gray-100">{{ \Ptah\Support\CssFramework::slot($actions, $attributes) }}</div>
                 @endisset
             </div>
         </template>
@@ -171,7 +171,7 @@
                             <td class="px-4 py-3 text-sm text-dark" x-text="row['{{ $header['key'] }}'] ?? '-'"></td>
                         @endforeach
                         @isset($actions)
-                            <td class="px-4 py-3 text-right">{{ $actions }}</td>
+                            <td class="px-4 py-3 text-right">{{ \Ptah\Support\CssFramework::slot($actions, $attributes) }}</td>
                         @endisset
                     </tr>
                 </template>

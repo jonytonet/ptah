@@ -29,7 +29,7 @@
     {{-- ── Modal Enterprise ─────────────────────────────────────────────────── --}}
     {{-- ══════════════════════════════════════════════════════════════════════ --}}
     @teleport('body')
-    <div x-data="crudConfigApp(@js($formEditFields), @js($customFilters), @js($conditionStyles))" x-init="init()"
+    <div{{ \Ptah\Support\CssFramework::scopeAttribute() }} x-data="crudConfigApp(@js($formEditFields), @js($customFilters), @js($conditionStyles))" x-init="init()"
         x-show="$wire.showModal" x-cloak
         x-on:keydown.escape.window="if ($wire.showModal) { $wire.showModal = false; $wire.closeModal(); }"
         class="fixed inset-0 z-[9999] flex items-center justify-center ptah-cfg">
@@ -2094,7 +2094,7 @@
                             <p class="text-[11px] font-mono text-primary bg-primary-light px-2 py-1 rounded mt-2">{{
                                 $style['style'] ?? '' }}</p>
                             @if (!empty($style['style']))
-                            <div class="mt-2 px-3 py-1.5 text-xs rounded" style="{{ $style['style'] }}">
+                            <div class="mt-[calc(var(--spacing)*2)] px-[calc(var(--spacing)*3)] py-[calc(var(--spacing)*1.5)] text-xs rounded-[.25rem]" style="{{ $style['style'] }}">
                                 {{ __('ptah::ui.cfg_style_preview_row') }}
                             </div>
                             @endif
@@ -2151,7 +2151,7 @@
                                 class="flex items-center gap-3 px-4 py-3 border rounded-md bg-slate-50 border-slate-200">
                                 <span class="text-[11px] text-slate-400 shrink-0">{{
                                     __('ptah::ui.cfg_style_preview_label') }}</span>
-                                <div class="flex-1 px-3 py-1.5 text-xs rounded" style="{{ $formDataStyle['style'] }}">
+                                <div class="flex-1 px-[calc(var(--spacing)*3)] py-[calc(var(--spacing)*1.5)] text-xs rounded-[.25rem]" style="{{ $formDataStyle['style'] }}">
                                     ID &nbsp;·&nbsp; Nome do Registro &nbsp;·&nbsp; Valor &nbsp;·&nbsp; Status
                                 </div>
                             </div>
@@ -2804,7 +2804,7 @@
                             $cfgSelectFields = $cfgFieldList->filter(fn ($c) => ! empty($c['colsSelect']));
                             $cfgDateFields = $cfgFieldList->filter(fn ($c) => in_array($c['colsTipo'] ?? '', ['date', 'datetime', 'datetime-local'], true) || str_ends_with((string) $c['colsNomeFisico'], '_at') || str_ends_with((string) $c['colsNomeFisico'], '_date'));
                         @endphp
-                        <div class="p-5 space-y-4 border rounded-md" style="border-color: var(--ptah-line-strong); background: var(--ptah-surface)">
+                        <div class="p-5 space-y-4 border rounded-md border-(--ptah-line-strong)" style="background: var(--ptah-surface)">
                             <h3 class="pb-2 text-sm font-semibold border-b" style="color: var(--ptah-text-strong); border-color: var(--ptah-line)">{{ __('ptah::ui.cfg_features') }}</h3>
 
                             <div class="grid gap-4 sm:grid-cols-3">

@@ -7,6 +7,12 @@
 > [Stacks.md](Stacks.md#using-the-components-yourself). Os tokens de tema e os
 > eixos de aparência descritos aqui valem nas três stacks.
 
+> **Projeto em Bootstrap (`PTAH_CSS=bootstrap`):** os exemplos daqui usam
+> classes do Tailwind, que o `ptah.css` pré-compilado só aplica dentro de um
+> escopo do ptah. Numa view sua, ponha `data-ptah-scope` na raiz do markup
+> Tailwind (os `<x-forge-*>` já recebem o escopo sozinhos; o conteúdo dos
+> slots deles é tratado como markup Bootstrap). Veja [Css.md](Css.md#4-how-the-isolation-works-and-its-rules).
+
 **Público:** devs de projetos consumidores (`petplace/` e afins) que criam uma tela
 própria — não gerada por `ptah:forge` nem baseada em `<x-base-crud>` — mas que
 ainda precisa parecer, e se comportar, como o resto do produto Ptah: mesmo tema,

@@ -6,7 +6,7 @@
     $calMonth = \Carbon\CarbonImmutable::createFromFormat('!Y-m', $cal['month'])->locale(app()->getLocale());
     $weekdays = explode(',', __('ptah::ui.calendar_weekdays'));
 @endphp
-<div class="rounded-md border" style="border-color: var(--ptah-line-strong); background: var(--ptah-surface)">
+<div class="rounded-md border border-(--ptah-line-strong)" style="background: var(--ptah-surface)">
     <header class="flex items-center justify-between gap-2 px-3 py-2 border-b" style="border-color: var(--ptah-line); background: var(--ptah-panel)">
         <x-forge-button wire:click="calendarShift(-1)" color="dark" flat size="sm" :aria-label="__('ptah::ui.calendar_prev')">‹</x-forge-button>
         <div class="flex items-center gap-2">

@@ -3,17 +3,18 @@
      ou um grupo nomeado: @include('ptah::dashboard.widgets', ['group' => 'financeiro']) --}}
 @php
     $ptahWidgets = app(\Ptah\Services\DashboardService::class)->visibleWidgets(isset($group) && is_string($group) ? $group : null);
-    $ptahTone = fn (string $c) => ['primary' => 'var(--ptah-primary)', 'success' => 'var(--ptah-success-strong)', 'danger' => 'var(--ptah-danger-strong)', 'warn' => 'var(--ptah-warn-strong)'][$c] ?? 'var(--ptah-primary)';
+    $ptahTone = fn (string $c) => ['primary' => 'var(--ptah-primary-strong)', 'success' => 'var(--ptah-success-strong)', 'danger' => 'var(--ptah-danger-strong)', 'warn' => 'var(--ptah-warn-strong)'][$c] ?? 'var(--ptah-primary-strong)';
 @endphp
-<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+{{-- Hosts @include this anywhere: in Bootstrap mode it opens its own ptah scope. --}}
+<div{{ \Ptah\Support\CssFramework::scopeAttribute() }} class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
     @foreach ($ptahWidgets as $w)
         @php
             $wide = in_array($w['type'], ['trend', 'latest', 'breakdown'], true);
             $tag = $w['link'] ? 'a' : 'div';
         @endphp
         <{{ $tag }} @if ($w['link']) href="{{ $w['link'] }}"@ptahNavigate($w['link']) @endif
-            class="block rounded-md border p-4 transition-colors {{ $wide ? 'sm:col-span-2' : '' }} {{ $w['link'] ? 'hover:underline-offset-2' : '' }}"
-            style="border-color: var(--ptah-line-strong); background: var(--ptah-surface)">
+            class="block rounded-md border p-4 transition-colors {{ $wide ? 'sm:col-span-2' : '' }} {{ $w['link'] ? 'hover:underline-offset-2' : '' }} border-(--ptah-line-strong)"
+            style="background: var(--ptah-surface)">
             <p class="text-xs font-semibold uppercase tracking-wide ptah-c-muted">{{ $w['label'] }}</p>
 
             @if ($w['error'])

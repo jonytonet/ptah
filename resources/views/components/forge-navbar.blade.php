@@ -60,7 +60,7 @@
             </button>
 
             @isset($brand)
-                {{ $brand }}
+                {{ \Ptah\Support\CssFramework::slot($brand, $attributes) }}
             @else
                 <a href="/"@ptahNavigate('/') class="flex items-center gap-2">
                     @php
@@ -138,7 +138,7 @@
              independente de quantos irmaos estao visiveis. --}}
         <div class="col-start-3 flex items-center justify-end gap-1 md:gap-2">
             @isset($actions)
-                {{ $actions }}
+                {{ \Ptah\Support\CssFramework::slot($actions, $attributes) }}
             @else
                 {{-- Dark Mode toggle button --}}
                 <button

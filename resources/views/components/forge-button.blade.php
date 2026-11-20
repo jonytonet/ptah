@@ -185,5 +185,5 @@
         <span class="shrink-0">{!! $icon !!}</span>
     @endif
 
-    <span>{{ $slot }}</span>
+    <span>{{ \Ptah\Support\CssFramework::slot($slot, $attributes) }}</span>
 </{{ $tag }}>

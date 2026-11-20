@@ -25,7 +25,7 @@
     $colorClass = $colors[$color] ?? $colors['primary'];
 @endphp
 
-<label class="inline-flex items-center gap-2 cursor-pointer {{ $disabled ? 'opacity-60 cursor-not-allowed' : '' }}">
+<label{{ \Ptah\Support\CssFramework::hostScope($attributes) }} class="inline-flex items-center gap-2 cursor-pointer {{ $disabled ? 'opacity-60 cursor-not-allowed' : '' }}">
     <input
         type="radio"
         name="{{ $name }}"

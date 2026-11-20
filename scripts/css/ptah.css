@@ -1,0 +1,59 @@
+/* ============================================================
+   Entry of the PRE-COMPILED stylesheet (resources/dist/ptah.css) that a
+   host WITHOUT Tailwind links (ptah.css.framework = bootstrap).
+
+   Not imported by anyone: `npm run build:css` compiles it and then
+   scripts/build-css.mjs scopes the result (see that file). What is
+   written here mirrors, line for line, what `ptah:install` injects into a
+   Tailwind host's app.css, so both skins draw the same pixels:
+
+     @import 'tailwindcss';                       (preflight + utilities)
+     @import '.../ptah-components.css';           (.ptah-c-* + --ptah-* tokens)
+     @source '.../resources/views' (every Blade file);
+     @custom-variant dark (...);
+     @theme { the 15 brand tokens }
+
+   Differences, all deliberate:
+   - the sources also cover the stubs `ptah:forge` copies into the host and
+     the PHP that writes cell markup at runtime (renderers), which a Tailwind
+     host never scans;
+   - `dark:` also answers Bootstrap's page-level :root[data-bs-theme=dark] (the same
+     rule as the .ptah-dark alias of the build — a dark Bootstrap navbar
+     around a ptah component does not make it dark);
+   - ptah-components.css lives in the `ptah` layer (in a Tailwind host it is
+     unlayered); the build explains why.
+   ============================================================ */
+
+@layer theme, base, components, utilities, ptah, ptah-bridge;
+
+@import 'tailwindcss' source(none);
+@import '../../resources/css/ptah-components.css' layer(ptah);
+
+@source '../../resources/views/**/*.blade.php';
+@source '../../src/Stubs/*.stub';
+@source '../../src/Livewire/BaseCrud/Concerns/HasCrudRenderers.php';
+@source '../../src/Exceptions/Concerns/FormatsError.php';
+@source '../../src/Services/Validation/Formatters/FlashMessageFormatter.php';
+
+@custom-variant dark (&:where(.dark, .dark *, :root[data-bs-theme=dark], :root[data-bs-theme=dark] *));
+
+/* Same literals as InstallCommand::updateAppCss() (InstallStubColorParityTest
+   pins those to config/ptah.php). In bootstrap mode the bridge at the end of
+   the build maps them onto --bs-*; the host's explicit PTAH_COLOR_* wins. */
+@theme {
+    --color-primary:       #5b21b6;
+    --color-primary-light: #ede9fe;
+    --color-primary-dark:  #4c1d95;
+    --color-success:       #10b981;
+    --color-success-light: #d1fae5;
+    --color-success-dark:  #059669;
+    --color-danger:        #ef4444;
+    --color-danger-light:  #fee2e2;
+    --color-danger-dark:   #dc2626;
+    --color-warn:          #f59e0b;
+    --color-warn-light:    #fef3c7;
+    --color-warn-dark:     #d97706;
+    --color-dark:          #1e293b;
+    --color-dark-light:    #f1f5f9;
+    --color-dark-dark:     #0f172a;
+}

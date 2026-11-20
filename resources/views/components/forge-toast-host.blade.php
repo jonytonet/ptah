@@ -26,7 +26,7 @@
     success e bg-danger-dark para danger, ambos com branco acima de 4.5:1 — ver
     ContrastGuardTest casos 13). `bg-warn` fica com texto escuro pelo mesmo motivo.
 --}}
-<div x-data="{
+<div{{ \Ptah\Support\CssFramework::scopeAttribute() }} x-data="{
         _toasts: [],
         _seq: 0,
         _show(title, color, undoId = null) {

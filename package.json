@@ -1,13 +1,15 @@
 {
   "name": "@jonytonet/ptah-ui",
   "private": true,
-  "description": "React and Vue front ends of the ptah headless CRUD API. Development only: a host compiles resources/js from vendor/ with its own Vite.",
+  "description": "React and Vue front ends of the ptah headless CRUD API, and the build of resources/dist/ptah.css (the stylesheet of hosts without Tailwind). Development only: a host compiles resources/js from vendor/ with its own Vite.",
   "type": "module",
   "scripts": {
+    "build:css": "node scripts/build-css.mjs",
     "typecheck": "tsc --noEmit && vue-tsc --noEmit -p tsconfig.vue.json",
     "test": "vitest run"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "4.3.5",
     "@testing-library/react": "^16.1.0",
     "@testing-library/vue": "^8.1.0",
     "@types/node": "^22.20.5",
@@ -15,9 +17,13 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitejs/plugin-vue": "^5.2.1",
+    "bootstrap": "5.3.9",
     "jsdom": "^25.0.1",
+    "postcss": "8.5.33",
+    "postcss-selector-parser": "7.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "tailwindcss": "4.3.5",
     "typescript": "^5.7.2",
     "vite": "^6.0.3",
     "vitest": "^2.1.8",

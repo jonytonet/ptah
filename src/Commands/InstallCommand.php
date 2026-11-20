@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 use Ptah\Seeders\DefaultAdminSeeder;
 use Ptah\Seeders\PtahDemoSeeder;
 use Ptah\Support\BoostPackages;
+use Ptah\Support\CssFramework;
 use Ptah\Support\ViteConfigPatcher;
 use Symfony\Component\Process\Process;
 
@@ -26,6 +27,7 @@ class InstallCommand extends Command
     protected $signature = 'ptah:install
                             {--force    : Overwrite existing files}
                             {--stack=   : What draws the screens: livewire (default), react or vue}
+                            {--css=     : CSS framework of the host: tailwind (default) or bootstrap}
                             {--skip-npm : Skip npm install and npm run build}
                             {--demo     : Install demo data (companies, departments, roles and menu)}
                             {--boost    : Install Laravel Boost for AI agent integration (Copilot, Claude, Cursor)}';
@@ -46,8 +48,9 @@ class InstallCommand extends Command
     public function handle(): int
     {
         $stack = $this->resolveStack();
+        $css = $this->resolveCss();
 
-        if ($stack === null) {
+        if ($stack === null || $css === null) {
             return self::FAILURE;
         }
 
@@ -58,7 +61,7 @@ class InstallCommand extends Command
         $this->publishMigrations();
         $this->publishLang();
         $this->publishMenuRegistry();
-        $this->updateAppCss();
+        $this->configureCss($css, $stack);
         $this->installStack($stack);
         $this->runMigrations();
         $this->createStorageLink();
@@ -85,6 +88,9 @@ class InstallCommand extends Command
         if ($stack !== 'livewire') {
             $this->line("     <fg=gray>({$stack} stack: each entity gets a page, a line in routes/ptah-screens.php and the same back end)</>");
         }
+        if ($css === CssFramework::BOOTSTRAP) {
+            $this->line('     <fg=gray>(Bootstrap: in a layout of your own, put the x-ptah-assets component in the head, before your CSS — docs/Css.md)</>');
+        }
         $this->line('  6. For AI agent integration:');
         $this->line('     <fg=green>php artisan ptah:install --boost</>');
         $this->line('  7. For Docker environment (Dockerfile, Nginx, docker-compose):');
@@ -109,6 +115,58 @@ class InstallCommand extends Command
         }
 
         return $stack;
+    }
+
+    /**
+     * The host's CSS framework: --css, or the one already configured (re-running
+     * the installer keeps it), or tailwind.
+     */
+    protected function resolveCss(): ?string
+    {
+        $css = strtolower((string) ($this->option('css') ?: CssFramework::current()));
+
+        if (! in_array($css, CssFramework::FRAMEWORKS, true)) {
+            $this->components->error("Unknown CSS framework '{$css}'. Use tailwind or bootstrap.");
+
+            return null;
+        }
+
+        return $css;
+    }
+
+    /**
+     * Tailwind (default): wires the host's app.css, as always. Bootstrap: leaves
+     * app.css, vite.config and package.json alone — the host keeps no Tailwind —
+     * and publishes ptah's pre-compiled stylesheet instead (docs/Css.md).
+     */
+    protected function configureCss(string $css, string $stack): void
+    {
+        if ($this->option('css')) {
+            $this->components->task("Setting the CSS framework to {$css} (.env)", function () use ($css) {
+                $this->setEnv('PTAH_CSS', $css);
+                config(['ptah.css.framework' => $css]);
+            });
+        }
+
+        if ($css !== CssFramework::BOOTSTRAP) {
+            $this->updateAppCss();
+
+            return;
+        }
+
+        $this->components->task('Publishing ptah.css (public/vendor/ptah)', function () {
+            $this->callSilent('vendor:publish', ['--tag' => 'ptah-assets', '--force' => true]);
+        });
+
+        // A host view compiled before the install has no scope marker on its
+        // <x-forge-*> tags (CssFramework::markHostComponents runs at compile time).
+        $this->components->task('Clearing compiled views', function () {
+            $this->callSilent('view:clear');
+        });
+
+        if ($stack !== 'livewire') {
+            $this->components->warn("--css=bootstrap styles the Livewire screens; the {$stack} screens keep their own stylesheet (resources/js/ptah-ui.css).");
+        }
     }
 
     /**

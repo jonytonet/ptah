@@ -33,7 +33,7 @@
     $ptahPageName = preg_replace('/[^A-Za-z0-9_]/', '', (string) $paginator->getPageName()) ?: 'page';
 @endphp
 @if ($paginator->hasPages())
-<nav aria-label="{{ __('ptah::ui.pagination_nav_label') }}" class="ptah-pagination flex items-center justify-between gap-4">
+<nav{{ \Ptah\Support\CssFramework::scopeAttribute() }} aria-label="{{ __('ptah::ui.pagination_nav_label') }}" class="ptah-pagination flex items-center justify-between gap-4">
 
     {{-- Mobile --}}
     <div class="flex items-center gap-2 md:hidden">
