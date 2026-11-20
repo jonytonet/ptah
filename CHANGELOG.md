@@ -7,7 +7,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [Unreleased]
+## [1.60.0] - 2026-11-20
 
 ### Added
 
@@ -66,8 +66,6 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   that predate the mode; a `console.warn` in browsers without CSS `@scope`.
 - The dashboard widget tone `primary` uses `--ptah-primary-strong` (AA on the
   dark surface) and `<x-forge-tab>` shows a focus ring to the keyboard.
-
----
 
 ## [1.59.2] - 2026-11-20
 
