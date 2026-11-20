@@ -55,6 +55,24 @@
                ESTA aba, entao uma aba nova comeca fechada. Reaberto assim, nao
                rouba o foco da pagina; so rola ate a ultima mensagem. O rascunho
                nao enviado vem junto. */
+            /* Recarregar a pagina reabre a conversa que a pessoa estava lendo
+               (escolhida no historico), nao a mais recente — a mesma regra das
+               stacks React e Vue (1.59.2). */
+            let keptConversation = null;
+            try { keptConversation = Number(sessionStorage.getItem('ptah:ai:conversation')) || null; } catch (e) {}
+            const keepConversation = (id) => {
+                try { id ? sessionStorage.setItem('ptah:ai:conversation', String(id)) : sessionStorage.removeItem('ptah:ai:conversation'); } catch (e) {}
+            };
+            this.$wire.$watch('conversationId', (id) => keepConversation(id));
+            if (keptConversation && keptConversation !== this.$wire.conversationId) {
+                this.$wire.loadConversation(keptConversation).then(() => {
+                    keepConversation(this.$wire.conversationId);
+                    this.scrollToBottom();
+                });
+            } else {
+                keepConversation(this.$wire.conversationId);
+            }
+
             try {
                 this.draft = sessionStorage.getItem('ptah:ai:draft') ?? '';
                 if (sessionStorage.getItem('ptah:ai:open') === '1') {
@@ -95,14 +113,21 @@
            com a navegacao SPA guarda a rolagem do bloco persistido
            (partials/spa-navigation). */
         scrollToBottom() {
-            this.$nextTick(() => {
-                const el = this.$refs.msgList;
-                if (!el) return;
-                let kept = null;
-                try { kept = sessionStorage.getItem('ptah:ai:scroll'); } catch (e) {}
-                const top = kept === null ? NaN : Number(kept);
-                el.scrollTop = Number.isFinite(top) ? Math.min(top, el.scrollHeight) : el.scrollHeight;
-            });
+            this.$nextTick(() => this.placeList(0));
+        },
+
+        /* A posicao vale so para a conversa em que foi anotada (`<id>:<top>`).
+           Com o painel ainda sem altura (abrindo), espera alguns quadros. */
+        placeList(tries) {
+            const el = this.$refs.msgList;
+            if (!el) return;
+            if (!el.clientHeight && tries < 30) {
+                requestAnimationFrame(() => this.placeList(tries + 1));
+                return;
+            }
+            let kept = null;
+            try { kept = /^(\d+):(\d+)$/.exec(sessionStorage.getItem('ptah:ai:scroll') || ''); } catch (e) {}
+            el.scrollTop = kept && Number(kept[1]) === this.$wire.conversationId ? Math.min(Number(kept[2]), el.scrollHeight) : el.scrollHeight;
         },
 
         toEnd() {
@@ -114,8 +139,9 @@
             const el = this.$refs.msgList;
             if (!el || !el.isConnected || !el.clientHeight) return;
             const atEnd = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+            const id = this.$wire.conversationId;
             try {
-                atEnd ? sessionStorage.removeItem('ptah:ai:scroll') : sessionStorage.setItem('ptah:ai:scroll', String(Math.round(el.scrollTop)));
+                atEnd || ! id ? sessionStorage.removeItem('ptah:ai:scroll') : sessionStorage.setItem('ptah:ai:scroll', id + ':' + Math.round(el.scrollTop));
             } catch (e) {}
         },
 
