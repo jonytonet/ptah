@@ -17,6 +17,7 @@ use Orchestra\Testbench\Dusk\Options as DuskOptions;
 use Orchestra\Testbench\Dusk\TestCase as OrchestraDuskTestCase;
 use Prism\Prism\PrismServiceProvider;
 use Ptah\PtahServiceProvider;
+use Ptah\Support\CssFramework;
 use Ptah\Tests\Browser\Fixtures\DuskCrudStub;
 use Ptah\Tests\Browser\Fixtures\DuskDraftContact;
 use Ptah\Tests\Browser\Fixtures\DuskMaskStub;
@@ -171,6 +172,27 @@ abstract class DuskTestCase extends OrchestraDuskTestCase
 
         $router->get('/dusk-test/crud', function () {
             return view('dusk-crud', ['model' => DuskCrudStub::class]);
+        });
+
+        // CssBootstrapBrowserTest (ptah.css.framework = bootstrap): the host's
+        // Bootstrap from the package's devDependency, and the pre-compiled
+        // stylesheet where `vendor:publish --tag=ptah-assets` would put it.
+        $router->get('/dusk-test/bootstrap.css', function () {
+            $css = file_get_contents(__DIR__.'/../../node_modules/bootstrap/dist/css/bootstrap.css');
+
+            return response($css, 200, ['Content-Type' => 'text/css']);
+        });
+
+        $router->get('/vendor/ptah/ptah.css', function () {
+            return response(file_get_contents(CssFramework::distPath()), 200, ['Content-Type' => 'text/css']);
+        });
+
+        $router->get('/dusk-test/bootstrap-crud', function () {
+            return view('dusk-bootstrap-crud', ['model' => DuskCrudStub::class]);
+        });
+
+        $router->get('/dusk-test/bootstrap-embed', function () {
+            return view('dusk-bootstrap-embed', ['model' => DuskCrudStub::class]);
         });
 
         // Tela trivial para o Fluxo 6 (pesquisa + voltar): navegar para fora do
