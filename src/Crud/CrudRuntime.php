@@ -784,6 +784,9 @@ final class CrudRuntime extends BaseCrud
             'maskPlaceholder' => $mask !== null && $mask['placeholder'] !== '' ? $mask['placeholder'] : null,
             'inputMode' => $mask !== null && $mask['inputmode'] !== '' ? $mask['inputmode'] : null,
             'maxLength' => $mask['maxlength'] ?? null,
+            // An emptied field saves null, and the money input shows empty
+            // instead of R$ 0,00 (maskEmptyIsNull).
+            'emptyNull' => ! empty($col['colsMask']) || ! empty($col['colsMaskTransform']) ? $this->maskEmptyIsNull($col) : false,
         ];
     }
 

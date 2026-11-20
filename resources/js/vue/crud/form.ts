@@ -308,13 +308,13 @@ export const PtahFormField = defineComponent({
                     type: 'text',
                     inputmode: 'numeric',
                     placeholder: 'R$ 0,00',
-                    value: moneyDisplay(value),
+                    value: moneyDisplay(value, field.emptyNull === true),
                     onFocus: (event: Event) => {
                         const element = target(event);
                         element.setSelectionRange(element.value.length, element.value.length);
                     },
                     onInput: (event: Event) => {
-                        const next = moneyFromTyping(target(event).value);
+                        const next = moneyFromTyping(target(event).value, field.emptyNull === true);
                         set(next);
                         keep(event, next);
                     },

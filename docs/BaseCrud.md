@@ -433,6 +433,7 @@ The `CrudConfig` is retrieved from the database (`crud_configs` table) by the `C
 | `colsMinWidth` | `string\|null` | Minimum width of the cell (`<td>`), e.g. `"120px"` |
 | `colsMask` | `string\|null` | Registered mask name. Built in: `digits`, `decimal`; `cpf`, `cnpj`, `phone`, `cep`… come from the `br` preset — see [Masks](#masks) |
 | `colsMaskTransform` | `string\|null` | Server-side transform applied before persisting: `money_to_float`, `digits_only`, `plate_clean`, `date_br_to_iso`, `date_iso_to_br`, `uppercase`, `lowercase`, `trim` |
+| `colsMaskEmpty` | `string\|null` | What an emptied masked field saves: `null` or `zero`. Unset: a nullable column saves `null` (and the money input stays empty instead of `R$ 0,00`), a NOT NULL one keeps what the mask makes of it (`0` for money). Since 1.59.2 |
 | `colsRelacao` | `string\|null` | Eloquent relation name. A **nested dotted path** is supported (e.g. `invoice.receivingStatus` + `colsRelacaoExibe: name`): the cell descends the chain, the searchdropdown filter applies `whereHas` against the related key (numeric id) or display column (text), and sorting by this column orders by the foreign key, not by the displayed value (nested can't JOIN). Eager-loaded automatically |
 | `colsRelacaoExibe` | `string\|null` | Relation field to display — a column or an accessor (`full_name`). The search and the column's text filter use it only when it is a real column of the related table |
 | `colsRelacaoBusca` | `string\|array\|null` | Where to search/filter this relation by text, as real columns — needed when `colsRelacaoExibe` is an accessor: `["company_name", "user.name"]` (dotted paths go deeper). Since 1.46.1 |
@@ -656,6 +657,10 @@ The package now ships two masks, and they are the two that are nobody's law:
 | `digits` | Stores only the digits | none — plain input |
 | `decimal` | Stores a float, reading either `1.234,56` or `1,234.56` | none — plain input |
 
+`decimal` has **no typing pattern**: the form shows the plain input (`type=number`
+for a numeric column) and the comma is only read on save. For a currency field that
+formats while typing, use `money_brl`.
+
 Everything else you declare. There are three ways in, and they compose.
 
 #### 1. A shipped preset
@@ -761,6 +766,16 @@ convenience; what lands in the column cannot depend on it.
 use it and changing what they store would alter production data on a package
 upgrade. With a registered `colsMask` and no transform, the mask's own `store`
 rule applies — which is the point: `colsMask: "cpf"` alone now normalises.
+
+#### An emptied field: null or zero (1.59.2)
+
+`money_to_float` and the `decimal` store rule read an empty value as `0`. On a
+column where empty means "not informed" — a free-delivery threshold, a discount
+cap, a branch price that falls back to the product's — that turns "never" into
+"always". So an emptied masked field on a **nullable** column saves `null`, without
+going through the mask, and the `money_brl` input stays empty (placeholder
+`R$ 0,00`) instead of showing `R$ 0,00`. A NOT NULL column keeps the old behaviour.
+`colsMaskEmpty: "null"` or `"zero"` decides field by field, whatever the column.
 
 #### Precedence
 

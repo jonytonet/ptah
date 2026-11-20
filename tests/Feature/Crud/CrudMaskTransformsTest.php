@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ptah\Tests\Feature\Crud;
 
+use Illuminate\Database\Eloquent\Model;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Ptah\Livewire\BaseCrud\Concerns\HasCrudForm;
@@ -22,6 +23,15 @@ class MaskHarness
     public function transform(array $data, array $formCols): array
     {
         return $this->applyMaskTransforms($data, $formCols);
+    }
+
+    /**
+     * No model behind the harness: the column's nullability is unknown, so an
+     * emptied field keeps what the mask makes of it (1.59.2, maskEmptyIsNull).
+     */
+    protected function resolveEloquentModel(): ?Model
+    {
+        return null;
     }
 }
 

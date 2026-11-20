@@ -13,6 +13,11 @@ import {
     AI_GUIDE,
     AI_PROVIDERS,
     AI_STORAGE,
+    chatToEnd,
+    keepChatConversation,
+    keptChatConversation,
+    noteChatScroll,
+    placeChatScroll,
     aiRangeText,
     aiWords,
     blankAiModel,
@@ -510,6 +515,10 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
     const [busyCard, setBusyCard] = useState(false);
     const abort = useRef<AbortController | null>(null);
     const listRef = useRef<HTMLDivElement | null>(null);
+    // The conversation this tab was reading, read once before anything writes it.
+    const keptConversation = useRef(keptChatConversation());
+    // Nothing is written before the reopening is settled: a remount reads it again.
+    const settled = useRef(false);
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
     const fileRef = useRef<HTMLInputElement | null>(null);
 
@@ -527,6 +536,25 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
                     setConfigId(next.selected_config_id);
                     setConversations(next.conversations);
                     setHistoryLimit(next.history_limit);
+                    // A reload reopens the conversation the person was reading, not the latest.
+                    const kept = keptConversation.current;
+                    const settle = (id: number | null) => {
+                        settled.current = true;
+                        keepChatConversation(id);
+                    };
+                    if (kept !== null && kept !== next.conversation_id) {
+                        openConversation(client, kept)
+                            .then((found) => {
+                                if (alive) {
+                                    setConversationId(found.conversation_id);
+                                    setMessages(found.messages);
+                                    settle(found.conversation_id);
+                                }
+                            })
+                            .catch(() => alive && settle(next.conversation_id));
+                    } else {
+                        settle(next.conversation_id);
+                    }
                 }
             })
             .catch(() => alive && setState(null));
@@ -566,9 +594,16 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
     useEffect(() => {
         const list = listRef.current;
         if (list) {
-            list.scrollTop = list.scrollHeight;
+            // Where the reader was (a reload, reopening), else the end.
+            placeChatScroll(list, conversationId);
         }
-    }, [messages, streamHtml, open, loading]);
+    }, [messages, streamHtml, open, loading, conversationId]);
+
+    useEffect(() => {
+        if (settled.current) {
+            keepChatConversation(conversationId);
+        }
+    }, [conversationId]);
 
     useEffect(() => {
         if (open) {
@@ -612,6 +647,8 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
         const optimistic: AiChatMessage = { role: 'user', content: text, attachments: sending.map((file) => file.name) };
 
         setDraft('');
+        // Sending: what comes next is read from the end.
+        chatToEnd();
         setMessages((current) => [...current, optimistic]);
         setError('');
         setLoading(true);
@@ -835,7 +872,7 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
                         </div>
                     ) : (
                         <>
-                            <div ref={listRef} style={chatStyles.list}>
+                            <div ref={listRef} style={chatStyles.list} onScroll={(event) => noteChatScroll(event.currentTarget, conversationId)}>
                                 {messages.length === 0 && !loading && <ForgeEmpty title={t.chatEmpty} />}
                                 {messages.map((message, index) =>
                                     message.role === 'user' ? (

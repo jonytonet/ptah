@@ -22,7 +22,7 @@ final class ColumnKeys
         'colsAlign', 'colsCellClass', 'colsCellIcon', 'colsCellStyle',
         'colsCss', 'colsDefaultValue', 'colsEditableForm', 'colsFilterType',
         'colsFormBlock', 'colsGravar', 'colsHelpText', 'colsHelper', 'colsIsFilterable',
-        'colsMask', 'colsMaskTransform', 'colsMetodoCustom', 'colsMetodoRaw', 'colsMinWidth',
+        'colsMask', 'colsMaskEmpty', 'colsMaskTransform', 'colsMetodoCustom', 'colsMetodoRaw', 'colsMinWidth',
         'colsNomeFisico', 'colsNomeLogico', 'colsOnChange', 'colsOperator', 'colsOrderBy',
         'colsPermission', 'colsPlaceholder', 'colsReadonly', 'colsRelacao', 'colsRelacaoBusca', 'colsRelacaoExibe',
         'colsRelacaoNested', 'colsRenderer', 'colsRendererBadges',

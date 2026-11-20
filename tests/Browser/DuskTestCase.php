@@ -179,6 +179,11 @@ abstract class DuskTestCase extends OrchestraDuskTestCase
             return view('dusk-other');
         });
 
+        // SpaNavigationBrowserTest: a second page with the persisted block of dusk-other.
+        $router->get('/dusk-test/persist', function () {
+            return view('dusk-persist');
+        });
+
         $router->get('/dusk-test/header', function () {
             return view('dusk-header');
         });

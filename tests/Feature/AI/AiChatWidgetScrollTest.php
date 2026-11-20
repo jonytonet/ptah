@@ -17,6 +17,10 @@ use PHPUnit\Framework\TestCase;
  * abertura passou a tambem focar o input. O comportamento vigiado continuava
  * intacto; era a forma exata que estava fixada. Agora casa o watcher e exige
  * scrollToBottom no corpo dele, que e a garantia de verdade.
+ *
+ * 1.59.2: scrollToBottom passou a levar a lista para ONDE A PESSOA ESTAVA
+ * (sessionStorage `ptah:ai:scroll`), ou para o fim se ela estava no fim; o
+ * envio vai sempre para o fim por toEnd(), que esquece a posicao antes.
  */
 class AiChatWidgetScrollTest extends TestCase
 {
@@ -32,6 +36,16 @@ class AiChatWidgetScrollTest extends TestCase
             $blade,
             'Abrir o painel precisa rolar a conversa para o fim.'
         );
+        // O servidor avisa a cada mensagem, resposta ou conversa carregada: a
+        // lista vai para a posicao guardada da conversa, ou para o fim.
         $this->assertStringContainsString('@ai-message-sent.window="scrollToBottom()"', $blade);
+        // So o envio feito pela pessoa esquece a posicao de leitura.
+        $this->assertMatchesRegularExpression(
+            '#sessionStorage\.removeItem\(\'ptah:ai:scroll\'\); \} catch \(e\) \{\}\s*this\.\$wire\.send\(text\);#',
+            $blade,
+            'Enviar precisa esquecer a posicao de leitura e rolar para o fim.'
+        );
+        // A posicao e anotada quando a pessoa rola a lista.
+        $this->assertMatchesRegularExpression('#x-ref="msgList"\s*@scroll\.passive="noteScroll\(\)"#', $blade);
     }
 }

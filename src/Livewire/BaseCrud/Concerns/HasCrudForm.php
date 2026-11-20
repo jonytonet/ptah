@@ -51,6 +51,20 @@ trait HasCrudForm
             $field = (string) ($col['colsNomeFisico'] ?? '');
             $default = $col['colsDefaultValue'] ?? null;
 
+            // A switch has no "not informed": without a declared default it
+            // opened OFF and saved 0, even on a column whose DEFAULT is 1 —
+            // a new category was born inactive and left every list filtered
+            // by is_active = 1 (1.59.2, PetPlace). The column's own default
+            // fills that gap; a declared colsDefaultValue still wins.
+            if (($default === null || $default === '') && $field !== '' && $this->isBooleanToggle($col)) {
+                $fromColumn = $this->columnDefault($field);
+                if ($fromColumn !== null) {
+                    $this->formData[$field] = self::defaultIsOn($fromColumn);
+                }
+
+                continue;
+            }
+
             if ($field === '' || $default === null || $default === '') {
                 continue;
             }
@@ -976,6 +990,33 @@ trait HasCrudForm
     }
 
     /**
+     * Whether an emptied masked field saves null (1.59.2). `colsMaskEmpty`
+     * decides when set — `null` or `zero` —; otherwise the column does: a
+     * nullable column saves null (empty there means "not informed": no
+     * free-delivery threshold, no discount cap, the product's general price),
+     * a NOT NULL one keeps what the mask makes of it (0 for money), as before.
+     * The money input follows the same answer: empty stays empty instead of
+     * showing R$ 0,00.
+     *
+     * @param  array<string, mixed>  $col
+     */
+    protected function maskEmptyIsNull(array $col): bool
+    {
+        $choice = strtolower(trim(Scalar::text($col['colsMaskEmpty'] ?? '')));
+
+        if ($choice === 'null') {
+            return true;
+        }
+        if ($choice === 'zero') {
+            return false;
+        }
+
+        $field = (string) ($col['colsNomeFisico'] ?? '');
+
+        return $field !== '' && $this->columnIsNullable($field) === true;
+    }
+
+    /**
      * Is this column of the screen's table nullable? Null when the schema
      * cannot be read or has no such column.
      */
@@ -989,6 +1030,37 @@ trait HasCrudForm
     /** @return array<string, bool> column => nullable; [] when unreadable */
     private static function columnNullability(Model $model): array
     {
+        return array_map(fn (array $column) => $column['nullable'], self::columnInfo($model));
+    }
+
+    /**
+     * The DEFAULT the database declares for this column of the screen's
+     * table, as the schema reports it (`1`, `'1'`, `true`, `'1'::integer`), or
+     * null when there is none or the schema cannot be read.
+     */
+    protected function columnDefault(string $field): ?string
+    {
+        $model = $this->resolveEloquentModel();
+        $default = $model ? (self::columnInfo($model)[$field]['default'] ?? null) : null;
+
+        return is_scalar($default) ? (string) $default : null;
+    }
+
+    /** Whether a column default reads as "on" (`1`, `'1'`, `true`, `b'1'`, `'1'::integer`). */
+    protected static function defaultIsOn(string $default): bool
+    {
+        $value = strtolower(trim($default));
+        $value = preg_replace('/::[a-z ]+$/', '', $value) ?? $value;
+        $value = trim($value, " ()'\"");
+        $value = preg_replace("/^b'?/", '', $value) ?? $value;
+        $value = trim($value, "'");
+
+        return in_array($value, ['1', 'true', 't', 'y', 'yes', 'on', 's', 'sim'], true);
+    }
+
+    /** @return array<string, array{nullable: bool, default: mixed}> column => info; [] when unreadable */
+    private static function columnInfo(Model $model): array
+    {
         static $memo = [];
 
         $key = $model->getConnectionName().'|'.$model->getTable();
@@ -996,7 +1068,7 @@ trait HasCrudForm
             $memo[$key] = [];
             try {
                 foreach ($model->getConnection()->getSchemaBuilder()->getColumns($model->getTable()) as $column) {
-                    $memo[$key][(string) $column['name']] = (bool) $column['nullable'];
+                    $memo[$key][(string) $column['name']] = ['nullable' => (bool) $column['nullable'], 'default' => $column['default'] ?? null];
                 }
             } catch (\Throwable) {
                 $memo[$key] = [];
@@ -1172,6 +1244,25 @@ trait HasCrudForm
      */
     protected function applyMaskTransforms(array $data, array $formCols): array
     {
+        // An emptied masked field on a column where empty means "not
+        // informed" saves null, never through the mask: money_to_float and the
+        // `decimal` store rule turn '' into 0.0, and "free delivery above"
+        // empty (never) became 0 (always) — 1.59.2, PetPlace. See
+        // maskEmptyIsNull() for who decides.
+        $blank = [];
+        foreach ($formCols as $col) {
+            $field = $col['colsNomeFisico'] ?? null;
+            if (! is_string($field) || $field === '' || ! array_key_exists($field, $data)) {
+                continue;
+            }
+            $masked = ! empty($col['colsMask']) || ! empty($col['colsMaskTransform']);
+            $value = $data[$field];
+            if ($masked && ($value === null || (is_string($value) && trim($value) === '')) && $this->maskEmptyIsNull($col)) {
+                $data[$field] = null;
+                $blank[$field] = true;
+            }
+        }
+
         // A regra de gravacao da MASCARA vem primeiro, e e a razao de a mascara
         // ser declarativa: `colsMask: "cpf"` sozinho ja normaliza, sem exigir um
         // `colsMaskTransform` combinando ao lado. Antes disto, quem configurava
@@ -1186,6 +1277,7 @@ trait HasCrudForm
             $maskName = $col['colsMask'] ?? null;
 
             if ($field
+                && ! isset($blank[$field])
                 && $maskName
                 && empty($col['colsMaskTransform'])
                 && array_key_exists($field, $data)
@@ -1198,7 +1290,7 @@ trait HasCrudForm
             $field = $col['colsNomeFisico'] ?? null;
             $transform = $col['colsMaskTransform'] ?? null;
 
-            if (! $field || ! $transform || ! array_key_exists($field, $data)) {
+            if (! $field || ! $transform || ! array_key_exists($field, $data) || isset($blank[$field])) {
                 continue;
             }
 

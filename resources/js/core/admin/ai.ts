@@ -505,6 +505,8 @@ export const AI_STORAGE = {
     launcherHidden: 'ptah:ai:launcher-hidden',
     open: 'ptah:ai:open',
     draft: 'ptah:ai:draft',
+    scroll: 'ptah:ai:scroll',
+    conversation: 'ptah:ai:conversation',
 };
 
 export function readStore(storage: 'local' | 'session', key: string): string | null {
@@ -513,6 +515,53 @@ export function readStore(storage: 'local' | 'session', key: string): string | n
     } catch {
         return null;
     }
+}
+
+/** How close to the end of the list still counts as "at the end" (px). */
+export const CHAT_END_SLACK = 24;
+
+/**
+ * Notes where the reader is in the chat's list of messages (this tab only),
+ * as `<conversation>:<scrollTop>`: a position when they scrolled up to read,
+ * nothing when they are at the end. A hidden list (closed chat) is not a
+ * position. The Livewire widget keeps the same keys with the same rule.
+ */
+export function noteChatScroll(list: HTMLElement, conversationId: number | null): void {
+    if (!list.isConnected || list.clientHeight === 0) {
+        return;
+    }
+    const atEnd = list.scrollHeight - list.scrollTop - list.clientHeight < CHAT_END_SLACK;
+    writeStore('session', AI_STORAGE.scroll, atEnd || conversationId === null ? null : `${conversationId}:${Math.round(list.scrollTop)}`);
+}
+
+/**
+ * Puts the list where the reader left it — reopening the chat, a reload, an
+ * answer arriving while they read an older message — or at the end when they
+ * were at the end, or when the position was taken in another conversation.
+ * Sending a message goes to the end (`chatToEnd`).
+ */
+export function placeChatScroll(list: HTMLElement, conversationId: number | null): void {
+    const kept = /^(\d+):(\d+)$/.exec(readStore('session', AI_STORAGE.scroll) ?? '');
+    list.scrollTop = kept && conversationId !== null && Number(kept[1]) === conversationId ? Math.min(Number(kept[2]), list.scrollHeight) : list.scrollHeight;
+}
+
+/**
+ * The conversation on screen, kept for this tab: a reload reopens the one the
+ * person was reading (picked from the history), not the latest.
+ */
+export function keepChatConversation(id: number | null): void {
+    writeStore('session', AI_STORAGE.conversation, id === null ? null : String(id));
+}
+
+export function keptChatConversation(): number | null {
+    const id = Number(readStore('session', AI_STORAGE.conversation) ?? '');
+
+    return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+/** Forgets the reading position: what comes next is read from the end. */
+export function chatToEnd(): void {
+    writeStore('session', AI_STORAGE.scroll, null);
 }
 
 export function writeStore(storage: 'local' | 'session', key: string, value: string | null): void {

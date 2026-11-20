@@ -295,6 +295,9 @@
                             // esta registrado — e ai o campo cai no input comum, que e
                             // exatamente o que "cpf" e companhia sempre fizeram.
                             $fMaskDef  = \Ptah\Support\PtahMask::get($fMask);
+                            // Vazio quer dizer "nao informado" (coluna anulavel ou colsMaskEmpty: null):
+                            // o campo de valor fica vazio em vez de R$ 0,00, e o save grava null.
+                            $fMaskBlank = ($fMask || ! empty($col['colsMaskTransform'])) && $this->maskEmptyIsNull($col);
                             $fValue    = $formData[$fField] ?? '';
                             $fHelpText = $col['colsHelpText'] ?? null;
                             // colsPlaceholder: gravado pela CLI (placeholder=) e pelo wizard
@@ -839,29 +842,35 @@
                                         x-on:ptah-typed-restored="display = $event.detail.value; if ($refs.moneyVisible) $refs.moneyVisible.value = display"
                                         x-data="{
                                             display: '',
+                                            blank: {{ $fMaskBlank ? 'true' : 'false' }},
                                             fmt(n) {
                                                 const v = parseFloat(n) || 0;
                                                 return 'R$ ' + v.toFixed(2)
                                                     .replace('.', ',')
                                                     .replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
                                             },
+                                            show(v) {
+                                                // Vazio = nao informado: fica vazio (o placeholder mostra R$ 0,00).
+                                                if (this.blank && (v === null || v === undefined || v === '')) return '';
+                                                return this.fmt(parseFloat(v) || 0);
+                                            },
                                             init() {
                                                 // Read directly from Livewire state (not PHP-rendered) so
                                                 // create→edit never carries stale display value.
-                                                const raw = this.$wire.formData?.['{{ $fField }}'] ?? 0;
-                                                this.display = this.fmt(parseFloat(raw) || 0);
+                                                const raw = this.$wire.formData?.['{{ $fField }}'] ?? null;
+                                                this.display = this.show(raw);
                                                 // Keep in sync when openEdit() sets formData from server
                                                 this.$wire.$watch('formData.{{ $fField }}', (val) => {
-                                                    if (val === null || val === undefined) return;
+                                                    if ((val === null || val === undefined) && ! this.blank) return;
                                                     // Ignore values already formatted (contain letters/symbols)
                                                     if (/[a-zA-Z$]/.test(String(val))) return;
-                                                    this.display = this.fmt(parseFloat(val) || 0);
+                                                    this.display = this.show(val);
                                                 });
                                             },
                                             onInput(e) {
                                                 const digits = e.target.value.replace(/\D/g, '');
                                                 const n = parseInt(digits || '0', 10) / 100;
-                                                const f = this.fmt(n);
+                                                const f = this.blank && digits === '' ? '' : this.fmt(n);
                                                 e.target.value = f;
                                                 this.display = f;
                                                 const h = this.$refs.moneyHidden;
