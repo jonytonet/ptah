@@ -1,0 +1,139 @@
+/* ============================================================
+   Bootstrap bridge — appended by scripts/build-css.mjs to the end of
+   resources/dist/ptah.css (the stylesheet of ptah.css.framework =
+   bootstrap). Never part of a Tailwind host.
+
+   1. Tokens. In a HOST layout (<x-ptah-assets />) the --ptah-* neutrals and
+      the brand colours follow the host's Bootstrap theme (--bs-*), so
+      changing $primary or switching data-bs-theme="dark" restyles the
+      embedded screens without a rebuild. In ptah's OWN layouts the <html>
+      carries the appearance presets (data-ptah-accent and the five other
+      axes the person picks in /profile) and this block does not apply:
+      those pages keep exactly the look they have in a Tailwind host.
+      It sits in the LAST layer: it beats the defaults of
+      ptah-components.css (layer `ptah`) and loses to anything unlayered —
+      the host's own `:root { --ptah-…: … }` and the explicit PTAH_COLOR_*
+      that <x-ptah-assets /> prints (partials.theme-colors). Each var()
+      carries ptah's own default as the fallback, so a page without
+      Bootstrap still renders the stock look.
+
+      The derived tints (-soft, -lite, -strong, -ring…) are not bridged on
+      purpose: ptah-components.css derives them from --ptah-primary and
+      --ptah-surface with color-mix(), so they already follow the bridged
+      values below and keep the contrast they were calibrated for.
+
+   2. Stacking. Bootstrap's fixed navbar is 1030 and its modal 1055; ptah's
+      overlays (modals, menus, toasts, the busy overlay, the chat) used
+      40–70. The build adds 1010 to every z-index utility from 40 up; the
+      layout chrome below is set back under Bootstrap's modal, so a
+      Bootstrap modal opened from host content in the ptah layout still
+      covers the sidebar and the navbar.
+   ============================================================ */
+
+@layer ptah-bridge {
+    :root:not([data-ptah-accent]) {
+        --color-primary:       var(--bs-primary, #5b21b6);
+        --color-primary-light: color-mix(in srgb, var(--color-primary) 14%, #ffffff);
+        --color-primary-dark:  color-mix(in srgb, var(--color-primary) 82%, #000000);
+        --color-success:       var(--bs-success, #10b981);
+        --color-success-light: color-mix(in srgb, var(--color-success) 18%, #ffffff);
+        --color-success-dark:  color-mix(in srgb, var(--color-success) 82%, #000000);
+        --color-danger:        var(--bs-danger, #ef4444);
+        --color-danger-light:  color-mix(in srgb, var(--color-danger) 14%, #ffffff);
+        --color-danger-dark:   color-mix(in srgb, var(--color-danger) 82%, #000000);
+        --color-warn:          var(--bs-warning, #f59e0b);
+        --color-warn-light:    color-mix(in srgb, var(--color-warn) 16%, #ffffff);
+        --color-warn-dark:     color-mix(in srgb, var(--color-warn) 82%, #000000);
+        --color-dark:          var(--bs-dark, #1e293b);
+
+        --ptah-canvas:              var(--bs-body-bg, #ffffff);
+        --ptah-surface:             var(--bs-body-bg, #ffffff);
+        --ptah-surface-raised:      var(--bs-body-bg, #ffffff);
+        --ptah-field:               var(--bs-body-bg, #ffffff);
+        --ptah-surface-sunken:      var(--bs-tertiary-bg, #f8fafc);
+        --ptah-surface-hover:       var(--bs-tertiary-bg, #f8fafc);
+        --ptah-menu-hover:          var(--bs-tertiary-bg, #f9fafb);
+        --ptah-panel:               var(--bs-tertiary-bg, #f8fafc);
+        --ptah-field-muted:         var(--bs-tertiary-bg, #f8fafc);
+        --ptah-control-ghost:       color-mix(in srgb, var(--bs-secondary-bg, #e2e8f0) 50%, var(--bs-tertiary-bg, #ffffff));
+        --ptah-control-ghost-hover: var(--bs-secondary-bg, #e2e8f0);
+
+        --ptah-line:             color-mix(in srgb, var(--bs-border-color, #e2e8f0) 50%, var(--bs-body-bg, #ffffff));
+        --ptah-line-strong:      var(--bs-border-color, #e2e8f0);
+        /* A field border is a UI boundary: 3:1 against the surface (the
+           --ptah-line-field rule in ptah-components.css). Half-way between
+           body text and body background clears it in both Bootstrap themes. */
+        --ptah-line-control:     color-mix(in srgb, var(--bs-body-color, #1e293b) 25%, var(--bs-body-bg, #ffffff));
+        --ptah-line-field:       color-mix(in srgb, var(--bs-body-color, #1e293b) 50%, var(--bs-body-bg, #ffffff));
+        --ptah-line-field-hover: var(--bs-secondary-color, #64748b);
+
+        --ptah-text-strong:    var(--bs-emphasis-color, #1e293b);
+        --ptah-text-field:     var(--bs-body-color, #1f2937);
+        --ptah-text:           var(--bs-body-color, #374151);
+        --ptah-text-secondary: var(--bs-secondary-color, #475569);
+        --ptah-text-muted:     var(--bs-secondary-color, #5a5f65);
+        /* --bs-tertiary-color is 50% ink: under 4.5:1 for text. */
+        --ptah-text-faint:     var(--bs-secondary-color, #5e636a);
+        --ptah-icon-muted:     var(--bs-secondary-color, #64748b);
+
+        --font-sans:            var(--bs-body-font-family, ui-sans-serif, system-ui, sans-serif);
+        --default-font-family:  var(--bs-body-font-family, ui-sans-serif, system-ui, sans-serif);
+        --radius-sm:            var(--bs-border-radius-sm, .25rem);
+        --radius-md:            var(--bs-border-radius, .375rem);
+        --radius-lg:            var(--bs-border-radius-lg, .5rem);
+    }
+
+    .ptah-sidebar-overlay.z-30 { z-index: 1028; }
+    .ptah-sidebar.z-40         { z-index: 1029; }
+    .ptah-navbar.z-50          { z-index: 1030; }
+    .ptah-cell-actions         { z-index: 1070; }
+
+    /* The lower boundary of the scope (host content inside a ptah slot):
+       a wrapper that must not exist for layout purposes. */
+    .ptah-slot, [data-ptah-slot] { display: contents; }
+
+    /* 3. What forge-dashboard-layout's inline <style> gives a screen, for a
+       screen in a HOST layout (<x-ptah-assets />): the busy overlay disc,
+       two utilities a Tailwind host never compiles, and the dark repaint of
+       the table — here on the --ptah-* tokens. Inside ptah's layout the
+       inline block wins (it is unlayered) and these change nothing.
+       `.ptah-dark` also matches :root[data-bs-theme=dark] (the build). */
+    .ptah-busy-spin { filter: drop-shadow(0 4px 12px rgba(0, 0, 0, .18)); }
+    .ptah-busy-disc { fill: var(--ptah-surface); }
+    .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+    .scrollbar-none::-webkit-scrollbar { display: none; }
+    .animate-wave { animation: ptah-wave 1s ease-in-out infinite; }
+
+    .ptah-dark .ptah-table-wrapper input[type="search"] {
+        background-color: var(--ptah-field);
+        border-color: var(--ptah-line-control);
+        color: var(--ptah-text-field);
+    }
+    .ptah-dark .ptah-table-wrapper input[type="search"]::placeholder { color: var(--ptah-icon-muted); }
+    .ptah-dark .ptah-table-wrapper .bg-white.rounded-md {
+        background-color: var(--ptah-surface);
+        border-color: var(--ptah-line-strong);
+    }
+    .ptah-dark .ptah-table-wrapper .text-gray-500 { color: var(--ptah-text-muted); }
+    .ptah-dark .ptah-table-wrapper .text-dark     { color: var(--ptah-text); }
+    .ptah-dark .ptah-table-wrapper .text-gray-400 { color: var(--ptah-icon-muted); }
+    .ptah-dark .ptah-table-wrapper .overflow-x-auto.rounded-md { border-color: var(--ptah-line-strong); }
+    .ptah-dark .ptah-table-wrapper thead tr {
+        background-color: var(--ptah-canvas);
+        border-color: var(--ptah-line-strong);
+    }
+    .ptah-dark .ptah-table-wrapper thead th { color: var(--ptah-text-muted); }
+    .ptah-dark .ptah-table-wrapper tbody    { background-color: var(--ptah-surface); }
+    .ptah-dark .ptah-table-wrapper tbody tr { border-color: var(--ptah-line-strong); }
+    .ptah-dark .ptah-table-wrapper tbody td { color: var(--ptah-text); }
+    .ptah-dark .ptah-table-wrapper tbody tr:hover { background-color: color-mix(in srgb, var(--ptah-primary) 8%, transparent); }
+    .ptah-dark .ptah-alert-primary { background-color: color-mix(in srgb, var(--color-primary) 18%, transparent); }
+    .ptah-dark .ptah-alert-success { background-color: color-mix(in srgb, var(--color-success) 15%, transparent); }
+    .ptah-dark .ptah-alert-danger  { background-color: color-mix(in srgb, var(--color-danger) 15%, transparent); }
+    .ptah-dark .ptah-alert-warn    { background-color: color-mix(in srgb, var(--color-warn) 15%, transparent); }
+}
+
+@keyframes ptah-wave {
+    0%, 100% { transform: scaleY(0.4); }
+    50%      { transform: scaleY(1.0); }
+}

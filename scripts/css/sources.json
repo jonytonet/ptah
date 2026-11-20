@@ -1,0 +1,24 @@
+{
+    "_comment": "Inputs of resources/dist/ptah.css. scripts/build-css.mjs hashes them into the dist header and PtahCssDistTest recomputes the same hash: a change to any of them without `npm run build:css` fails the suite. Keep in step with the @source lines of scripts/css/ptah.css.",
+    "dirs": [
+        ["resources/views", ".blade.php"],
+        ["src/Stubs", ".stub"]
+    ],
+    "files": [
+        "resources/css/ptah-components.css",
+        "scripts/css/ptah.css",
+        "scripts/css/bridge.css",
+        "scripts/css/sources.json",
+        "scripts/build-css.mjs",
+        "src/Livewire/BaseCrud/Concerns/HasCrudRenderers.php",
+        "src/Exceptions/Concerns/FormatsError.php",
+        "src/Services/Validation/Formatters/FlashMessageFormatter.php"
+    ],
+    "packages": [
+        "tailwindcss",
+        "@tailwindcss/postcss",
+        "postcss",
+        "postcss-selector-parser",
+        "bootstrap"
+    ]
+}
