@@ -47,6 +47,25 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `public/vendor/ptah/ptah.css`.** The Forge CSS sources it used to copy to
   `resources/css/vendor/ptah/` moved to the new tag `ptah-css-sources`
   (`php artisan vendor:publish --tag=ptah-css-sources`).
+- Bootstrap mode, after review: one z-index lift (+1000) keeps Tailwind's
+  order among ptah's layers (the busy veil stays under the navbar); the
+  stylesheet link is versioned by the PUBLISHED file and a stale copy is
+  logged; `dark:` answers only `:root[data-bs-theme=dark]`; nothing of
+  ptah.css reaches the host page (`html` rules only on ptah's layouts, the
+  reduced-motion reset scoped, the build refuses leaks); Bootstrap's smooth
+  scroll is off on ptah's layouts; classes a custom Bootstrap build adds to the
+  spacing/gap/radius/shadow/opacity/z-index families are neutralised too; the
+  Blade compile step acts only in bootstrap mode, skips `@verbatim` and
+  comments and only marks the package's `<x-forge-*>`; a host subclass of a
+  Livewire component rendering its own view gets no scope; the pagination
+  view and the dashboard widgets open their own scope when a host renders
+  them; inline border colours moved to utilities (they were lost under
+  Bootstrap's `.border !important`), guarded by
+  `BootstrapImportantInlineStyleTest`; `ptah:upgrade-check` also lists
+  published components, generated page headers and published translations
+  that predate the mode; a `console.warn` in browsers without CSS `@scope`.
+- The dashboard widget tone `primary` uses `--ptah-primary-strong` (AA on the
+  dark surface) and `<x-forge-tab>` shows a focus ring to the keyboard.
 
 ---
 

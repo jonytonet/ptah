@@ -9,7 +9,7 @@ install time which CSS framework **it** uses; ptah adapts:
 | Setting | — (`PTAH_CSS=tailwind`) | `PTAH_CSS=bootstrap` (`ptah.css.framework`) |
 | Who compiles ptah's classes | your Tailwind (`app.css` gets `@source` + `ptah-components.css`) | nobody: ptah ships `public/vendor/ptah/ptah.css`, already compiled |
 | Tailwind in your project | yes | **no** — `app.css`, `vite.config.js` and `package.json` are not touched |
-| Look of ptah's screens | Tailwind | the same (measured: identical pixels in ptah's layout) |
+| Look of ptah's screens | Tailwind | the same: 99.33% pixel similarity (SSIM 0.986) over 58 screen states of a real host against its Tailwind twin; the exceptions are in §4.1 |
 
 Everything here is about the **Livewire** stack. The React and Vue screens
 (`--stack=react|vue`) keep their own stylesheet (`resources/js/ptah-ui.css`).
@@ -164,18 +164,33 @@ utilities and `ptah-components.css` a Tailwind project compiles — and then:
   specificity, closer scope, so it wins on ptah's elements and hands the
   property back to ptah's styles. A Bootstrap rule outside the scope is never
   touched.
-- **Stacking.** ptah's overlays (modals, menus, toasts, the busy overlay, the
-  assistant) are lifted above Bootstrap's fixed navbar (1030) and modal
-  (1055): `z-50` becomes 1060. ptah's own sidebar and navbar stay at
-  1028–1030, under a Bootstrap modal.
+- **Same-named classes of a custom Bootstrap build.** A Sass build can add
+  utilities to Bootstrap's !important families (`$spacers` 6 → `.p-6`). Every
+  ptah class named like a member of a stock spacing, gap, radius, shadow,
+  opacity or z-index family is neutralised too (about 5 KiB). Colour,
+  display and size families are not: they would also override the layout's
+  dark repaint, Alpine's inline `display: none` and the widths Alpine sets.
+- **Stacking.** Every ptah `z-index` from 40 up is lifted by the same 1000,
+  so ptah's own order is Tailwind's (the busy veil, 1040, under the navbar,
+  1050): sidebar, veil and bulk bar 1040 — above a Bootstrap fixed navbar
+  (1030); navbar, modals and menus 1050 — under a Bootstrap modal (1055),
+  whose backdrop comes later in the page; toasts 1060; the search dropdown
+  1999.
+- **Nothing leaks.** Rules of ptah's that select no ptah class (`html`,
+  `*`, the reduced-motion reset, `scrollbar-gutter`, the canvas colour) apply
+  only on pages whose `<body>` is a ptah scope (ptah's own layouts) or inside
+  the scope; `npm run build:css` refuses to write a stylesheet that breaks
+  this. On ptah's layouts Bootstrap's `:root { scroll-behavior: smooth }` is
+  turned back off.
 
 Who marks the scope:
 
 | Element | Marked by |
 |---|---|
 | `<body>` of ptah's layouts (dashboard, auth, error pages) | the layout |
-| Root of every Livewire component of the package (BaseCrud, CrudConfig, admin screens, bell, company switcher, assistant…) and of host classes extending them | a Livewire render hook |
-| An `<x-forge-*>` you write in **your** views | a Blade compile step adds it to the tag; its slots are fenced as host markup |
+| Root of every Livewire component that renders a package view (BaseCrud, CrudConfig, admin screens, bell, company switcher, assistant…, and a host subclass that keeps the package's view) | a Livewire render hook |
+| The dashboard widgets (`@include('ptah::dashboard.widgets')`), the pagination view (`$x->links('ptah::components.forge-pagination')`), the toast host, the config editor's teleported modal, the cell copy button | their own root |
+| An `<x-forge-*>` of the package written in **your** views | a Blade compile step (bootstrap mode only; `@verbatim` and Blade comments untouched; your own `forge-*` components left alone) adds it to the tag; its slots are fenced as host markup |
 | The page header `ptah:forge` generates | the generator (`data-ptah-scope` on the header) |
 
 Consequences you should know:
@@ -191,24 +206,88 @@ Consequences you should know:
   `#[Layout]`) are ptah's page layouts: what you put in their content is
   treated as ptah markup (Tailwind classes). For pages of your own with
   Bootstrap markup use the `<x-forge-dashboard-layout>` component.
-- **Compiled views**: the marker is added when Blade compiles your view. After
-  installing/upgrading run `php artisan view:clear` (the installer does).
+- **Compiled views**: the marker is added when Blade compiles your view, and
+  only in bootstrap mode. After installing, upgrading or switching
+  `PTAH_CSS` run `php artisan view:clear` (the installer does).
+- **Slots that cannot be fenced**: the rows of `<x-forge-table>` (a wrapper in
+  `<tbody>` would be moved out of the table by the browser), the panels of
+  `<x-forge-tabs>` in array mode (`{!! $tab['slot'] !!}`) and the text of
+  `<x-forge-textarea>` — host markup there is treated as ptah markup.
+- **Inside a fence, `space-y-*` / `divide-*` of the ptah element do not
+  reach your markup** (they select the children, which are host markup).
+- **Inline styles next to a Bootstrap class**: a package view never sets
+  inline a property that a Bootstrap !important class of the same element
+  sets (the neutraliser is !important too, and beats `style`) —
+  `BootstrapImportantInlineStyleTest` pins it. In your own Tailwind markup
+  inside a scope the same applies: use `border-(--my-colour)` + a custom
+  property instead of `class="border" style="border-color: …"`.
 - **Custom classes in a screen config** (`colsCellClass`, row styles,
   badges) are compiled only if ptah's own sources use them — the same rule a
   Tailwind project has with `@source`. A class nobody uses is missing in both.
 - **Browsers**: CSS `@scope` and `revert-layer` — Chrome/Edge 118+, Safari
-  17.4+, Firefox 146+.
+  17.4+, Firefox 146+. There is no fallback: without `@scope` the stylesheet
+  styles nothing, and the layouts and `<x-ptah-assets />` say so with a
+  `console.warn` (`'CSSScopeRule' in window`).
+- **Bootstrap imported into a cascade layer** (`@import "bootstrap.css"
+  layer(vendor)`, `@layer bootstrap { … }`) is not supported: a layer of
+  yours declared after ptah's beats ptah's layered styles, and a layered
+  `!important` beats the unlayered neutraliser. Load Bootstrap unlayered (the
+  stock way).
+- **Published views and translations are not compiled**: a component you
+  published (`resources/views/vendor/ptah`) keeps its old markup — without
+  the scope markers it renders unstyled; a published
+  `lang/vendor/ptah/*/ui.php` with markup can use a class `ptah.css` does
+  not have. `php artisan ptah:upgrade-check` lists both, and generated
+  screens whose page header has no `data-ptah-scope`.
 - **Your own element rules do not reach ptah's markup.** A rule of yours with
   exactly the weight of a Bootstrap selector (`body { … }`, `a { … }`,
   `h2 { … }`) is neutralised inside the scope together with Bootstrap's.
   Theme ptah through its tokens (§3) instead.
 - **A custom Bootstrap build** (other spacers, renamed utilities) is
   neutralised only where its selectors match stock Bootstrap 5.3.9.
-- Weight: about 310 KiB uncompressed, 35 KiB gzip.
+- Weight: about 321 KiB uncompressed, 36 KiB gzip.
+
+### 4.1 Measured differences against a Tailwind host
+
+In the package's own harness (the same views compiled as a Tailwind host
+would) ptah's layout, BaseCrud list, filters, modal, cards, dark mode and the
+forge components render identical pixels apart from the `z-index` values.
+Against a real host the remaining differences came from the host: a Tailwind
+build compiled before the package's views changed (a responsive class it did
+not have yet), and markup the host itself writes with Tailwind classes (a
+page header) — host-owned, outside ptah's scope.
+
+## 5. Migrating a Tailwind host's theme
+
+- **`@theme` tokens** (`--color-primary`, `--font-sans`…) become a plain,
+  unlayered `:root { … }` in your CSS.
+- **Your `.ptah-dark { … }` overrides** (a custom dark tone) only follow
+  ptah's own dark toggle. In a layout of your own, where Bootstrap's
+  `data-bs-theme="dark"` is the switch, write them as
+  `.ptah-dark, :root[data-bs-theme=dark] { … }`.
+- **Fonts**: set both `--font-sans` (ptah) and Bootstrap's
+  `$font-family-base` / `--bs-body-font-family` to the same stack.
+- **Colours**: keep `$primary` equal to `PTAH_COLOR_PRIMARY` (or to the
+  accent your users pick): there is no bridge from ptah's tokens to
+  Bootstrap's variables — only the other way, in a layout of your own (§3).
+- **Your Tailwind classes in host views** (page headers of `ptah:forge`
+  screens, the custom screens of `docs/CustomScreens.md`) need
+  `data-ptah-scope` on their root, or Bootstrap markup instead.
+
+## 6. Troubleshooting
+
+| Symptom | Check |
+|---|---|
+| ptah's screens unstyled | `public/vendor/ptah/ptah.css` exists and is the installed version (`ptah:upgrade-check`); the browser supports `@scope` (console warning); Bootstrap is not in a cascade layer |
+| A screen of yours unstyled after the switch | `php artisan view:clear`; your Tailwind markup has `data-ptah-scope` on its root |
+| A component styled, its content not | the content is in a slot (host markup, Bootstrap); put `data-ptah-scope` on a wrapper of yours |
+| An old stylesheet after `composer update` | `php artisan vendor:publish --tag=ptah-assets --force` (the link is versioned by the published file; a stale copy is also logged) |
+| A colour of yours lost on an element with `border` / `rounded` / `p-*` | an inline style next to a Bootstrap !important class (§4) |
+| Dark mode of your layout not reaching ptah | `data-bs-theme="dark"` must be on `<html>` |
 
 ---
 
-## 5. Maintaining the stylesheet (package contributors)
+## 7. Maintaining the stylesheet (package contributors)
 
 `resources/dist/ptah.css` is generated and committed:
 
