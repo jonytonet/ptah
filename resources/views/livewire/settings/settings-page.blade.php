@@ -16,7 +16,7 @@
 
         <form wire:submit="save" class="space-y-6">
             @foreach ($groups as $group => $defs)
-                <section class="rounded-md border p-4" style="border-color: var(--ptah-line-strong); background: var(--ptah-surface)">
+                <section class="rounded-md border p-4 border-(--ptah-line-strong)" style="background: var(--ptah-surface)">
                     <h2 class="mb-4 text-sm font-semibold" style="color: var(--ptah-text-strong)">{{ $group }}</h2>
                     <div class="grid gap-4 sm:grid-cols-2">
                         @foreach ($defs as $key => $def)

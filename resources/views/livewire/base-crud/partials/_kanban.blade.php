@@ -16,8 +16,8 @@
     x-data="{ over: null, from: null, targets: @js((object) $kanbanTargets), accepts(to) { return this.from !== null && (this.targets[this.from] ?? []).includes(to) } }">
     @foreach ($kanbanColumns as $column)
         <section wire:key="kanban-col-{{ $column['value'] }}"
-            class="flex flex-col shrink-0 w-72 rounded-md border"
-            style="border-color: var(--ptah-line-strong); background: var(--ptah-surface-sunken)"
+            class="flex flex-col shrink-0 w-72 rounded-md border border-(--ptah-line-strong)"
+            style="background: var(--ptah-surface-sunken)"
             :style="over === @js($column['value']) ? 'outline: 2px solid var(--ptah-primary); outline-offset: -2px' : ''"
             @php
                 $isOther = $column['value'] === \Ptah\Livewire\BaseCrud\BaseCrud::KANBAN_OTHER;
@@ -42,8 +42,8 @@
             <ul class="flex flex-col gap-2 p-2 min-h-16">
                 @forelse ($column['cards'] as $card)
                     <li wire:key="kanban-card-{{ $card['id'] }}"
-                        class="rounded-md border p-2 text-sm"
-                        style="border-color: var(--ptah-line); background: var(--ptah-surface){{ $isLocked ? '; opacity: .75' : '' }}"
+                        class="rounded-md border p-2 text-sm border-(--ptah-line)"
+                        style="background: var(--ptah-surface){{ $isLocked ? '; opacity: .75' : '' }}"
                         @if ($kanbanCanMove && $cardTargets !== []) draggable="true" @dragstart="from = @js($column['value']); $event.dataTransfer.setData('text/plain', @js((string) $card['id']))" @dragend="from = null; over = null" @endif>
                         <button type="button" wire:click="openEdit({{ json_encode($card['id']) }})"
                             class="block w-full text-left font-medium hover:underline focus:outline-none focus-visible:underline"

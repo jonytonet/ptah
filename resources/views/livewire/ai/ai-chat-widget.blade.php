@@ -528,8 +528,8 @@
             @if($commands !== [])
                 {{-- Autocomplete dos comandos: aparece ao digitar `/`. --}}
                 <div x-show="cmdMatches().length > 0" x-cloak
-                     class="mb-2 overflow-hidden rounded-lg border text-xs"
-                     style="border-color: var(--ptah-line-strong); background: var(--ptah-surface)"
+                     class="mb-2 overflow-hidden rounded-lg border text-xs border-(--ptah-line-strong)"
+                     style="background: var(--ptah-surface)"
                      role="listbox" aria-label="{{ __('ptah::ui.ai_commands_title') }}">
                     <template x-for="c in cmdMatches()" :key="c.name">
                         <button type="button" role="option" @click="pickCommand(c.name)"

@@ -68,7 +68,7 @@
                 @if (!empty($pv['errors']))
                     <div class="space-y-2">
                         <p class="text-sm font-semibold ptah-c-form_lbl">{{ __('ptah::ui.import_errors_title') }}</p>
-                        <div class="overflow-x-auto rounded-md border" style="border-color: var(--ptah-line-strong)">
+                        <div class="overflow-x-auto rounded-md border border-(--ptah-line-strong)">
                             <table class="w-full text-sm">
                                 <thead style="background: var(--ptah-panel); color: var(--ptah-text-secondary)">
                                     <tr>

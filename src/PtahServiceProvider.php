@@ -262,11 +262,11 @@ class PtahServiceProvider extends ServiceProvider
             // Bootstrap mode: the root of each of the package's Livewire
             // components opens a ptah scope — the pre-compiled stylesheet
             // applies there even when the component sits in a host's own
-            // Bootstrap layout (Ptah\Support\CssFramework). A host class
-            // extending one of them (a BaseCrud subclass) renders the
-            // package's view, so it counts too.
-            \Livewire\on('render', function ($component) {
-                if (! Support\CssFramework::isBootstrap() || ! Support\CssFramework::isPackageComponent($component)) {
+            // Bootstrap layout (Ptah\Support\CssFramework). Decided by the
+            // VIEW rendered: a host subclass of BaseCrud with the package's
+            // view counts, one rendering a view of its own does not.
+            \Livewire\on('render', function ($component, $view) {
+                if (! Support\CssFramework::isBootstrap() || ! Support\CssFramework::isPackageView(method_exists($view, 'getPath') ? $view->getPath() : null)) {
                     return null;
                 }
 

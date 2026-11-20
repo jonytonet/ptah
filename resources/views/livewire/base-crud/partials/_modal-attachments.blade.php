@@ -28,7 +28,7 @@
             @if ($attachmentItems === [])
                 <x-forge-empty :title="__('ptah::ui.attachments_empty')" />
             @else
-                <ul class="divide-y rounded-md border" style="border-color: var(--ptah-line-strong)">
+                <ul class="divide-y rounded-md border border-(--ptah-line-strong)">
                     @foreach ($attachmentItems as $att)
                         <li wire:key="att-{{ $att['id'] }}" class="flex items-center justify-between gap-3 px-3 py-2" style="border-color: var(--ptah-line)">
                             <div class="min-w-0">

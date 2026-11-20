@@ -11,12 +11,12 @@
     $cardStatus = (string) ($card['status'] ?? 'pending');
     $cardCell = fn (mixed $v): string => is_scalar($v) || $v === null ? (string) $v : (string) json_encode($v, JSON_UNESCAPED_UNICODE);
 @endphp
-<div class="mt-2 rounded-lg border p-2.5 text-xs" style="border-color: var(--ptah-line-strong); background: var(--ptah-surface)"
+<div class="mt-2 rounded-lg border p-2.5 text-xs border-(--ptah-line-strong)" style="background: var(--ptah-surface)"
      data-ptah-confirmation="{{ $cardValid ? $cardToken : '' }}">
     <p class="font-semibold" style="color: var(--ptah-text)">{{ $card['summary'] ?? '' }}</p>
 
     @if($cardRows !== [] && $cardColumns !== [])
-        <div class="mt-2 max-h-56 overflow-auto rounded border" style="border-color: var(--ptah-line)">
+        <div class="mt-2 max-h-56 overflow-auto rounded border border-(--ptah-line)">
             <table class="w-full text-[11px] tabular-nums">
                 <thead>
                     <tr style="background: var(--ptah-line)">
@@ -53,8 +53,8 @@
             <button type="button"
                     wire:click="cancelAction('{{ $cardToken }}')"
                     wire:loading.attr="disabled" wire:target="confirmAction,cancelAction"
-                    class="rounded-md border px-3 py-1.5 font-semibold disabled:opacity-50"
-                    style="border-color: var(--ptah-line-strong); color: var(--ptah-text)">
+                    class="rounded-md border px-3 py-1.5 font-semibold disabled:opacity-50 border-(--ptah-line-strong)"
+                    style="color: var(--ptah-text)">
                 {{ __('ptah::ui.ai_cancel_btn') }}
             </button>
         </div>

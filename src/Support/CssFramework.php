@@ -6,6 +6,7 @@ namespace Ptah\Support;
 
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Env;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\HtmlString;
 use Illuminate\View\ComponentAttributeBag;
 use Throwable;
@@ -65,6 +66,8 @@ final class CssFramework
 
     private static ?string $distHash = null;
 
+    private static bool $staleLogged = false;
+
     public static function current(): string
     {
         $framework = strtolower(trim((string) config('ptah.css.framework', self::TAILWIND)));
@@ -83,38 +86,54 @@ final class CssFramework
         return dirname(__DIR__, 2).'/resources/dist/ptah.css';
     }
 
-    /**
-     * The inputs hash recorded in the header of the package's stylesheet ('' when
-     * it cannot be read) — the cache-busting version of the link.
-     */
+    /** The inputs hash recorded in the header of the package's stylesheet ('' when it cannot be read). */
     public static function distHash(): string
     {
-        if (self::$distHash !== null) {
-            return self::$distHash;
-        }
-
-        $hash = '';
-
-        try {
-            $handle = @fopen(self::distPath(), 'rb');
-            if ($handle !== false) {
-                $head = (string) fread($handle, 1024);
-                fclose($handle);
-                if (preg_match('/inputs-hash: ([0-9a-f]{64})/', $head, $m) === 1) {
-                    $hash = $m[1];
-                }
-            }
-        } catch (Throwable) {
-            $hash = '';
-        }
-
-        return self::$distHash = $hash;
+        return self::$distHash ??= self::headerHash(self::distPath());
     }
 
-    /** URL of the published stylesheet, versioned by the package's build. */
+    /** The same hash in the PUBLISHED copy (public/vendor/ptah/ptah.css); '' when missing or unreadable. */
+    public static function publishedHash(): string
+    {
+        return self::headerHash(public_path(self::PUBLIC_PATH));
+    }
+
+    public static function headerHash(string $path): string
+    {
+        try {
+            $handle = is_file($path) ? @fopen($path, 'rb') : false;
+            if ($handle === false) {
+                return '';
+            }
+            $head = (string) fread($handle, 1024);
+            fclose($handle);
+
+            return preg_match('/inputs-hash: ([0-9a-f]{64})/', $head, $m) === 1 ? $m[1] : '';
+        } catch (Throwable) {
+            return '';
+        }
+    }
+
+    /**
+     * URL of the published stylesheet, versioned by the PUBLISHED file: after a
+     * `composer update` without re-publishing, the link keeps the old version
+     * (the content the browser has is the content served), and re-publishing
+     * changes it. A copy that is not the package's build is logged once per
+     * process — `ptah:upgrade-check` says what to run.
+     */
     public static function stylesheetUrl(): string
     {
-        $version = substr(self::distHash(), 0, 12);
+        $published = self::publishedHash();
+        $version = substr($published, 0, 12);
+
+        if ($version === '' && is_file($file = public_path(self::PUBLIC_PATH))) {
+            $version = (string) filemtime($file);
+        }
+
+        if (! self::$staleLogged && $published !== self::distHash()) {
+            self::$staleLogged = true;
+            Log::warning('ptah: public/'.self::PUBLIC_PATH.' is missing or is not the stylesheet of the installed ptah — run php artisan vendor:publish --tag=ptah-assets --force');
+        }
 
         return asset(self::PUBLIC_PATH).($version !== '' ? '?v='.$version : '');
     }
@@ -148,7 +167,10 @@ final class CssFramework
             return new HtmlString('');
         }
 
-        return new HtmlString('<link rel="stylesheet" href="'.e(self::stylesheetUrl()).'" data-ptah-css>');
+        // The isolation is CSS @scope (Chrome 118, Safari 17.4, Firefox 146):
+        // without it the stylesheet styles nothing, so say so in the console.
+        return new HtmlString('<link rel="stylesheet" href="'.e(self::stylesheetUrl()).'" data-ptah-css>'
+            ."<script>if (!('CSSScopeRule' in window)) { console.warn('ptah: this browser has no CSS @scope; ptah.css (Bootstrap mode) cannot style the screens — docs/Css.md'); }</script>");
     }
 
     /**
@@ -237,36 +259,51 @@ final class CssFramework
     }
 
     /**
-     * Blade precompiler: in a view that is NOT one of the package's, every
-     * `<x-forge-*>` gets `:data-ptah-scope="…isBootstrap()"`. In bootstrap mode
-     * that renders `data-ptah-scope` on the component's root (it rides on
-     * `$attributes`) and fences its slots; in tailwind mode the value is false
-     * and Blade prints nothing. The compiled view is the same in both modes, so
-     * switching PTAH_CSS needs no view:clear.
+     * Blade compile step, bootstrap mode only: in a view that is NOT one of the
+     * package's, every `<x-forge-*>` of the PACKAGE (a host component of its own
+     * named forge-kpi is left alone) gets `:data-ptah-scope="…isBootstrap()"`.
+     * That renders `data-ptah-scope` on the component's root (it rides on
+     * `$attributes`) and fences its slots. `@verbatim` blocks and Blade comments
+     * are copied as they are. In tailwind mode nothing is touched; switching
+     * PTAH_CSS therefore needs `php artisan view:clear` (the installer runs it).
      */
     public static function markHostComponents(string $value, ?string $path): string
     {
-        if (! str_contains($value, '<x-forge-') || self::isPackageView($path)) {
+        if (! self::isBootstrap() || ! str_contains($value, '<x-forge-') || self::isPackageView($path)) {
             return $value;
         }
 
-        return (string) preg_replace_callback(
-            '/<x-forge-([\w\-.]+)(?=[\s\/>])/',
-            fn (array $m): string => $m[0].' :'.self::SCOPE_ATTRIBUTE.'="\\'.self::class.'::isBootstrap()"',
-            $value
-        );
-    }
+        $names = implode('|', array_map(fn (string $n): string => preg_quote($n, '/'), self::packageComponents()));
+        $parts = preg_split('/(@verbatim.*?@endverbatim|\{\{--.*?--\}\})/s', $value, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [$value];
 
-    /** Whether a Livewire component is the package's, or extends one of them. */
-    public static function isPackageComponent(object $component): bool
-    {
-        foreach ([$component::class, ...array_values(class_parents($component) ?: [])] as $class) {
-            if (str_starts_with($class, 'Ptah\\')) {
-                return true;
+        foreach ($parts as $i => $part) {
+            if ($i % 2 === 1) {
+                continue;
             }
+
+            $parts[$i] = (string) preg_replace_callback(
+                '/<x-('.$names.')(?=[\s\/>])/',
+                fn (array $m): string => $m[0].' :'.self::SCOPE_ATTRIBUTE.'="\\'.self::class.'::isBootstrap()"',
+                $part
+            );
         }
 
-        return false;
+        return implode('', $parts);
+    }
+
+    /**
+     * The package's `forge-*` components (file names under resources/views/components).
+     *
+     * @return list<string>
+     */
+    public static function packageComponents(): array
+    {
+        static $names = null;
+
+        return $names ??= array_map(
+            fn (string $file): string => basename($file, '.blade.php'),
+            glob(dirname(__DIR__, 2).'/resources/views/components/forge-*.blade.php') ?: []
+        );
     }
 
     /** Whether a compiled view is one of the package's (shipped or published). */
