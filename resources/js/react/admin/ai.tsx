@@ -13,6 +13,9 @@ import {
     AI_GUIDE,
     AI_PROVIDERS,
     AI_STORAGE,
+    chatToEnd,
+    noteChatScroll,
+    placeChatScroll,
     aiRangeText,
     aiWords,
     blankAiModel,
@@ -566,7 +569,8 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
     useEffect(() => {
         const list = listRef.current;
         if (list) {
-            list.scrollTop = list.scrollHeight;
+            // Where the reader was (a reload, reopening), else the end.
+            placeChatScroll(list);
         }
     }, [messages, streamHtml, open, loading]);
 
@@ -612,6 +616,8 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
         const optimistic: AiChatMessage = { role: 'user', content: text, attachments: sending.map((file) => file.name) };
 
         setDraft('');
+        // Sending: what comes next is read from the end.
+        chatToEnd();
         setMessages((current) => [...current, optimistic]);
         setError('');
         setLoading(true);
@@ -835,7 +841,7 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
                         </div>
                     ) : (
                         <>
-                            <div ref={listRef} style={chatStyles.list}>
+                            <div ref={listRef} style={chatStyles.list} onScroll={(event) => noteChatScroll(event.currentTarget)}>
                                 {messages.length === 0 && !loading && <ForgeEmpty title={t.chatEmpty} />}
                                 {messages.map((message, index) =>
                                     message.role === 'user' ? (

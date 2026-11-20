@@ -113,6 +113,8 @@
         }
         document.addEventListener('livewire:navigate', function () {
             release();
+            /* Before the content goes inert: an inert subtree drops the focus. */
+            keepPersistedFocus();
             leaving = document.querySelector('main');
             if (!leaving) return;
             leaving.setAttribute('inert', '');
@@ -200,10 +202,64 @@
                     } catch (e) {}
                 });
             }
+            keepPersistedScrolls();
             /* After reading the sidebar's state above: the teardown forgets it. */
             tearDownAlpine();
             cancelMessagesOfThePageBeingLeft();
         });
+
+        /* A persisted block (the assistant, the toasts) is the same element on
+           the next page — but Livewire takes it out of the document for the
+           swap and puts it back, and an element taken out of the document
+           forgets its scroll offset and its focus. The open chat jumped back
+           to its first message, and a half-typed message lost the caret
+           (1.59.2). What scrolled and what had the focus is noted here and
+           given back once the block is in again. */
+        /* The focus is noted when the navigation starts (`livewire:navigate`),
+           before the content goes inert; the scrolls right before the swap
+           (`livewire:navigating`), so a scroll made while the page was on its
+           way counts. */
+        function keepPersistedFocus() {
+            spa.kept = { scrolls: [], focus: null };
+            var active = document.activeElement;
+            if (active && active !== document.body && active.closest && active.closest('[x-persist]')) {
+                var focus = { el: active };
+                try {
+                    if (typeof active.selectionStart === 'number') {
+                        focus.start = active.selectionStart;
+                        focus.end = active.selectionEnd;
+                    }
+                } catch (e) {}
+                spa.kept.focus = focus;
+            }
+        }
+
+        function keepPersistedScrolls() {
+            spa.kept = spa.kept || { scrolls: [], focus: null };
+            spa.kept.scrolls = [];
+            document.querySelectorAll('[x-persist]').forEach(function (block) {
+                [block].concat(Array.prototype.slice.call(block.querySelectorAll('*'))).forEach(function (el) {
+                    if (el.scrollTop || el.scrollLeft) spa.kept.scrolls.push({ el: el, top: el.scrollTop, left: el.scrollLeft });
+                });
+            });
+        }
+
+        function givePersistedStateBack() {
+            var kept = spa.kept;
+            if (!kept) return;
+            kept.scrolls.forEach(function (s) {
+                if (!s.el.isConnected) return;
+                s.el.scrollTop = s.top;
+                s.el.scrollLeft = s.left;
+            });
+            var f = kept.focus;
+            if (f && f.el.isConnected && (document.activeElement === document.body || !document.activeElement)) {
+                try {
+                    f.el.focus({ preventScroll: true });
+                    if (typeof f.start === 'number') f.el.setSelectionRange(f.start, f.end);
+                } catch (e) {}
+            }
+        }
 
         document.addEventListener('livewire:navigated', function () {
             release();
@@ -223,11 +279,16 @@
 
             var nav = sidebarNav();
             if (nav && spa.scroll !== null) nav.scrollTop = spa.scroll;
+            givePersistedStateBack();
 
             requestAnimationFrame(function () {
                 requestAnimationFrame(function () {
                     d.removeAttribute('data-ptah-swapping');
                     if (nav && spa.scroll !== null && nav.isConnected) nav.scrollTop = spa.scroll;
+                    /* Again once the new page is laid out: a scroll given back
+                       before layout can be clamped to a shorter height. */
+                    givePersistedStateBack();
+                    spa.kept = null;
                 });
             });
         });

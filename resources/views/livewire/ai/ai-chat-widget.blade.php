@@ -87,11 +87,36 @@
             });
         },
 
+        /* Onde a pessoa estava na lista (1.59.2) — a mesma regra e a mesma
+           chave das stacks React e Vue (core/admin/ai.ts): reabrir o chat,
+           recarregar a pagina ou uma resposta chegando enquanto ela le uma
+           mensagem antiga nao a joga para o fim; quem estava no fim continua
+           no fim. Enviar uma mensagem vai para o fim (toEnd). A troca de tela
+           com a navegacao SPA guarda a rolagem do bloco persistido
+           (partials/spa-navigation). */
         scrollToBottom() {
             this.$nextTick(() => {
                 const el = this.$refs.msgList;
-                if (el) el.scrollTop = el.scrollHeight;
+                if (!el) return;
+                let kept = null;
+                try { kept = sessionStorage.getItem('ptah:ai:scroll'); } catch (e) {}
+                const top = kept === null ? NaN : Number(kept);
+                el.scrollTop = Number.isFinite(top) ? Math.min(top, el.scrollHeight) : el.scrollHeight;
             });
+        },
+
+        toEnd() {
+            try { sessionStorage.removeItem('ptah:ai:scroll'); } catch (e) {}
+            this.scrollToBottom();
+        },
+
+        noteScroll() {
+            const el = this.$refs.msgList;
+            if (!el || !el.isConnected || !el.clientHeight) return;
+            const atEnd = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+            try {
+                atEnd ? sessionStorage.removeItem('ptah:ai:scroll') : sessionStorage.setItem('ptah:ai:scroll', String(Math.round(el.scrollTop)));
+            } catch (e) {}
         },
 
         focusInput() {
@@ -230,7 +255,7 @@
             this.submit();
         }
     }"
-    @ai-message-sent.window="scrollToBottom()"
+    @ai-message-sent.window="toEnd()"
     @ai-draft-clear.window="draft = ''; resetGrow()"
     @keydown.escape.window="if (open) open = false"{!! \Ptah\Support\SpaNavigation::enabled() ? ' x-on:livewire:navigated.document="'.e("document.body.classList.toggle('ptah-has-ai-launcher', !launcherHidden)").'"' : '' !!}
     class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3"
@@ -393,6 +418,7 @@
         @if(!$showHistory)
         <div
             x-ref="msgList"
+            @scroll.passive="noteScroll()"
             class="flex-1 overflow-y-auto px-4 py-3 space-y-3 scrollbar-none"
         >
             @if(empty($messages))

@@ -13,6 +13,9 @@ import {
     AI_GUIDE,
     AI_PROVIDERS,
     AI_STORAGE,
+    chatToEnd,
+    noteChatScroll,
+    placeChatScroll,
     aiRangeText,
     aiWords,
     blankAiModel,
@@ -490,7 +493,8 @@ export const PtahAiChat = defineComponent({
         watch([messages, streamHtml, open, loading], () =>
             nextTick(() => {
                 if (listRef.value) {
-                    listRef.value.scrollTop = listRef.value.scrollHeight;
+                    // Where the reader was (a reload, reopening), else the end.
+                    placeChatScroll(listRef.value);
                 }
             }),
         );
@@ -531,6 +535,8 @@ export const PtahAiChat = defineComponent({
             draft.value = '';
             // By position: the list holds reactive proxies, never the object pushed.
             const at = messages.value.length;
+            // Sending: what comes next is read from the end.
+            chatToEnd();
             messages.value = [...messages.value, optimistic];
             error.value = '';
             loading.value = true;
@@ -867,7 +873,7 @@ export const PtahAiChat = defineComponent({
                                 ])
                               : null,
 
-                          ...(showHistory.value ? [renderHistory(w)] : [h('div', { ref: listRef, style: chatStyles.list }, renderMessages(w)), renderFoot(w, current)]),
+                          ...(showHistory.value ? [renderHistory(w)] : [h('div', { ref: listRef, style: chatStyles.list, onScroll: (event: Event) => noteChatScroll(event.currentTarget as HTMLElement) }, renderMessages(w)), renderFoot(w, current)]),
                       ],
                   )
                 : null;

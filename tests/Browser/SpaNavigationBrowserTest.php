@@ -383,6 +383,50 @@ class SpaNavigationBrowserTest extends DuskTestCase
         });
     }
 
+    /**
+     * 1.59.2 — the assistant's chat stayed open across screens, but its list of
+     * messages jumped back to the first one and a half-typed message lost the
+     * caret: Livewire takes a persisted block out of the document for the swap,
+     * and an element out of the document forgets its scroll and its focus.
+     */
+    #[Test]
+    public function a_persisted_block_keeps_its_scroll_and_its_focus_across_a_navigation(): void
+    {
+        $this->beforeServingApplication('spaOn');
+
+        $this->browse(function (Browser $b) {
+            $this->start($b, '/dusk-test/other');
+            $b->waitFor('#dusk-persisted-list', 30);
+            $b->script("const l = document.querySelector('#dusk-persisted-list'); l.scrollTop = 400; window.__panel = document.querySelector('#dusk-persisted-panel');");
+            $b->click('#dusk-persisted-draft')->type('#dusk-persisted-draft', 'Rascunho');
+            $b->script("document.querySelector('#dusk-persisted-draft').setSelectionRange(3, 3);");
+            $before = (int) $b->script("return document.querySelector('#dusk-persisted-list').scrollTop;")[0];
+            $this->assertGreaterThan(300, $before);
+
+            // A navigation that keeps the focus in the panel: a script call, as the
+            // menu would take the focus away with the click.
+            $b->script("window.Livewire.navigate('/dusk-test/persist');");
+            $this->landed($b, '/dusk-test/persist');
+            $b->waitFor('#dusk-persist-marker', 30);
+
+            $this->assertSame(42, $this->marker($b));
+            $this->assertTrue((bool) $b->script("return window.__panel === document.querySelector('#dusk-persisted-panel');")[0], 'O bloco persistido nao e o mesmo elemento.');
+            $this->assertSame($before, (int) $b->script("return document.querySelector('#dusk-persisted-list').scrollTop;")[0], 'A lista do bloco persistido voltou ao inicio.');
+            $this->assertSame(
+                ['dusk-persisted-draft', 3],
+                $b->script("return [document.activeElement && document.activeElement.id, document.activeElement && document.activeElement.selectionStart];")[0],
+                'O campo do bloco persistido perdeu o foco ou o cursor.'
+            );
+            $this->assertSame('Rascunho', $b->value('#dusk-persisted-draft'));
+
+            // And back through the menu.
+            $b->click(self::SIDEBAR.' a[href="/dusk-test/other"]');
+            $this->landed($b, '/dusk-test/other');
+            $this->assertSame($before, (int) $b->script("return document.querySelector('#dusk-persisted-list').scrollTop;")[0]);
+            $this->assertNoSevereLog($b, 'bloco persistido');
+        });
+    }
+
     /** No SEVERE entry in the browser log (a missing favicon is not ours). */
     private function assertNoSevereLog(Browser $b, string $where): void
     {
