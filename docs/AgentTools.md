@@ -378,6 +378,7 @@ php artisan ptah:upgrade-check --json
 | migrations | migrations not run yet |
 | structure_editor | menu/company screens closed because `PTAH_STRUCTURE_EDITOR` is off |
 | composer | `composer.json` pins `jonytonet/ptah` to an exact version (`"1.58.6"`): `composer update jonytonet/ptah` runs clean and does not move it. Informational — use `^1.59`, or edit the version at each upgrade |
+| stylesheet | `PTAH_CSS=bootstrap` and `public/vendor/ptah/ptah.css` missing or older than the installed package → `vendor:publish --tag=ptah-assets --force` ([Css.md](Css.md)) |
 
 ---
 
