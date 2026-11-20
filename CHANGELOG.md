@@ -7,6 +7,56 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.59.2] - 2026-11-20
+
+Reported by a production host (PetPlace) on 1.59.1.
+
+### Fixed
+
+- **The assistant's chat jumped back to its first message.** With the Livewire
+  single-page navigation the chat stays open across screens, but Livewire takes
+  a persisted block (`@persist`: the chat, the toasts) out of the document for
+  the swap and puts it back, and an element out of the document forgets its
+  scroll and its focus. The layout now notes them before the swap and gives
+  them back; a half-typed message keeps the caret too. In every stack (Livewire,
+  React, Vue) the chat also notes where the reader is in the list (this tab,
+  `sessionStorage` `ptah:ai:scroll`, per conversation): reopening it or
+  reloading the page puts the list there, at the end stays at the end, and
+  sending a message goes to the end. A reload also reopens the conversation
+  the person was reading (picked from the history), not the latest one
+  (`ptah:ai:conversation`).
+- **A switch on "New" ignored the column's DEFAULT.** A `boolean` NOT NULL
+  column is a switch, and without `colsDefaultValue` it opened off and saved 0
+  even on a `DEFAULT 1` column — a new category was born inactive and left
+  every list filtered by `is_active = 1`. The column's own default now sets
+  the switch on "New" (Livewire, and the blank form React and Vue receive); a
+  declared `colsDefaultValue` still wins.
+- **An emptied money field saved 0 where empty means "not informed".** With
+  `colsMask: "money_brl"` + `colsMaskTransform: "money_to_float"` (and the
+  `decimal` store rule) an empty value became `0.0`, and the input opened and
+  cleared to `R$ 0,00` — even a record opened and saved untouched. On a
+  "free delivery above" field that turned "never" into "always"; on a coupon's
+  "max discount", into no discount. Now an emptied masked field on a
+  **nullable** column saves `null` without going through the mask, and the
+  money input stays empty (placeholder `R$ 0,00`) — in the Livewire modal and
+  in the React and Vue forms (`emptyNull` in the form schema). A NOT NULL column
+  keeps the old behaviour.
+
+### Added
+
+- **`colsMaskEmpty`** (`null` | `zero`; CLI `mask_empty=`): decides, field by
+  field, what an emptied masked field saves, whatever the column.
+
+### Docs
+
+- `decimal` has no typing pattern: the form shows the plain input and the
+  comma is read on save. Said in the masks section of BaseCrud.md.
+
+### Upgrading
+
+Review masked money fields on **nullable** columns: an emptied value now saves
+`null` instead of `0`. To keep zero on a field, set `colsMaskEmpty: "zero"`.
+
 ## [1.59.1] - 2026-11-19
 
 Reported by a production host (Livewire 4.4.8) after turning
