@@ -20,5 +20,7 @@
         <span id="forge-slot-host" class="px-3">Host markup inside a forge slot</span>
     </x-forge-card>
 
+    @include('ptah::dashboard.widgets')
+
     @livewire('ptah-base-crud', ['model' => $model])
 </x-forge-dashboard-layout>

@@ -8,6 +8,7 @@ use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
 use Laravel\Dusk\Browser;
 use PHPUnit\Framework\Attributes\Test;
+use Ptah\Tests\Browser\Fixtures\DuskCrudStub;
 
 /**
  * ptah.css.framework = bootstrap in a real Chrome, with Bootstrap 5.3.9 on the
@@ -26,6 +27,10 @@ class CssBootstrapBrowserTest extends DuskTestCase
     public function bootstrapMode(Application $app, Repository $config): void
     {
         $config->set('ptah.css.framework', 'bootstrap');
+        // A "latest" widget, @included by the host view in the layout's slot.
+        $config->set('ptah-dashboard.widgets', [
+            ['type' => 'latest', 'label' => 'Latest', 'model' => DuskCrudStub::class, 'columns' => ['name', 'status'], 'limit' => 2, 'cache' => 0],
+        ]);
     }
 
     private function style(Browser $b, string $selector, string $property): string
@@ -84,8 +89,29 @@ class CssBootstrapBrowserTest extends DuskTestCase
             // …and the host markup in its slot is Bootstrap again.
             $this->assertSame('16px', $this->style($b, '#forge-slot-host', 'paddingLeft'));
 
-            // The ptah chrome stays under Bootstrap's modal (1055).
-            $this->assertSame('1030', $this->style($b, '.ptah-navbar', 'zIndex'));
+            // Tailwind's order among ptah's layers: the busy veil (40) under the
+            // navbar (50) — both lifted by the same 1000, the navbar still under
+            // Bootstrap's modal (1055).
+            $this->assertSame('1050', $this->style($b, '.ptah-navbar', 'zIndex'));
+            $this->assertSame('1040', $this->style($b, '[data-ptah-busy]', 'zIndex'));
+            $this->assertSame('1040', $this->style($b, '.ptah-sidebar', 'zIndex'));
+
+            // Bootstrap's :root { scroll-behavior: smooth } stays off ptah's layout.
+            $this->assertSame('auto', (string) $b->script('return getComputedStyle(document.documentElement).scrollBehavior;')[0]);
+
+            // The widgets a host @includes in the slot open their own scope;
+            // their border colour (once inline, lost to Bootstrap's .border
+            // !important) comes from the token.
+            $this->assertSame([true, '8px', '14px', true], $b->script(<<<'JS'
+                var grid = document.querySelector('main [data-ptah-slot] [data-ptah-scope].grid');
+                var card = grid.firstElementChild;
+                var probe = document.createElement('i');
+                probe.style.color = 'var(--ptah-line-strong)';
+                grid.appendChild(probe);
+                var token = getComputedStyle(probe).color; probe.remove();
+                var td = grid.querySelector('td');
+                return [getComputedStyle(card).borderTopColor === token, getComputedStyle(td).paddingRight, getComputedStyle(td).fontSize, getComputedStyle(card).borderTopWidth === '1px'];
+                JS)[0]);
 
             $this->assertNoSevereLog($b);
         });
@@ -105,6 +131,7 @@ class CssBootstrapBrowserTest extends DuskTestCase
             $this->assertSame('12px', $this->style($b, '.ptah-base-crud th.px-3', 'paddingLeft'));
             $this->assertSame('12px', $this->style($b, '#host-container', 'paddingLeft'), 'Bootstrap container gutter.');
             $this->assertSame('1030', $this->style($b, '#host-navbar', 'zIndex'));
+            $this->assertSame('smooth', (string) $b->script('return getComputedStyle(document.documentElement).scrollBehavior;')[0], 'The host page keeps Bootstrap.');
 
             // <x-ptah-assets /> appended the toast host to <body>, scoped.
             $this->assertTrue($b->script("return !!document.querySelector('body > [data-ptah-scope][aria-live=polite]');")[0]);
@@ -118,7 +145,7 @@ class CssBootstrapBrowserTest extends DuskTestCase
                 return [getComputedStyle(overlay).zIndex, overlay.contains(top), !!top.closest('#host-navbar')];
                 JS)[0];
 
-            $this->assertGreaterThan(1055, (int) $overlay[0]);
+            $this->assertGreaterThan(1030, (int) $overlay[0]);
             $this->assertTrue($overlay[1], 'The point under the host navbar belongs to the ptah modal overlay.');
             $this->assertFalse($overlay[2]);
 
@@ -156,6 +183,12 @@ class CssBootstrapBrowserTest extends DuskTestCase
                 document.querySelector('.ptah-base-crud').appendChild(probe);
                 var c = getComputedStyle(probe).backgroundColor; probe.remove(); return c;
                 JS)[0], 'data-bs-theme="dark" reaches the ptah tokens.');
+
+            // …and nothing of ptah.css paints the HOST page itself.
+            $this->assertSame(['rgba(0, 0, 0, 0)', 'auto'], $b->script(<<<'JS'
+                var cs = getComputedStyle(document.documentElement);
+                return [cs.backgroundColor, cs.scrollbarGutter];
+                JS)[0]);
         });
     }
 }
