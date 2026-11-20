@@ -87,6 +87,9 @@
                     "colsMask": {
                         "description": "Read by the runtime — see docs/Configuration.md"
                     },
+                    "colsMaskEmpty": {
+                        "description": "Read by the runtime — see docs/Configuration.md"
+                    },
                     "colsMaskTransform": {
                         "description": "Read by the runtime — see docs/Configuration.md"
                     },
@@ -408,6 +411,7 @@
                                 "colsHelper",
                                 "colsIsFilterable",
                                 "colsMask",
+                                "colsMaskEmpty",
                                 "colsMaskTransform",
                                 "colsMetodoCustom",
                                 "colsMetodoRaw",

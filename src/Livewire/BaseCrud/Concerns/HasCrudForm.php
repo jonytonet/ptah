@@ -976,6 +976,33 @@ trait HasCrudForm
     }
 
     /**
+     * Whether an emptied masked field saves null (1.59.2). `colsMaskEmpty`
+     * decides when set — `null` or `zero` —; otherwise the column does: a
+     * nullable column saves null (empty there means "not informed": no
+     * free-delivery threshold, no discount cap, the product's general price),
+     * a NOT NULL one keeps what the mask makes of it (0 for money), as before.
+     * The money input follows the same answer: empty stays empty instead of
+     * showing R$ 0,00.
+     *
+     * @param  array<string, mixed>  $col
+     */
+    public function maskEmptyIsNull(array $col): bool
+    {
+        $choice = strtolower(trim(Scalar::text($col['colsMaskEmpty'] ?? '')));
+
+        if ($choice === 'null') {
+            return true;
+        }
+        if ($choice === 'zero') {
+            return false;
+        }
+
+        $field = (string) ($col['colsNomeFisico'] ?? '');
+
+        return $field !== '' && $this->columnIsNullable($field) === true;
+    }
+
+    /**
      * Is this column of the screen's table nullable? Null when the schema
      * cannot be read or has no such column.
      */
@@ -1172,6 +1199,25 @@ trait HasCrudForm
      */
     protected function applyMaskTransforms(array $data, array $formCols): array
     {
+        // An emptied masked field on a column where empty means "not
+        // informed" saves null, never through the mask: money_to_float and the
+        // `decimal` store rule turn '' into 0.0, and "free delivery above"
+        // empty (never) became 0 (always) — 1.59.2, PetPlace. See
+        // maskEmptyIsNull() for who decides.
+        $blank = [];
+        foreach ($formCols as $col) {
+            $field = $col['colsNomeFisico'] ?? null;
+            if (! is_string($field) || $field === '' || ! array_key_exists($field, $data)) {
+                continue;
+            }
+            $masked = ! empty($col['colsMask']) || ! empty($col['colsMaskTransform']);
+            $value = $data[$field];
+            if ($masked && ($value === null || (is_string($value) && trim($value) === '')) && $this->maskEmptyIsNull($col)) {
+                $data[$field] = null;
+                $blank[$field] = true;
+            }
+        }
+
         // A regra de gravacao da MASCARA vem primeiro, e e a razao de a mascara
         // ser declarativa: `colsMask: "cpf"` sozinho ja normaliza, sem exigir um
         // `colsMaskTransform` combinando ao lado. Antes disto, quem configurava
@@ -1186,6 +1232,7 @@ trait HasCrudForm
             $maskName = $col['colsMask'] ?? null;
 
             if ($field
+                && ! isset($blank[$field])
                 && $maskName
                 && empty($col['colsMaskTransform'])
                 && array_key_exists($field, $data)
@@ -1198,7 +1245,7 @@ trait HasCrudForm
             $field = $col['colsNomeFisico'] ?? null;
             $transform = $col['colsMaskTransform'] ?? null;
 
-            if (! $field || ! $transform || ! array_key_exists($field, $data)) {
+            if (! $field || ! $transform || ! array_key_exists($field, $data) || isset($blank[$field])) {
                 continue;
             }
 
