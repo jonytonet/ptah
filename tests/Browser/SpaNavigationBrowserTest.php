@@ -414,7 +414,7 @@ class SpaNavigationBrowserTest extends DuskTestCase
             $this->assertSame($before, (int) $b->script("return document.querySelector('#dusk-persisted-list').scrollTop;")[0], 'A lista do bloco persistido voltou ao inicio.');
             $this->assertSame(
                 ['dusk-persisted-draft', 3],
-                $b->script("return [document.activeElement && document.activeElement.id, document.activeElement && document.activeElement.selectionStart];")[0],
+                $b->script('return [document.activeElement && document.activeElement.id, document.activeElement && document.activeElement.selectionStart];')[0],
                 'O campo do bloco persistido perdeu o foco ou o cursor.'
             );
             $this->assertSame('Rascunho', $b->value('#dusk-persisted-draft'));
