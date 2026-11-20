@@ -1000,7 +1000,7 @@ trait HasCrudForm
      *
      * @param  array<string, mixed>  $col
      */
-    public function maskEmptyIsNull(array $col): bool
+    protected function maskEmptyIsNull(array $col): bool
     {
         $choice = strtolower(trim(Scalar::text($col['colsMaskEmpty'] ?? '')));
 
