@@ -36,6 +36,8 @@ export interface Field {
     maskPlaceholder?: string | null;
     inputMode?: string | null;
     maxLength?: number | null;
+    /** An emptied field saves null: the money input stays empty instead of R$ 0,00 (1.59.2). */
+    emptyNull?: boolean;
 }
 
 export interface LookupSettings {

@@ -178,9 +178,9 @@ export function PtahFormField({ crud, form, field, t, onTouch }: FormFieldProps)
                 type="text"
                 inputMode="numeric"
                 placeholder="R$ 0,00"
-                value={moneyDisplay(value)}
+                value={moneyDisplay(value, field.emptyNull === true)}
                 onFocus={(event) => event.target.setSelectionRange(event.target.value.length, event.target.value.length)}
-                onChange={(event) => set(moneyFromTyping(event.target.value))}
+                onChange={(event) => set(moneyFromTyping(event.target.value, field.emptyNull === true))}
             />
         );
     } else if (special === 'uppercase') {

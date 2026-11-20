@@ -193,8 +193,15 @@ export function formatMoney(value: unknown): string {
     return 'R$ ' + number.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
 }
 
-/** What the field shows: a stored number formatted, or what was typed (already formatted). */
-export function moneyDisplay(value: unknown): string {
+/**
+ * What the field shows: a stored number formatted, or what was typed (already
+ * formatted). With `blank` (the column takes null: `field.emptyNull`) an
+ * empty value stays empty — "not informed" is not R$ 0,00.
+ */
+export function moneyDisplay(value: unknown, blank = false): string {
+    if (blank && (value === null || value === undefined || value === '')) {
+        return '';
+    }
     if (typeof value === 'string' && /[a-zA-Z$]/.test(value)) {
         return value;
     }
@@ -202,9 +209,16 @@ export function moneyDisplay(value: unknown): string {
     return formatMoney(value);
 }
 
-/** Typing: the digits are cents — `12345` → `R$ 123,45`. This text goes to the server, as in Livewire. */
-export function moneyFromTyping(text: string): string {
+/**
+ * Typing: the digits are cents — `12345` → `R$ 123,45`. This text goes to the
+ * server, as in Livewire. With `blank`, erasing every digit leaves the field
+ * empty (saved as null) instead of R$ 0,00.
+ */
+export function moneyFromTyping(text: string, blank = false): string {
     const digits = text.replace(/\D/g, '');
+    if (blank && digits === '') {
+        return '';
+    }
 
     return formatMoney(parseInt(digits || '0', 10) / 100);
 }

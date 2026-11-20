@@ -1820,6 +1820,7 @@ field:type:modifier:option=value:option=value...
 | `badges` | `colsRendererBadges` | array | `badges=active\|green,inactive\|red` — `\|`-separated, not `:` |
 | `mask` | `colsMask` | string | `mask=money_brl` |
 | `mask_transform` | `colsMaskTransform` | string | `mask_transform=money_to_float` |
+| `mask_empty` | `colsMaskEmpty` | string | `mask_empty=null` |
 | `validation` | `colsValidations` | array | `validation=email\|maxLength:255` — `\|`-separated; see [Validation](#validation) for the rules (`required` is not one: use the `required` modifier) |
 | `options` | `colsSelect` | string | `options=yes:Yes,no:No` |
 | `relation` | `colsRelacao` | string | `relation=category` |
@@ -2553,6 +2554,7 @@ Properties of each column in `cols[]`:
 |-------------|------|--------|----------|
 | `colsMask` | string | `''` | Input mask: `money_brl`, `money_usd`, `percent`, `cpf`, `cnpj`, `rg`, `pis`, `ncm`, `ean13`, `phone`, `cep`, `plate`, `credit_card`, `date`, `datetime`, `time`, `integer`, `uppercase` |
 | `colsMaskTransform` | string | `''` | Transform on save: `money_to_float`, `digits_only`, `plate_clean`, `date_br_to_iso`, `date_iso_to_br`, `uppercase`, `lowercase`, `trim` |
+| `colsMaskEmpty` | string | `''` | What an emptied masked field saves: `null` or `zero`; unset follows the column (nullable → `null`, NOT NULL → what the mask makes of it, `0` for money). Since 1.59.2 |
 
 A field left empty is saved as `null` when the column is nullable in the
 database, and as `''` otherwise (1.47.0). There is no per-column key for it.
@@ -2639,7 +2641,7 @@ keys that the runtime does not read.)
 | `colsReverse` | bool | `false` | Reverse value order (for arrays) |
 | `colsMetodoCustom` | string | `''` | `Class\method(%field%, 'literal')` — calls `method` on `App\Services\Class` (the `App\Services\` prefix is always added; `/` also separates namespaces) with the row's field values; the result is shown as text (`colsMetodoRaw: true` for HTML). A column with it cannot be sorted |
 | `colsPlaceholder` | string | `''` | Input placeholder |
-| `colsDefaultValue` | mixed | `null` | Default value on create |
+| `colsDefaultValue` | mixed | `null` | Default value on create. Unset on a `boolean` NOT NULL column (a switch), the column's own `DEFAULT` is used, so a switch on a `DEFAULT 1` column opens on (1.59.2) |
 
 ---
 

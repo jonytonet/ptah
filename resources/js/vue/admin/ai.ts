@@ -14,6 +14,8 @@ import {
     AI_PROVIDERS,
     AI_STORAGE,
     chatToEnd,
+    keepChatConversation,
+    keptChatConversation,
     noteChatScroll,
     placeChatScroll,
     aiRangeText,
@@ -441,6 +443,10 @@ export const PtahAiChat = defineComponent({
         const dragging = ref(false);
         const busyCard = ref(false);
         const listRef = ref<HTMLElement | null>(null);
+        // The conversation this tab was reading, read once before anything writes it.
+        const keptConversation = keptChatConversation();
+        // Nothing is written before the reopening is settled: a remount reads it again.
+        let settled = false;
         const inputRef = ref<HTMLTextAreaElement | null>(null);
         const fileRef = ref<HTMLInputElement | null>(null);
         let abort: AbortController | null = null;
@@ -459,6 +465,25 @@ export const PtahAiChat = defineComponent({
                     configId.value = next.selected_config_id;
                     conversations.value = next.conversations;
                     historyLimit.value = next.history_limit;
+                    // A reload reopens the conversation the person was reading, not the latest.
+                    let shown = next.conversation_id;
+                    if (keptConversation !== null && keptConversation !== next.conversation_id) {
+                        try {
+                            const found = await openConversation(client, keptConversation);
+                            if (!alive) {
+                                return;
+                            }
+                            conversationId.value = found.conversation_id;
+                            messages.value = found.messages;
+                            shown = found.conversation_id;
+                        } catch {
+                            // Gone or not this user's: the latest stays.
+                        }
+                    }
+                    if (alive) {
+                        settled = true;
+                        keepChatConversation(shown);
+                    }
                 }
             } catch {
                 state.value = null;
@@ -490,14 +515,19 @@ export const PtahAiChat = defineComponent({
             document.body.classList.remove('ptah-has-ai-launcher');
         });
 
-        watch([messages, streamHtml, open, loading], () =>
+        watch([messages, streamHtml, open, loading, conversationId], () =>
             nextTick(() => {
                 if (listRef.value) {
                     // Where the reader was (a reload, reopening), else the end.
-                    placeChatScroll(listRef.value);
+                    placeChatScroll(listRef.value, conversationId.value);
                 }
             }),
         );
+        watch(conversationId, (id) => {
+            if (settled) {
+                keepChatConversation(id);
+            }
+        });
         watch(open, (value) => value && nextTick(() => inputRef.value?.focus()));
 
         const take = (list: FileList | File[] | null | undefined) => {
@@ -873,7 +903,7 @@ export const PtahAiChat = defineComponent({
                                 ])
                               : null,
 
-                          ...(showHistory.value ? [renderHistory(w)] : [h('div', { ref: listRef, style: chatStyles.list, onScroll: (event: Event) => noteChatScroll(event.currentTarget as HTMLElement) }, renderMessages(w)), renderFoot(w, current)]),
+                          ...(showHistory.value ? [renderHistory(w)] : [h('div', { ref: listRef, style: chatStyles.list, onScroll: (event: Event) => noteChatScroll(event.currentTarget as HTMLElement, conversationId.value) }, renderMessages(w)), renderFoot(w, current)]),
                       ],
                   )
                 : null;

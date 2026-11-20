@@ -36,10 +36,12 @@ class AiChatWidgetScrollTest extends TestCase
             $blade,
             'Abrir o painel precisa rolar a conversa para o fim.'
         );
-        // Enviar: esquece a posicao de leitura e vai para o fim.
-        $this->assertStringContainsString('@ai-message-sent.window="toEnd()"', $blade);
+        // O servidor avisa a cada mensagem, resposta ou conversa carregada: a
+        // lista vai para a posicao guardada da conversa, ou para o fim.
+        $this->assertStringContainsString('@ai-message-sent.window="scrollToBottom()"', $blade);
+        // So o envio feito pela pessoa esquece a posicao de leitura.
         $this->assertMatchesRegularExpression(
-            "#toEnd\(\) \{\s*try \{ sessionStorage\.removeItem\('ptah:ai:scroll'\); \} catch \(e\) \{\}\s*this\.scrollToBottom\(\);#",
+            '#sessionStorage\.removeItem\(\'ptah:ai:scroll\'\); \} catch \(e\) \{\}\s*this\.\$wire\.send\(text\);#',
             $blade,
             'Enviar precisa esquecer a posicao de leitura e rolar para o fim.'
         );

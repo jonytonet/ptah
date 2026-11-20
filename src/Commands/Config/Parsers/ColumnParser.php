@@ -113,6 +113,7 @@ class ColumnParser
 
         // Mask
         'mask_transform' => 'colsMaskTransform',
+        'mask_empty' => 'colsMaskEmpty',
 
         // Totalizer
         'totalizer' => 'totalizadorType',

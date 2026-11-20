@@ -126,14 +126,20 @@ class CrudFormFieldKindsTest extends TestCase
         $this->assertStringContainsString('wire:key="ptah-select-verified-new"', $html);
     }
 
+    /**
+     * Untouched, the switch saves a value (never null into a NOT NULL column).
+     * Which value: until 1.59.2 always off — even here, where the column's
+     * DEFAULT is true, so a new record was born inactive (PetPlace). Now the
+     * column's default (CrudSwitchDefaultTest covers a column without one).
+     */
     #[Test]
-    public function an_untouched_switch_saves_off(): void
+    public function an_untouched_switch_saves_the_column_default(): void
     {
         Livewire::test(BaseCrud::class, ['model' => KindsStaff::class])->call('prepareCreate')
             ->set('formData.name', 'Bia')->set('formData.password', 'x1')
             ->call('save')->assertSet('formErrors', []);
 
-        $this->assertSame(0, (int) DB::table('kinds_staff')->where('name', 'Bia')->value('active'));
+        $this->assertSame(1, (int) DB::table('kinds_staff')->where('name', 'Bia')->value('active'));
     }
 
     #[Test]

@@ -785,6 +785,7 @@ value is DISPLAYED in the listing table. See [KnownLimitations.md §5](KnownLimi
 | `duration_unit` | `colsRendererDurationUnit` | — |
 | `qr_size` | `colsRendererQrSize` | — |
 | `mask_transform` | `colsMaskTransform` | `mask_transform=money_to_float` |
+| `mask_empty` | `colsMaskEmpty` | `mask_empty=null` |
 | `totalizer` | `totalizadorType` → moved by the command into the screen-level `totalizadores.columns` (`{field, aggregate}`) with `totalizadores.enabled` on (1.50.0) | `totalizer=sum` |
 | `totalizer_format` | `totalizadorFormat` — ignored with a warning (the footer uses the column renderer) | — |
 | `totalizer_label` | `totalizadorLabel` — ignored with a warning (the footer uses the column renderer) | — |
