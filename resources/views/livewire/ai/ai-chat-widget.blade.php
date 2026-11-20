@@ -109,7 +109,7 @@
            chave das stacks React e Vue (core/admin/ai.ts): reabrir o chat,
            recarregar a pagina ou uma resposta chegando enquanto ela le uma
            mensagem antiga nao a joga para o fim; quem estava no fim continua
-           no fim. Enviar uma mensagem vai para o fim (toEnd). A troca de tela
+           no fim. Enviar uma mensagem vai para o fim (send() esquece a posicao). A troca de tela
            com a navegacao SPA guarda a rolagem do bloco persistido
            (partials/spa-navigation). */
         scrollToBottom() {
@@ -128,11 +128,6 @@
             let kept = null;
             try { kept = /^(\d+):(\d+)$/.exec(sessionStorage.getItem('ptah:ai:scroll') || ''); } catch (e) {}
             el.scrollTop = kept && Number(kept[1]) === this.$wire.conversationId ? Math.min(Number(kept[2]), el.scrollHeight) : el.scrollHeight;
-        },
-
-        toEnd() {
-            try { sessionStorage.removeItem('ptah:ai:scroll'); } catch (e) {}
-            this.scrollToBottom();
         },
 
         noteScroll() {
@@ -180,6 +175,8 @@
 
             this.draft = '';
             this.resetGrow();
+            // Enviar: o que vem a seguir e lido do fim (esquece a posicao de leitura).
+            try { sessionStorage.removeItem('ptah:ai:scroll'); } catch (e) {}
             this.$wire.send(text);
         },
 
@@ -281,7 +278,7 @@
             this.submit();
         }
     }"
-    @ai-message-sent.window="toEnd()"
+    @ai-message-sent.window="scrollToBottom()"
     @ai-draft-clear.window="draft = ''; resetGrow()"
     @keydown.escape.window="if (open) open = false"{!! \Ptah\Support\SpaNavigation::enabled() ? ' x-on:livewire:navigated.document="'.e("document.body.classList.toggle('ptah-has-ai-launcher', !launcherHidden)").'"' : '' !!}
     class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3"
