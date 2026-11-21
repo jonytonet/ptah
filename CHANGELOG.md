@@ -7,6 +7,53 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.60.1] - 2026-11-21
+
+### Fixed
+
+- **A form select no longer keeps the screen sending requests.** With the
+  BaseCrud "New" form open and a few selects chosen, the component sent an
+  empty request every second, forever, and the chosen values changed on their
+  own. The select sent back to the server the value the server's own answer had
+  just brought; each answer caused the next request. It now sends only what the
+  person chose. Found porting a large ERP to ptah; reproduced in ptah's own
+  layout, with or without SPA navigation.
+- **A select chosen while another request is in flight keeps its value.** The
+  "New" form's `formData` went to the browser as an empty JSON array, and
+  Livewire then replaced the whole object with the next answer instead of
+  merging field by field — so a value picked during a searchdropdown pick (or
+  any slow action) was wiped. The form now opens with one key per field.
+  Fields nobody filled in are left out of the INSERT, so the column's DEFAULT
+  still applies, as before.
+- **The sidebar draws every level of the menu.** The database menu already
+  nested up to `ptah.menu.max_depth` levels (4), and the sidebar search and
+  the assistant's `find_menu` showed paths such as "Fiscal > Cadastro >
+  Ncms", but the sidebar drew only two levels: a subgroup became a link to `#`
+  and everything under it disappeared. A subgroup now opens and closes like a
+  group; the whole path to the current page comes open; from the third level
+  a long label is truncated, with the full text in its tooltip. A menu with two
+  levels renders the same HTML as before.
+- **SPA navigation keeps subgroups apart.** The open/closed state of a group
+  is kept by its path ("Fiscal/Cadastro") rather than its label, so opening
+  "Cadastro" under one group no longer opens a "Cadastro" under another.
+- **Menu admin: the parent list shows the path and refuses a cycle.** Groups
+  are listed as "Fiscal > Cadastro" instead of a bare, possibly repeated,
+  label; when editing, the item itself and everything below it are not
+  offered, and a request naming one is refused (choosing one made the whole
+  branch vanish from the menu). The same list feeds the React and Vue menu
+  admin.
+
+### Upgrading
+
+- Nothing to run: no migration, and the Bootstrap stylesheet has the same
+  rules (`ptah:upgrade-check` may still report it as stale; republishing with
+  `vendor:publish --tag=ptah-assets --force` clears the notice).
+- A project that copied `forge-sidebar.blade.php` or `_modal-form.blade.php`
+  into `resources/views/vendor/ptah` to work around these defects can delete
+  the copy.
+
+---
+
 ## [1.60.0] - 2026-11-20
 
 ### Added
