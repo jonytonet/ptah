@@ -198,6 +198,45 @@ final class MenuResolver
     }
 
     /**
+     * Is the current page somewhere under this item (1.60.1)?
+     *
+     * The sidebar decided "this group is open" by looking only at the group's
+     * direct children, so on a page of the third level the group above it came
+     * closed — and the sidebar drew no third level at all, while the jump box
+     * and `find_menu` already walked every level. One recursive answer, used
+     * for every group and subgroup, keeps the three agreeing.
+     *
+     * A link counts as active on its own path and below it, as the group check
+     * always did (`match`, or the url without slashes).
+     *
+     * @param  array<string, mixed>  $item
+     */
+    public static function isActiveBranch(array $item): bool
+    {
+        foreach ((array) ($item['children'] ?? []) as $child) {
+            if (! is_array($child)) {
+                continue;
+            }
+
+            if (self::linkMatchesRequest($child) || self::isActiveBranch($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string, mixed>  $link
+     */
+    private static function linkMatchesRequest(array $link): bool
+    {
+        $match = (string) ($link['match'] ?? ltrim(rtrim((string) ($link['url'] ?? '#'), '/'), '/'));
+
+        return $match !== '' && (request()->is($match) || request()->is($match.'/*'));
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     private static function demoTree(): array

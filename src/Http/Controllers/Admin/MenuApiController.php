@@ -268,10 +268,9 @@ class MenuApiController extends Controller
     /** @return list<array{id: int, text: string}> */
     private function groups(HeadlessMenuList $page): array
     {
-        return $page->groups()
-            ->map(fn (Menu $group) => ['id' => (int) $group->id, 'text' => (string) $group->text])
-            ->values()
-            ->all();
+        // Ja vem como {id, text}, com o caminho no texto e sem o proprio item
+        // nem os descendentes dele (1.60.1) — a mesma lista da tela Livewire.
+        return $page->groups()->values()->all();
     }
 
     /**
