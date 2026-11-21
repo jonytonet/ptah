@@ -146,8 +146,10 @@ class CrudFormDraftTest extends TestCase
         $crud->call('restoreFormDraft', ['name' => 'Rascunho', 'document' => '123', 'secret' => 'x', 'id' => 99]);
 
         $this->assertSame('Rascunho', $crud->get('formData.name'));
-        $this->assertArrayNotHasKey('document', $crud->get('formData'));
-        $this->assertArrayNotHasKey('secret', $crud->get('formData'));
+        // `document` e campo do formulario: a chave existe desde a 1.60.1
+        // (prepareCreate abre com uma chave por campo), mas o rascunho nao a enche.
+        $this->assertNull($crud->get('formData.document'));
+        $this->assertNull($crud->get('formData.secret'));
         $this->assertArrayNotHasKey('id', $crud->get('formData'));
         $this->assertNotSame($key, $crud->get('formInstanceKey'), 'O formulario precisa remontar para as mascaras lerem o valor.');
     }
@@ -192,7 +194,7 @@ class CrudFormDraftTest extends TestCase
             ->assertDispatched('ptah:form-draft', fn ($n, $p) => $p['restored'] === true && $p['discarded'] === false);
 
         $this->assertSame('Do rascunho', $crud->get('formData.name'));
-        $this->assertArrayNotHasKey('document', $crud->get('formData'), 'Campo excluido nao entra nem pelo envio.');
+        $this->assertNull($crud->get('formData.document'), 'Campo excluido nao entra nem pelo envio.');
         $this->assertSame([], $crud->get('formDraftIncoming'), 'Usado uma vez e esvaziado.');
     }
 

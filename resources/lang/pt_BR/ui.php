@@ -359,6 +359,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'menu_url_unsafe' => 'A URL precisa ser http(s), mailto:, tel: ou um caminho relativo.',
+    'menu_parent_cycle' => 'O grupo pai não pode ser o próprio item nem um item abaixo dele.',
     'permission_denied' => 'Você não tem permissão para realizar esta ação.',
 
     /*

@@ -87,7 +87,17 @@ class MenuList extends Component
             'icon' => 'nullable|string|max:100',
             'type' => 'required|in:menuLink,menuGroup',
             'target' => 'required|in:_self,_blank',
-            'parent_id' => 'nullable|integer|exists:menus,id',
+            'parent_id' => [
+                'nullable', 'integer', 'exists:menus,id',
+                // O formulario ja nao oferece, mas a requisicao pode trazer:
+                // pai igual ao proprio item ou a um descendente fecha um ciclo.
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($value && $this->isEditing && $this->editingId
+                        && in_array((int) $value, $this->selfAndDescendants((int) $this->editingId), true)) {
+                        $fail(trans('ptah::ui.menu_parent_cycle'));
+                    }
+                },
+            ],
             'link_order' => 'integer|min:0',
             'is_active' => 'boolean',
         ];
@@ -221,16 +231,67 @@ class MenuList extends Component
     }
 
     // ── Select de grupos (para parent_id) ─────────────────────────────
+    /**
+     * Os grupos que podem ser pai, com o caminho no rotulo (1.60.1).
+     *
+     * A sidebar passou a desenhar todos os niveis, e o select listava so o
+     * texto de cada grupo: "Cadastro" de Fiscal e "Cadastro" de Compras eram
+     * indistinguiveis. Agora o rotulo e o caminho ("Fiscal > Cadastro").
+     * Editando, o proprio item e os descendentes dele ficam de fora: escolher
+     * um deles fecharia um ciclo, e o ramo inteiro sumiria do menu
+     * (Menu::nestItems parte da raiz e nunca chega a ele).
+     *
+     * @return Collection<int, array{id: int, text: non-falsy-string}>
+     */
     #[Computed]
     public function groups(): Collection
     {
-        $query = Menu::where('type', 'menuGroup')->orderBy('link_order')->orderBy('text');
+        $all = Menu::where('type', 'menuGroup')->orderBy('link_order')->orderBy('text')->get(['id', 'text', 'parent_id']);
+        $byId = $all->keyBy('id');
+        $blocked = $this->isEditing && $this->editingId ? $this->selfAndDescendants((int) $this->editingId) : [];
 
-        if ($this->isEditing && $this->editingId) {
-            $query->where('id', '!=', $this->editingId);
+        return $all
+            ->reject(fn (Menu $g) => in_array((int) $g->id, $blocked, true))
+            ->map(function (Menu $g) use ($byId): array {
+                $names = [$g->text];
+                $seen = [(int) $g->id => true];
+                $parent = $g->parent_id;
+                // `seen` corta um ciclo que ja exista no banco.
+                while ($parent !== null && isset($byId[$parent]) && ! isset($seen[(int) $parent])) {
+                    $seen[(int) $parent] = true;
+                    array_unshift($names, $byId[$parent]->text);
+                    $parent = $byId[$parent]->parent_id;
+                }
+
+                return ['id' => (int) $g->id, 'text' => implode(' > ', $names)];
+            })
+            ->sortBy('text', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+    }
+
+    /**
+     * O item e todos os que estao abaixo dele, em qualquer nivel.
+     *
+     * @return list<int>
+     */
+    private function selfAndDescendants(int $id): array
+    {
+        $children = Menu::query()->whereNotNull('parent_id')->get(['id', 'parent_id'])->groupBy('parent_id');
+        $out = [];
+        $queue = [$id];
+
+        while ($queue !== []) {
+            $current = array_shift($queue);
+            if (in_array($current, $out, true)) {
+                continue;
+            }
+            $out[] = $current;
+            foreach ($children->get($current, collect()) as $child) {
+                $queue[] = (int) $child->id;
+            }
         }
 
-        return $query->get(['id', 'text']);
+        return $out;
     }
 
     // ── Query principal ────────────────────────────────────────────────

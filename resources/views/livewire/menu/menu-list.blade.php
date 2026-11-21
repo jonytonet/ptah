@@ -205,7 +205,7 @@
                 {{-- Grupo pai --}}
                 @php
                     $menuGroups = $this->groups
-                        ->map(fn($g) => ['value' => (string)$g->id, 'label' => $g->text])
+                        ->map(fn($g) => ['value' => (string) $g['id'], 'label' => $g['text']])
                         ->prepend(['value' => '', 'label' => __('ptah::ui.menu_form_root')])
                         ->toArray();
                 @endphp

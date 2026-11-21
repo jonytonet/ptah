@@ -416,6 +416,15 @@
                                             :value="selected ?? ''"
                                             x-init="$watch('selected', val => {
                                                 $el.value = val ?? '';
+                                                {{-- So o que a pessoa escolheu vai ao servidor (1.60.1): o
+                                                     $wire.$watch do init() tambem muda selected com o valor
+                                                     que a resposta trouxe, e reenviar esse valor abria outra
+                                                     requisicao, cuja resposta mudava selected de novo — um
+                                                     commit vazio por segundo, e com varios selects um
+                                                     sobrescrevia o outro. --}}
+                                                const srv = $wire.$get('formData.{{ $fField }}');
+                                                const now = (srv === null || srv === undefined) ? '' : (typeof srv === 'boolean' ? (srv ? '1' : '0') : String(srv));
+                                                if (now === String(val ?? '')) return;
                                                 $el.dispatchEvent(new Event('input', { bubbles: true }));
                                             })"
                                             wire:model.live="formData.{{ $fField }}"

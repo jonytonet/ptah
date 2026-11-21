@@ -346,11 +346,9 @@
                     $children   = $item['children'] ?? [];
                     $hasKids    = !empty($children);
                     $isActive   = $itemMatch ? (request()->is($itemMatch) || request()->is($itemMatch . '/*')) : false;
-                    // Um grupo está ativo se algum filho estiver ativo
-                    $groupActive = $hasKids && collect($children)->contains(function($c) {
-                        $cm = $c['match'] ?? ltrim(rtrim($c['url'] ?? '#', '/'), '/');
-                        return $cm && (request()->is($cm) || request()->is($cm . '/*'));
-                    });
+                    // Um grupo está ativo se a página estiver em qualquer nível
+                    // abaixo dele, e não só nos filhos diretos (1.60.1).
+                    $groupActive = $hasKids && \Ptah\Support\MenuResolver::isActiveBranch($item);
                 @endphp
 
                 {{-- ── menuGroup com filhos → acordeon Alpine ── --}}
@@ -397,36 +395,16 @@
                              — colapsada (iconOnly), a lista fica fora do fluxo em vez de render
                              estreito com o trilho (border-l/ml-3/pl-3) cortado pelos 4rem. --}}
                         <ul x-show="open && !iconOnly()" x-collapse class="mt-1 ml-3 pl-3 border-l space-y-0.5 ptah-c-sidebar_subnav">
-                            @foreach($children as $child)
-                                @php
-                                    $childLabel  = $child['label'] ?? ($child['text'] ?? '');
-                                    $childIcon   = $child['icon'] ?? 'bx bx-circle';
-                                    // SafeUrl como no item de primeiro nivel: uma linha gravada
-                                    // antes da 1.34.8 (quando qualquer logado gravava menu) ou por
-                                    // seeder ainda podia trazer `javascript:` (1.41.9).
-                                    $childUrl    = \Ptah\Support\SafeUrl::sanitize($child['url'] ?? '#');
-                                    $childTarget = $child['target'] ?? '_self';
-                                    $childMatch  = $child['match'] ?? ltrim($childUrl, '/');
-                                    $childActive = $childMatch ? request()->is($childMatch) : false;
-                                @endphp
-                                <li>
-                                    <a
-                                        href="{{ $childUrl }}"
-                                        target="{{ $childTarget }}"{!! \Ptah\Support\SpaNavigation::attr($childUrl, $childTarget, ! \Ptah\Support\SpaNavigation::optsOut($child)) !!}
-                                        @if ($childActive) aria-current="page" @endif
-                                        class="ptah-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200
-                                            {{ $childActive
-                                                ? 'ptah-nav-active bg-primary-light text-primary font-semibold'
-                                                : 'hover:text-primary'
-                                            }}"
-                                    >
-                                        <span class="flex-shrink-0 w-4 h-4 flex items-center justify-center text-sm">
-                                            {!! $renderIcon($childIcon) !!}
-                                        </span>
-                                        <span class="whitespace-nowrap text-sm">{{ $childLabel }}</span>
-                                    </a>
-                                </li>
-                            @endforeach
+                            {{-- Filhos de um nivel qualquer (1.60.1): um filho com filhos vira
+                                 subgrupo que abre e fecha, ate ptah.menu.max_depth. Com dois
+                                 niveis o HTML sai igual ao de antes. --}}
+                            @include('ptah::partials.sidebar-subnav', [
+                                'nodes' => $children,
+                                'trail' => [$itemLabel],
+                                'depth' => 2,
+                                'renderIcon' => $renderIcon,
+                                'ptahSpa' => $ptahSpa,
+                            ])
                         </ul>
                     </li>
 

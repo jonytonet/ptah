@@ -159,7 +159,8 @@ class CrudSaveTest extends TestCase
             ->set('formData.name', 'First item')
             ->call('saveAndNew')
             ->assertSet('showModal', true)
-            ->assertSet('formData', [])
+            // 1.60.1: uma chave por campo, todas vazias.
+            ->assertSet('formData', fn (array $data): bool => array_filter($data, fn ($v) => $v !== null) === [])
             ->assertSet('editingId', null);
 
         $this->assertSame(1, SaveStub::count());
@@ -246,7 +247,8 @@ class CrudSaveTest extends TestCase
             ->set('formData.name', 'leftover')
             ->set('editingId', 99)
             ->call('prepareCreate')
-            ->assertSet('formData', [])
+            // 1.60.1: uma chave por campo, todas vazias.
+            ->assertSet('formData', fn (array $data): bool => array_filter($data, fn ($v) => $v !== null) === [])
             ->assertSet('editingId', null)
             ->assertSet('formErrors', []);
     }

@@ -44,6 +44,20 @@ trait HasCrudForm
         $this->imageUploads = [];
         $this->formInstanceKey = ($this->formInstanceKey + 1) % 999;
 
+        // Uma chave por campo, na ordem do formulario (1.60.1). Vazio, o
+        // formData ia ao navegador como array JSON `[]`; o Livewire funde a
+        // resposta campo a campo so quando os dois lados sao objetos com as
+        // mesmas chaves na mesma ordem — senao troca o objeto inteiro. Um campo
+        // escolhido com outra requisicao em voo era apagado pela resposta dela
+        // (yelll, varios selects escolhidos em sequencia). Null aqui e "nao
+        // informado": save() nao grava esses campos num registro novo.
+        foreach ($this->getFormCols() as $col) {
+            $field = (string) ($col['colsNomeFisico'] ?? '');
+            if ($field !== '' && ! str_contains($field, '.')) {
+                $this->formData[$field] = null;
+            }
+        }
+
         // O padrao declarado na coluna. Era gravado pelo wizard e lido por
         // ninguem: o "Novo" abria vazio e, numa coluna NOT NULL sem default no
         // banco, salvar so com os obrigatorios dava erro SQL cru (achado #4).
@@ -292,6 +306,13 @@ trait HasCrudForm
         // Build data from only columns with colsGravar == 'S'
         $savableFields = array_column($formCols, 'colsNomeFisico');
         $data = array_intersect_key($this->formData, array_flip($savableFields));
+
+        // Num registro novo, null e o campo que ninguem preencheu (prepareCreate
+        // cria a chave so para o formData ir como objeto, 1.60.1). Fora do
+        // INSERT, como antes: vale o DEFAULT da coluna.
+        if (! $this->editingId) {
+            $data = array_filter($data, static fn (mixed $value): bool => $value !== null);
+        }
 
         // Hard guard against mass assignment of sensitive/audit fields, regardless
         // of what the CRUD config marks as savable. These are set by the framework
