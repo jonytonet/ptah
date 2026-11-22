@@ -101,4 +101,82 @@ class FormSelectLoopBrowserTest extends DuskTestCase
             $this->assertSame('g', $state['wire'], 'O estado do Livewire perdeu o select escolhido durante a requisicao.');
         });
     }
+
+    #[Test]
+    public function form_requests_do_not_flash_the_table_loading_behind_the_modal(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $this->openNew($browser);
+
+            // Anota se a tabela (ou os cards) ganhou o loading em algum momento.
+            $browser->script(<<<'JS'
+                window.__ptahTableDimmed = false;
+                window.__ptahObs = new MutationObserver(() => {
+                    const wrap = document.querySelector('[id^="ptah-table-wrap-"]');
+                    const bar = [...document.querySelectorAll('.ptah-loading-bar')].some(b => b.offsetParent !== null);
+                    if ((wrap && wrap.classList.contains('opacity-60')) || bar) {
+                        window.__ptahTableDimmed = true;
+                    }
+                });
+                window.__ptahObs.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class', 'style'] });
+            JS);
+
+            foreach (['kind' => 'part', 'size' => 'm', 'color' => 'green'] as $field => $value) {
+                $this->pick($browser, $field, $value);
+                $browser->pause(600);
+            }
+            $browser->pause(1000);
+
+            [$dimmed] = $browser->script('return window.__ptahTableDimmed;');
+            $this->assertFalse($dimmed, 'Uma requisicao do formulario acendeu o loading da tabela ao fundo.');
+        });
+    }
+
+    #[Test]
+    public function focusing_a_searchdropdown_does_not_flash_the_table_nor_reload_its_options(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $this->openNew($browser);
+
+            $sd = "[...document.querySelectorAll('input[type=text]')].find(e => (e.getAttribute('wire:keyup.debounce.300ms') || '').indexOf(\"'parent_id'\") !== -1)";
+            $name = "[...document.querySelectorAll('input')].find(e => e.getAttribute('wire:model') === 'formData.name')";
+
+            $browser->script(<<<'JS'
+                window.__ptahTableDimmed = false;
+                window.__ptahFetches = 0;
+                const orig = window.fetch;
+                window.fetch = function (...args) {
+                    const url = String(args[0] && args[0].url ? args[0].url : args[0]);
+                    if (url.indexOf('livewire') !== -1) window.__ptahFetches++;
+                    return orig.apply(this, args);
+                };
+                new MutationObserver(() => {
+                    const wrap = document.querySelector('[id^="ptah-table-wrap-"]');
+                    const bar = [...document.querySelectorAll('.ptah-loading-bar')].some(b => b.offsetParent !== null);
+                    if ((wrap && wrap.classList.contains('opacity-60')) || bar) window.__ptahTableDimmed = true;
+                }).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class', 'style'] });
+            JS);
+
+            // 1o foco: carrega as opcoes (uma ida ao servidor), sem acender a tabela.
+            $browser->script("({$sd}).focus();");
+            $browser->waitUsing(10, 200, function () use ($browser) {
+                [$n] = $browser->script('return ('.self::WIRE.'.get("sdResults").parent_id || []).length;');
+
+                return $n > 0;
+            }, 'O foco no searchdropdown nao carregou as opcoes.');
+            $browser->pause(800);
+            [$first] = $browser->script('return window.__ptahFetches;');
+            $this->assertSame(1, $first, 'O primeiro foco deveria buscar as opcoes uma vez.');
+
+            // Sai e volta: as opcoes ja estao carregadas, nada vai ao servidor.
+            $browser->script("({$name}).focus();");
+            $browser->pause(300);
+            $browser->script("({$sd}).focus();");
+            $browser->pause(1500);
+
+            [$state] = $browser->script('return { fetches: window.__ptahFetches, dimmed: window.__ptahTableDimmed };');
+            $this->assertSame(1, $state['fetches'], 'Voltar ao searchdropdown buscou as opcoes de novo.');
+            $this->assertFalse($state['dimmed'], 'O foco no searchdropdown acendeu o loading da tabela ao fundo.');
+        });
+    }
 }

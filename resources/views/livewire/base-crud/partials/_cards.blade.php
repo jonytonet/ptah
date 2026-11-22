@@ -12,7 +12,7 @@
 @include('ptah::livewire.base-crud.partials._sort-bar')
 
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 transition-opacity duration-300"
-     wire:loading.class="opacity-60">
+     wire:loading.class="opacity-60" wire:target.except="{{ $ptahFormOnlyTargets ?? '' }}">
 
     @forelse ($rows as $row)
         @php

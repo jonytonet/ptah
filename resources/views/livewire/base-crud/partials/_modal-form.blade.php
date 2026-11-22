@@ -530,7 +530,7 @@
                                             <input type="text"
                                                 x-model="displayVal"
                                                 wire:keyup.debounce.300ms="searchDropdown('{{ $fField }}', $event.target.value)"
-                                                @focus="$wire.openDropdown('{{ $fField }}')"
+                                                @focus="if (! ($wire.sdResults?.['{{ $fField }}'] || []).length) $wire.openDropdown('{{ $fField }}')"
                                                 placeholder="{{ $sdParentEmpty
                                                     ? __('ptah::ui.sd_select_parent_first', ['parent' => $sdParentLabel])
                                                     : ($sdSettings['placeholder'] ?: __('ptah::ui.search_entity', ['label' => $fLabel])) }}"
@@ -543,7 +543,7 @@
                                             <button type="button"
                                                 tabindex="-1"
                                                 @if ($sdParentEmpty) disabled @endif
-                                                @mousedown.prevent="open = !open; if (open) $wire.openDropdown('{{ $fField }}')"
+                                                @mousedown.prevent="open = !open; if (open && ! ($wire.sdResults?.['{{ $fField }}'] || []).length) $wire.openDropdown('{{ $fField }}')"
                                                 class="absolute right-2.5 ptah-c-fp_chevron transition-transform duration-200 disabled:opacity-40 disabled:pointer-events-none"
                                                 :class="open ? 'rotate-180' : ''">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

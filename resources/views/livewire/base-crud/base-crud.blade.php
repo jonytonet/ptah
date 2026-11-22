@@ -142,6 +142,27 @@
         @php
             $ptahResponsiveCards = (bool) config('ptah.crud.responsive_cards', true);
             $ptahViewMode = ($viewMode === 'auto' && ! $ptahResponsiveCards) ? 'table' : $viewMode;
+
+            // O que o modal faz sem mexer nas linhas (1.60.2). O loading da
+            // tabela e dos cards nao tinha alvo, entao acendia em toda
+            // requisicao do componente: com o formulario aberto, cada foco num
+            // searchDropdown ou cada select escolhido fazia a tabela ao fundo
+            // piscar. `wire:target.except` apaga o loading quando a requisicao
+            // traz qualquer um destes; o resto (busca, filtro, pagina, ordem,
+            // salvar, excluir) continua acendendo como antes. So entram as
+            // acoes que esta tela oferece: o nome de um metodo no HTML nao
+            // pode sugerir um botao que a permissao tirou.
+            $ptahFormOnlyTargets = implode(',', array_merge(
+                ['formData', 'formDraftIncoming', 'imageUploads',
+                 'openDropdown', 'searchDropdown', 'selectDropdownOption', 'applyFieldOnChange',
+                 'closeModal', 'restoreFormDraft', 'revertFormToOriginal', 'clearFormDraft'],
+                ($effectivePerms['canCreate'] ?? false) ? ['prepareCreate', 'openCreate', 'duplicateRecord'] : [],
+                ($effectivePerms['canUpdate'] ?? false) ? ['openEdit'] : [],
+                ($effectivePerms['canDelete'] ?? false) ? ['confirmDelete', 'cancelDelete'] : [],
+                $this->attachmentsEnabled() ? ['openAttachments', 'closeAttachments', 'attachmentUploads', 'downloadAttachment', 'showAttachmentsModal'] : [],
+                $this->historyEnabled() ? ['openHistory', 'closeHistory', 'showHistoryModal'] : [],
+                $this->importEnabled() ? ['openImport', 'closeImport', 'importFile', 'importMapping', 'previewImport', 'showImportModal'] : [],
+            ));
         @endphp
 
         @if ($ptahViewMode === 'kanban' && $this->kanbanEnabled())
