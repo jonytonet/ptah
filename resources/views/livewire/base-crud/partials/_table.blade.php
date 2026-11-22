@@ -1,11 +1,11 @@
 {{-- ── Tabela ──────────────────────────────────────────────────────── --}}
 {{-- Loading indicator (filter/search/sort) --}}
-<div wire:loading.delay class="h-0.5 mb-2 overflow-hidden rounded-full bg-primary/10">
+<div wire:loading.delay wire:target.except="{{ $ptahFormOnlyTargets ?? '' }}" class="h-0.5 mb-2 overflow-hidden rounded-full bg-primary/10">
     <div class="h-full w-full ptah-loading-bar"></div>
 </div>
 
 <div class="overflow-x-auto border rounded-lg ptah-c-tbl_wrap transition-opacity duration-300"
-     wire:loading.class="opacity-60"
+     wire:loading.class="opacity-60" wire:target.except="{{ $ptahFormOnlyTargets ?? '' }}"
      id="ptah-table-wrap-{{ $crudTitle }}"
      data-ptah-copy="{{ ($crudConfig['uiPreferences']['copyCell'] ?? true) ? '1' : '0' }}">
     {{-- uiPreferences.stickyHeader / highlightOnHover (1.50.1): written by the

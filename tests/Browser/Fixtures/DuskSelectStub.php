@@ -14,13 +14,15 @@ use Ptah\Models\CrudConfig;
 /**
  * Screen with several inline selects and nothing with a default, for
  * FormSelectLoopBrowserTest (1.60.1, yelll): the "New" form opens with an
- * empty formData, the case that went to the browser as a JSON array.
+ * empty formData, the case that went to the browser as a JSON array. The
+ * searchdropdown (`parent_id`, over this same table) is for 1.60.2: focusing
+ * it must not make the table behind the modal flash.
  */
 class DuskSelectStub extends Model
 {
     protected $table = 'dusk_select_stubs';
 
-    protected $fillable = ['name', 'kind', 'size', 'color', 'origin'];
+    protected $fillable = ['name', 'kind', 'size', 'color', 'origin', 'parent_id'];
 
     public static function seedFixtures(): void
     {
@@ -32,8 +34,14 @@ class DuskSelectStub extends Model
                 $t->string('size')->nullable();
                 $t->string('color')->nullable();
                 $t->string('origin')->nullable();
+                $t->unsignedBigInteger('parent_id')->nullable();
                 $t->timestamps();
             });
+        }
+
+        if (! self::query()->exists()) {
+            self::query()->create(['name' => 'Motor']);
+            self::query()->create(['name' => 'Freio']);
         }
 
         $select = fn (string $field, array $options) => [
@@ -49,6 +57,8 @@ class DuskSelectStub extends Model
                 $select('size', ['P' => 'p', 'M' => 'm', 'G' => 'g']),
                 $select('color', ['Azul' => 'blue', 'Verde' => 'green']),
                 $select('origin', ['Nacional' => 'nac', 'Importado' => 'imp']),
+                ['colsNomeFisico' => 'parent_id', 'colsNomeLogico' => 'Pai', 'colsTipo' => 'searchdropdown', 'colsGravar' => true,
+                    'colsSDModel' => self::class, 'colsSDLabel' => 'name', 'colsSDValor' => 'id', 'colsSDTipo' => 'model'],
             ],
             'permissions' => [],
         ]]);
