@@ -7,6 +7,42 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.60.3] - 2026-11-22
+
+### Fixed
+
+- **A chosen searchdropdown can be searched again.** After picking an item,
+  erasing it and typing to look for another put the chosen item back in the
+  field at every answer of the server, so nothing could be searched any more.
+  The field's Alpine state was written from the render (`x-data` held the
+  label and the open flag); each answer that changed them changed the
+  attribute, and Livewire's morph restarted the field with the old label. The
+  state now starts from `$wire`, and only a real change of the label touches
+  the field.
+- **Erasing a chosen searchdropdown's text clears the choice.** The field went
+  blank while the form kept the old id, so saving stored the item just erased.
+  Now the value, the label and the dependent dropdowns are cleared. Leaving the
+  field with search text and no new pick shows the chosen item again.
+
+### Added
+
+- **`ptah.crud.form_draft` (`PTAH_CRUD_FORM_DRAFT`)**: the form draft for
+  every screen that does not set `formDraft.enabled`. Default `false`, as
+  before. A screen's own key always wins, and saving in the editor writes it
+  only when the box differs from the host default. With the draft on, closing
+  the modal keeps what was typed instead of asking "discard changes?".
+- **The BaseCrud form modal can be dragged by its header.** `<x-forge-modal
+  draggable>` enables it on any modal; the position survives the component's
+  answers and resets when the modal opens again.
+- **Clicking the filter panel's header closes it**, like the Filters button of
+  the toolbar ("Clear all" in the header still only clears).
+
+### Upgrading
+
+- Nothing to run. To turn the draft on everywhere, set
+  `PTAH_CRUD_FORM_DRAFT=true`. Republishing `ptah-assets` clears the
+  `ptah:upgrade-check` notice (the compiled CSS gained `cursor-move`).
+
 ## [1.60.2] - 2026-11-22
 
 ### Fixed
