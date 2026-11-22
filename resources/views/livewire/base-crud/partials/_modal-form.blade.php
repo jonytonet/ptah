@@ -240,6 +240,7 @@
         :title="($editingId ? __('ptah::ui.modal_edit_prefix') : $this->modalNewPrefix()) . ' ' . $crudTitleSingular"
         :subtitle="$editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle')"
         size="2xl"
+        draggable
     >
         {{-- Erro geral --}}
         @if (!empty($formErrors['_general']))
@@ -493,8 +494,6 @@
                             @elseif ($fTipo === 'searchdropdown')
                                 {{-- ── SearchDropdown inline ── --}}
                                 @php
-                                    $sdInitLabel  = $sdLabels[$fField] ?? '';
-                                    $sdHasResults = !empty($sdResults[$fField]);
                                     $sdSettings   = $this->sdSettings($col);
                                     // Cascading dropdown: locked until the parent field has a value.
                                     $sdDependsOn   = $col['colsSDDependsOn'] ?? null;
@@ -508,14 +507,29 @@
                                         {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
                                     </label>
                                     <div
+                                        {{-- x-data sem nada que venha do render (1.60.3): com o
+                                             rotulo ou o "aberto" escritos aqui, cada resposta que os
+                                             mudava trocava o atributo, o morph do Livewire reiniciava
+                                             este Alpine, e o campo voltava ao item escolhido por cima
+                                             do que a pessoa digitava. O estado inicial vem do $wire. --}}
                                         x-data="{
-                                            open: {{ $sdHasResults ? 'true' : 'false' }},
-                                            displayVal: @js($sdInitLabel),
+                                            open: false,
+                                            displayVal: '',
+                                            {{-- O rotulo que o servidor conhece: so uma mudanca real
+                                                 dele mexe no campo, nao cada resposta do componente. --}}
+                                            _label: '',
                                             init() {
+                                                const first = this.$wire.sdLabels ? this.$wire.sdLabels['{{ $fField }}'] : undefined;
+                                                this._label = (first === undefined || first === null) ? '' : String(first);
+                                                this.displayVal = this._label;
+                                                const res0 = this.$wire.sdResults ? this.$wire.sdResults['{{ $fField }}'] : undefined;
+                                                this.open = Array.isArray(res0) && res0.length > 0;
                                                 this.$wire.$watch('sdLabels', (val) => {
-                                                    if (val['{{ $fField }}'] !== undefined) {
-                                                        this.displayVal = val['{{ $fField }}'];
-                                                    }
+                                                    const raw = val ? val['{{ $fField }}'] : undefined;
+                                                    const label = (raw === undefined || raw === null) ? '' : String(raw);
+                                                    if (label === this._label) return;
+                                                    this._label = label;
+                                                    this.displayVal = label;
                                                 });
                                                 this.$wire.$watch('sdResults', (val) => {
                                                     const res = val['{{ $fField }}'];
@@ -523,7 +537,9 @@
                                                 });
                                             }
                                         }"
-                                        @click.outside="open = false"
+                                        {{-- Sair sem escolher, com um item ja escolhido: o campo
+                                             volta a mostrar esse item, e nao o texto da busca. --}}
+                                        @click.outside="open = false; if (displayVal !== '' && displayVal !== _label && _label !== '') displayVal = _label"
                                         class="relative"
                                     >
                                         <div class="relative flex items-center">

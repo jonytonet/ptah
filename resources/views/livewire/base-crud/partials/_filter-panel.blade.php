@@ -2,7 +2,9 @@
 @if ($showFilters)
     <div class="mb-4 overflow-hidden border rounded-lg ptah-c-fp_card">
 
-        <div class="flex items-center justify-between px-5 py-3.5 border-b ptah-c-fp_hd">
+        {{-- Clicar no cabecalho fecha o painel (1.60.3), como o botao Filtros da barra. --}}
+        <div class="flex items-center justify-between px-5 py-3.5 border-b ptah-c-fp_hd cursor-pointer select-none"
+             wire:click="toggleFilters" title="{{ __('ptah::ui.filters_close') }}">
             <div class="flex items-center gap-2">
                 <svg class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -15,7 +17,7 @@
                     </span>
                 @endif
             </div>
-            <x-forge-button wire:click="clearFilters" flat color="danger" size="sm">
+            <x-forge-button wire:click.stop="clearFilters" flat color="danger" size="sm">
                 <x-slot name="icon">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>

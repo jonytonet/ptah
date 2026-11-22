@@ -123,6 +123,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'filters_title' => 'Filtros',
+    'filters_close' => 'Fechar filtros',
     'filters_clear_all' => 'Limpar tudo',
     'filters_date_shortcuts' => 'Atalhos de data',
     'filters_date_from' => 'De',

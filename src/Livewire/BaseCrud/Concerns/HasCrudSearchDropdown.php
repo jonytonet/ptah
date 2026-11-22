@@ -32,6 +32,16 @@ trait HasCrudSearchDropdown
         if (strlen($query) < 1) {
             $this->sdResults[$field] = [];
 
+            // Apagar o texto de um searchdropdown escolhido desfaz a escolha
+            // (1.60.3): antes o valor ficava gravado com o campo em branco, e
+            // salvar levava o item que a pessoa tinha acabado de apagar.
+            if (array_key_exists($field, $this->formData) && $this->formData[$field] !== null && $this->formData[$field] !== ''
+                && strtolower((string) ($this->findColByField($field)['colsTipo'] ?? '')) === 'searchdropdown') {
+                $this->formData[$field] = null;
+                unset($this->sdLabels[$field]);
+                $this->resetSdDependents($field);
+            }
+
             return;
         }
 

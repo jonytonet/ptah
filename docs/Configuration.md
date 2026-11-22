@@ -282,6 +282,7 @@ device/browser; it never leaks credentials or any other account data.
 | `crud.per_page` | — | `25` | This document — [General Settings](#general-settings) |
 | `crud.max_per_page` | — | `200` | Ceiling for the client-writable `perPage` (1.41.11) |
 | `crud.soft_deletes` | — | `true` | Default of `ptah:forge` for new entities (`--no-soft-deletes` overrides it). Does not touch a screen that already exists — that follows the model's `SoftDeletes` trait. Since 1.50.0 |
+| `crud.form_draft` | `PTAH_CRUD_FORM_DRAFT` | `false` | Form draft for screens without `formDraft.enabled` (BaseCrud.md § Form draft); the screen's key always wins |
 | `crud.responsive_cards` | `PTAH_CRUD_RESPONSIVE_CARDS` | `true` | `true`: a screen whose `viewMode` is `auto` shows the table on wide screens and cards on phones; `false`: `auto` behaves like `table` |
 | `crud.config_editor` | `PTAH_CONFIG_EDITOR` | `false` | [Permissions.md](Permissions.md) (ignored while the permissions module is active) |
 | `structure_editor` | `PTAH_STRUCTURE_EDITOR` | `false` | Who may administer `/ptah-menu` and `/ptah-companies`. With the permissions module ACTIVE this is ignored and only masters may; with it OFF the screens are denied unless this is `true`. Until 1.34.8 both were open to any authenticated user |

@@ -67,7 +67,9 @@ trait HasCrudFormDraft
     #[ServerOnly]
     public function formDraftEnabled(): bool
     {
-        $enabled = $this->crudConfig['formDraft']['enabled'] ?? false;
+        // A tela decide; sem a chave na tela, vale o padrao do host
+        // (ptah.crud.form_draft, 1.60.3), desligado como sempre foi.
+        $enabled = $this->crudConfig['formDraft']['enabled'] ?? (bool) config('ptah.crud.form_draft', false);
 
         return $enabled === true || $enabled === 1 || $enabled === '1' || $enabled === 'true';
     }

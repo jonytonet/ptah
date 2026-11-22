@@ -450,7 +450,7 @@ class CrudConfig extends Component
         $this->featureImportMode = ($cfg['importConfig']['mode'] ?? 'create') === 'upsert' ? 'upsert' : 'create';
         $this->featureImportKey = (string) ($cfg['importConfig']['key'] ?? '');
         $this->featureHistory = ($cfg['history']['enabled'] ?? true) !== false;
-        $this->featureFormDraft = ($cfg['formDraft']['enabled'] ?? false) === true;
+        $this->featureFormDraft = ($cfg['formDraft']['enabled'] ?? (bool) config('ptah.crud.form_draft', false)) === true;
         $this->featureAttachments = ($cfg['attachments']['enabled'] ?? true) !== false;
         $this->kanbanField = (string) ($cfg['kanbanConfig']['field'] ?? '');
         $this->calendarStart = (string) ($cfg['calendarConfig']['start'] ?? '');
@@ -1203,7 +1203,14 @@ class CrudConfig extends Component
             ]),
             'history' => ['enabled' => $this->featureHistory],
             // Merge: `exclude` e `ttlDays` vem da CLI e nao tem campo aqui.
-            'formDraft' => array_merge((array) ($existing['formDraft'] ?? []), ['enabled' => $this->featureFormDraft]),
+            // Uma tela sem a chave segue o padrao do host (ptah.crud.form_draft):
+            // salvar no editor so grava `enabled` quando a tela ja tinha a
+            // chave ou quando a caixa difere do padrao — senao abrir e salvar
+            // congelaria o padrao de hoje na tela.
+            'formDraft' => (array_key_exists('enabled', (array) ($existing['formDraft'] ?? []))
+                    || $this->featureFormDraft !== (bool) config('ptah.crud.form_draft', false))
+                ? array_merge((array) ($existing['formDraft'] ?? []), ['enabled' => $this->featureFormDraft])
+                : ((array) ($existing['formDraft'] ?? []) ?: null),
             'attachments' => ['enabled' => $this->featureAttachments],
             'kanbanConfig' => $this->kanbanField !== '' ? array_merge($existing['kanbanConfig'] ?? [], ['field' => $this->kanbanField]) : null,
             'calendarConfig' => $this->calendarStart !== ''
