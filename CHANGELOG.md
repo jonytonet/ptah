@@ -7,6 +7,29 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.60.2] - 2026-11-22
+
+### Fixed
+
+- **Filling in the form no longer makes the table behind it flash.** The
+  loading bar above the BaseCrud table and the dimmed table (and the cards)
+  had no `wire:target`, so they lit up on every request of the component: with
+  the form open, each focus on a searchdropdown and each select chosen showed
+  the table loading behind the modal. They now ignore the requests that only
+  concern the form and its modals (`formData`, the searchdropdown calls,
+  opening/closing the form, draft, attachments, history, import); search,
+  filters, paging, sorting, saving and deleting light them up as before. The
+  list only names the actions the screen offers, so a method name in the HTML
+  never suggests a button a permission removed.
+- **Focusing a searchdropdown whose options are already loaded no longer goes
+  to the server.** The server already returned early in that case, but the
+  round trip still re-rendered the whole component — the table query included.
+
+### Upgrading
+
+- Nothing to run. The compiled `ptah.css` only changed its source hash;
+  republishing `ptah-assets` clears the `ptah:upgrade-check` notice.
+
 ## [1.60.1] - 2026-11-21
 
 ### Fixed
