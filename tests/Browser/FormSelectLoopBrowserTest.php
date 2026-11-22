@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Ptah\Tests\Browser;
 
+use Facebook\WebDriver\Remote\RemoteWebElement;
+use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverKeys;
 use Laravel\Dusk\Browser;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -177,6 +180,55 @@ class FormSelectLoopBrowserTest extends DuskTestCase
             [$state] = $browser->script('return { fetches: window.__ptahFetches, dimmed: window.__ptahTableDimmed };');
             $this->assertSame(1, $state['fetches'], 'Voltar ao searchdropdown buscou as opcoes de novo.');
             $this->assertFalse($state['dimmed'], 'O foco no searchdropdown acendeu o loading da tabela ao fundo.');
+        });
+    }
+
+    /** O input de texto do searchdropdown `parent_id`, como elemento do WebDriver. */
+    private static function sdInput(Browser $browser): RemoteWebElement
+    {
+        return $browser->driver->findElement(WebDriverBy::xpath(
+            "//input[@type='text'][@*[name()='wire:keyup.debounce.300ms' and contains(., 'parent_id')]]"
+        ));
+    }
+
+    private function chooseSd(Browser $browser, string $label): void
+    {
+        $browser->waitUsing(10, 200, function () use ($browser, $label) {
+            [$ok] = $browser->script("return [...document.querySelectorAll('button')].some(b => (b.getAttribute('wire:click') || '').indexOf('selectDropdownOption') === 0 && b.offsetParent !== null && b.textContent.trim() === ".json_encode($label).');');
+
+            return $ok;
+        }, "A opcao {$label} nao apareceu.");
+        $browser->script("[...document.querySelectorAll('button')].find(b => (b.getAttribute('wire:click') || '').indexOf('selectDropdownOption') === 0 && b.offsetParent !== null && b.textContent.trim() === ".json_encode($label).').click();');
+    }
+
+    #[Test]
+    public function a_chosen_searchdropdown_can_be_searched_again_and_cleared(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $this->openNew($browser);
+
+            self::sdInput($browser)->click();
+            $this->chooseSd($browser, 'Motor');
+            $browser->waitUsing(10, 200, fn () => $browser->script('return '.self::WIRE.'.get("formData.parent_id");')[0] == 1, 'Motor nao foi escolhido.');
+            $browser->pause(500);
+
+            // Apaga o escolhido e procura outro: o texto digitado tem de ficar.
+            $in = self::sdInput($browser);
+            $in->sendKeys(str_repeat(WebDriverKeys::BACKSPACE, 8));
+            $in->sendKeys('Fre');
+            $browser->pause(1500);
+            $this->assertSame('Fre', self::sdInput($browser)->getAttribute('value'), 'O texto digitado voltou para o item escolhido antes.');
+
+            $this->chooseSd($browser, 'Freio');
+            $browser->waitUsing(10, 200, fn () => $browser->script('return '.self::WIRE.'.get("formData.parent_id");')[0] == 2, 'Freio nao foi escolhido depois de Motor.');
+            $browser->pause(500);
+            $this->assertSame('Freio', self::sdInput($browser)->getAttribute('value'));
+
+            // Apagar tudo limpa a escolha, e o campo fica vazio.
+            self::sdInput($browser)->sendKeys(str_repeat(WebDriverKeys::BACKSPACE, 8));
+            $browser->pause(1500);
+            $this->assertSame('', self::sdInput($browser)->getAttribute('value'), 'O campo apagado voltou a mostrar o item escolhido.');
+            $this->assertNull($browser->script('return '.self::WIRE.'.get("formData.parent_id");')[0], 'Apagar o texto nao limpou a escolha.');
         });
     }
 }

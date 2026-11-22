@@ -2217,6 +2217,13 @@ on the server.
 Editor: gear → General → Features → "Keep a form draft in the browser". CLI:
 `--set="formDraft.enabled=true"`.
 
+**For every screen at once** (1.60.3): `PTAH_CRUD_FORM_DRAFT=true` (config
+`ptah.crud.form_draft`) turns it on for each screen that does not say. A
+screen's own `formDraft.enabled` always wins, so one screen can still opt out
+with `false`; saving a screen in the editor writes the key only when its box
+differs from the host default. With the draft on, closing the modal never asks
+"discard changes?" — nothing is lost.
+
 - **One draft per user + screen + mode + record.** "New" only ever restores the
   create draft — never values from an edit. An edit restores the draft of THAT
   record id; opening another id shows that record (or its own draft).

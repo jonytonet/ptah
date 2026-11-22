@@ -426,6 +426,16 @@ return [
          */
         'responsive_cards' => env('PTAH_CRUD_RESPONSIVE_CARDS', true),
 
+        /*
+         | Form draft in the browser, for screens that do not say (1.60.3).
+         |
+         | A screen's `formDraft.enabled` always wins. Without it, this decides:
+         | true keeps what the user typed in the create/edit modal when it is
+         | closed (no "discard changes?" question) and brings it back on the
+         | next opening. false (default) is how every release before behaved.
+         */
+        'form_draft' => env('PTAH_CRUD_FORM_DRAFT', false),
+
         'cache_enabled' => true,
         'cache_ttl' => 3600,
         'per_page' => 25,
