@@ -13,6 +13,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Ptah\Livewire\BaseCrud\BaseCrud;
 use Ptah\Livewire\BaseCrud\CrudConfig as CrudConfigEditor;
 use Ptah\Models\CrudConfig;
+use Ptah\PtahServiceProvider;
 use Ptah\Tests\TestCase;
 
 class HostDraftItem extends Model
@@ -105,5 +106,31 @@ class CrudFormDraftHostDefaultTest extends TestCase
 
         $saved = CrudConfig::where('model', HostDraftItem::class)->where('route', '')->sole()->config;
         $this->assertFalse($saved['formDraft']['enabled']);
+    }
+
+    #[Test]
+    public function the_env_switch_reaches_a_config_published_before_the_key_existed(): void
+    {
+        // Found in yelll (1.60.3): its config/ptah.php has a `crud` block from an
+        // older release, the shallow merge never brought `form_draft` in, and
+        // PTAH_CRUD_FORM_DRAFT=true did nothing.
+        config(['ptah.crud' => ['responsive_cards' => false]]);
+        putenv('PTAH_CRUD_FORM_DRAFT=true');
+        $_ENV['PTAH_CRUD_FORM_DRAFT'] = $_SERVER['PTAH_CRUD_FORM_DRAFT'] = 'true';
+
+        try {
+            $provider = new PtahServiceProvider($this->app);
+            (fn () => $this->fillMissingNestedConfig('crud', ['form_draft']))->call($provider);
+        } finally {
+            putenv('PTAH_CRUD_FORM_DRAFT');
+            unset($_ENV['PTAH_CRUD_FORM_DRAFT'], $_SERVER['PTAH_CRUD_FORM_DRAFT']);
+        }
+
+        $this->assertTrue((bool) config('ptah.crud.form_draft'));
+        // The host's own keys are untouched.
+        $this->assertFalse(config('ptah.crud.responsive_cards'));
+
+        $source = (string) file_get_contents(dirname(__DIR__, 3).'/src/PtahServiceProvider.php');
+        $this->assertStringContainsString("fillMissingNestedConfig('crud', ['form_draft'])", $source);
     }
 }

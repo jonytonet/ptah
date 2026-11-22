@@ -163,6 +163,9 @@ class PtahServiceProvider extends ServiceProvider
         // published before it existed — the merge above is shallow, so it never
         // would (PTAH_SPA_NAVIGATION=true did nothing in such a host).
         $this->fillMissingNestedConfig('forge', ['spa_navigation', 'spa_navigation_except']);
+        // Same trap for PTAH_CRUD_FORM_DRAFT (1.60.3): yelll published its config
+        // before the key existed, so the .env switch was ignored.
+        $this->fillMissingNestedConfig('crud', ['form_draft']);
 
         $this->registerLaravelTranslations();
 
