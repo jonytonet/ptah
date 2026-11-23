@@ -122,6 +122,8 @@ export interface Features {
     responsiveCards: boolean;
     /** The copy / filter buttons over a cell (`uiPreferences.copyCell`). */
     copyCell: boolean;
+    /** Delete goes to the deleted list and the toast offers Undo (1.61.0). */
+    undoDelete?: boolean;
 }
 
 export const NO_FEATURES: Features = {

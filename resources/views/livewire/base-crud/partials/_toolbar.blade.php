@@ -140,7 +140,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                 </svg>
-                <span class="ptah-c-btn_label">{{ __('ptah::ui.btn_filters') }}</span>
+                {{-- Filtros e a acao mais usada da barra: o rotulo fica sempre (1.61.0). --}}
+                <span class="ptah-c-btn_label ptah-c-btn_label_keep">{{ __('ptah::ui.btn_filters') }}</span>
                 @if ($activeFilterCount > 0)
                     <span class="inline-flex items-center justify-center w-4 h-4 text-xs leading-none text-white rounded-full bg-primary">
                         {{ $activeFilterCount }}
@@ -425,7 +426,11 @@
                 aria-label="{{ __('ptah::ui.btn_density') }}"
                 aria-haspopup="true"
                 :aria-expanded="open">
-                <span class="text-sm leading-none">{{ $densityMap[$viewDensity]['icon'] ?? '☰' }}</span>
+                {{-- Icone de linhas (1.61.0) no lugar dos caracteres soltos (◈ ≡ ☰ ⊟),
+                     que nao diziam o que o botao fazia. --}}
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                </svg>
                 <span class="ptah-c-btn_label">{{ __('ptah::ui.btn_density') }}</span>
                 <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -440,7 +445,7 @@
                     <button wire:click="setViewDensity('{{ $d }}')" @click="open = false"
                         class="flex items-center justify-between w-full px-4 py-2 text-sm transition-colors ptah-c-dd_item
                                {{ $viewDensity === $d ? 'font-semibold ptah-c-dd_active' : '' }}">
-                        <span>{{ $info['icon'] }} {{ $info['label'] }}</span>
+                        <span>{{ $info['label'] }}</span>
                         @if ($viewDensity === $d)
                             <svg class="w-4 h-4 shrink-0 ptah-c-dd_active" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -496,13 +501,17 @@
 </div>{{-- end main flex row --}}
 
 {{-- Filter chips (busca ativa + filtros ativos) --}}
+{{-- 1.61.0: busca e filtros sao lembrados entre visitas; a faixa diz que a
+     lista ESTA filtrada, com um rotulo e um "Limpar tudo", para quem volta a tela
+     nao achar que sumiram registros. --}}
 @if ($search !== '' || count($textFilter) > 0)
-    <div class="flex flex-wrap items-center gap-1.5 px-4 pb-2.5 -mt-1">
+    <div class="flex flex-wrap items-center gap-1.5 px-4 pb-2.5 -mt-1" role="status" data-ptah-active-filters>
+        <span class="text-xs font-semibold ptah-c-muted mr-0.5">{{ __('ptah::ui.filters_applied') }}:</span>
         @if ($search !== '')
             <span class="ptah-c-chip">
                 <svg class="w-3 h-3 shrink-0 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"/></svg>
                 {{ \Illuminate\Support\Str::limit($search, 30) }}
-                <button type="button" wire:click="$set('search', '')" title="{{ __('ptah::ui.btn_clear_filters') }}">
+                <button type="button" wire:click="$set('search', '')" title="{{ __('ptah::ui.filters_remove', ['label' => __('ptah::ui.search_placeholder')]) }}" aria-label="{{ __('ptah::ui.filters_remove', ['label' => __('ptah::ui.search_placeholder')]) }}">
                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </span>
@@ -511,11 +520,14 @@
             <span class="ptah-c-chip">
                 <span class="opacity-60 mr-0.5">{{ $badge['label'] }}:</span>
                 {{ \Illuminate\Support\Str::limit((string) $badge['value'], 20) }}
-                <button type="button" wire:click="removeTextFilterBadge('{{ $badge['field'] }}')" title="{{ __('ptah::ui.btn_clear_filters') }}">
+                <button type="button" wire:click="removeTextFilterBadge('{{ $badge['field'] }}')" title="{{ __('ptah::ui.filters_remove', ['label' => $badge['label']]) }}" aria-label="{{ __('ptah::ui.filters_remove', ['label' => $badge['label']]) }}">
                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </span>
         @endforeach
+        @if (($search !== '' ? 1 : 0) + count($textFilter) > 1)
+            <button type="button" wire:click="clearFilters" class="text-xs font-semibold underline underline-offset-2 ml-1 ptah-c-muted hover:opacity-80">{{ __('ptah::ui.filters_clear_all') }}</button>
+        @endif
     </div>
 @endif
 

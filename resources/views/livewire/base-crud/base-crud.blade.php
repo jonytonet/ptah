@@ -204,6 +204,19 @@
                 <span class="text-sm font-semibold">
                     {{ __('ptah::ui.bulk_n_selected', ['n' => count($selectedRows)]) }}
                 </span>
+                {{-- Todas as paginas (1.61.0): marcar o cabecalho so pega a pagina. --}}
+                @php
+                    $ptahTotalRows = $this->rows->total();
+                    $ptahCanSelectAll = $selectAll && $ptahTotalRows > count($selectedRows)
+                        && $ptahTotalRows <= \Ptah\Livewire\BaseCrud\BaseCrud::SELECT_ALL_MATCHING_CAP;
+                @endphp
+                @if ($ptahCanSelectAll)
+                    <button type="button" wire:click="selectAllMatching" class="text-xs font-semibold underline underline-offset-2" data-ptah-select-all-matching>
+                        {{ __('ptah::ui.bulk_select_all_matching', ['n' => $ptahTotalRows]) }}
+                    </button>
+                @elseif ($selectAll && count($selectedRows) > $this->rows->count())
+                    <span class="text-xs opacity-80">{{ __('ptah::ui.bulk_all_matching_selected', ['n' => count($selectedRows)]) }}</span>
+                @endif
 
                 @if ($showTrashed)
                     {{-- Modo lixeira: limpar permanentemente + restaurar --}}
@@ -278,7 +291,7 @@
                             <p class="text-sm font-semibold text-slate-800 dark:text-white"
                                x-text="_bulkConfirm === 'force'
                                    ? '{{ addslashes(__('ptah::ui.bulk_force_delete_confirm', ['n' => count($selectedRows)])) }}'
-                                   : '{{ addslashes(__('ptah::ui.bulk_delete_confirm', ['n' => count($selectedRows)])) }}'"></p>
+                                   : '{{ addslashes(__($this->deleteIsUndoable() ? 'ptah::ui.bulk_delete_confirm_undoable' : 'ptah::ui.bulk_delete_confirm', ['n' => count($selectedRows)])) }}'"></p>
                             <p x-show="_bulkConfirm === 'force'" class="text-xs mt-1 text-red-500">
                                 {{ __('ptah::ui.bulk_force_irreversible') }}
                             </p>
@@ -341,6 +354,10 @@
                     <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">n</kbd></dd>
                 </div>
                 @endif
+                <div class="flex items-center justify-between gap-3">
+                    <dt>{{ __('ptah::ui.shortcuts_save') }}</dt>
+                    <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">Ctrl+Enter</kbd></dd>
+                </div>
                 <div class="flex items-center justify-between gap-3">
                     <dt>{{ __('ptah::ui.shortcuts_filters') }}</dt>
                     <dd><kbd class="px-1.5 py-0.5 rounded border text-xs font-mono ptah-c-kbd">f</kbd></dd>

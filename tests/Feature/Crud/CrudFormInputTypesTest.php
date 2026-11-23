@@ -191,8 +191,9 @@ class CrudFormInputTypesTest extends TestCase
     public function an_optional_colour_can_be_cleared(): void
     {
         // Without this there is no way back to "no colour": the native picker
-        // always holds one.
-        $html = $this->openForm(['colsTipo' => 'color']);
+        // always holds one. `status` has a DEFAULT, so it is optional; `name`
+        // is NOT NULL without one and is required since 1.61.0.
+        $html = $this->openForm(['colsTipo' => 'color', 'colsNomeFisico' => 'status']);
 
         $this->assertStringContainsString('ptah-c-color_clear', $html);
         $this->assertStringContainsString('clear()', $html);
@@ -206,6 +207,9 @@ class CrudFormInputTypesTest extends TestCase
         $html = $this->openForm(['colsTipo' => 'color', 'colsRequired' => true]);
 
         $this->assertStringNotContainsString('ptah-c-color_clear', $html);
+
+        // A NOT NULL column without a DEFAULT is required too (1.61.0).
+        $this->assertStringNotContainsString('ptah-c-color_clear', $this->openForm(['colsTipo' => 'color']));
     }
 
     #[Test]

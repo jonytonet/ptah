@@ -44,6 +44,32 @@ trait HasCrudBulkActions
         }
     }
 
+    /** Most a "select all N results" may select (1.61.0): one bulk action, one request. */
+    public const SELECT_ALL_MATCHING_CAP = 1000;
+
+    /**
+     * Selects every record of the current listing — all pages, same search,
+     * filters and company scope (1.61.0). Marking the header only takes the
+     * page; this takes the rest, up to SELECT_ALL_MATCHING_CAP. The ids come
+     * from the server's own query, so every bulk action keeps working on
+     * selectedRows as before.
+     */
+    public function selectAllMatching(): void
+    {
+        $model = $this->resolveEloquentModel();
+        if (! $model) {
+            return;
+        }
+
+        $keyName = $model->getKeyName();
+        [$query] = $this->buildBaseQuery($model);
+        $this->selectedRows = $query->limit(self::SELECT_ALL_MATCHING_CAP)
+            ->pluck($model->qualifyColumn($keyName))
+            ->map(fn ($id) => (string) $id)
+            ->all();
+        $this->selectAll = true;
+    }
+
     public function clearSelection(): void
     {
         $this->selectedRows = [];

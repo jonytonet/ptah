@@ -206,7 +206,7 @@ export function PtahCrud({ screen, locale, title, toolbar, controller, ...option
             {state.deleting !== null && (
                 <PtahConfirmDialog
                     title={t.deleteTitle}
-                    text={t.deleteMessage}
+                    text={crud.features.undoDelete ? t.deleteMessageUndoable : t.deleteMessage}
                     confirm={t.delete}
                     cancel={t.cancel}
                     closeLabel={t.close}
@@ -914,7 +914,7 @@ function BulkBar({ crud, state, w }: PartProps) {
             {asking && (
                 <BulkConfirm
                     w={w}
-                    text={fillWords(asking === 'force' ? w.bulkForceConfirm : w.bulkDeleteConfirm, { n })}
+                    text={fillWords(asking === 'force' ? w.bulkForceConfirm : crud.features.undoDelete ? w.bulkDeleteConfirmUndoable : w.bulkDeleteConfirm, { n })}
                     note={asking === 'force' ? w.bulkIrreversible : null}
                     onCancel={() => setAsking(null)}
                     onConfirm={() => {
@@ -1026,7 +1026,17 @@ function Toasts({ crud, state, w, locale }: Omit<PartProps, 't'>) {
     return (
         <div className="pc-toasts pc-tst-host" aria-live="polite">
             {state.toasts.map((toast) => (
-                <div key={toast.id} className="pc-tst" data-color={toast.level} role="status">
+                <div
+                    key={toast.id}
+                    className="pc-tst"
+                    data-color={toast.level}
+                    role="status"
+                    // Hovering or focusing a toast pauses its clock (1.61.0).
+                    onMouseEnter={() => crud.pauseToast(toast.id)}
+                    onMouseLeave={() => crud.resumeToast(toast.id)}
+                    onFocus={() => crud.pauseToast(toast.id)}
+                    onBlur={() => crud.resumeToast(toast.id)}
+                >
                     {TOAST_ICONS[toast.level] && <Icon name={TOAST_ICONS[toast.level]} />}
                     <span className="pc-toast-text">{toast.text}</span>
                     {toast.undo !== undefined && toast.undo !== null && (

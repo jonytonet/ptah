@@ -23,18 +23,20 @@
     <div class="ptah-c-sortbar flex items-center gap-2 mb-3" role="group"
          aria-label="{{ __('ptah::ui.sort_group_label') }}">
 
-        <label for="ptah-sort-{{ $crudTitle }}" class="sr-only">{{ __('ptah::ui.sort_by') }}</label>
-
         <svg class="w-4 h-4 shrink-0 ptah-c-sortbar_icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9M3 12h5m5 4l4 4 4-4m-4 4V4"/>
         </svg>
+
+        {{-- Rotulo visivel (1.61.0): um select largo mostrando so "ID" nao dizia
+             que era a ordem da lista. --}}
+        <label for="ptah-sort-{{ $crudTitle }}" class="text-xs font-medium shrink-0 ptah-c-muted">{{ __('ptah::ui.sort_by') }}:</label>
 
         {{-- wire:model.live="sort" é o idioma dominante do pacote para select
              (ver _filter-panel). O hook updatedSort() carrega resetPage() +
              savePreferences() e revalida o valor contra a allowlist. --}}
         <select id="ptah-sort-{{ $crudTitle }}"
                 wire:model.live="sort"
-                class="ptah-c-control ptah-c-sortbar_select flex-1 min-w-0 rounded-md border"
+                class="ptah-c-control ptah-c-sortbar_select min-w-0 max-w-xs rounded-md border"
                 title="{{ __('ptah::ui.sort_by') }}">
             @foreach ($ptahSortable as $ptahCol)
                 <option value="{{ $ptahCol['sortBy'] }}">{{ $ptahCol['label'] }}</option>

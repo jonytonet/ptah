@@ -16,6 +16,17 @@
         <x-forge-button wire:click="calendarShift(1)" color="dark" flat size="sm" :aria-label="__('ptah::ui.calendar_next')">›</x-forge-button>
     </header>
 
+    @if ($cal['empty'])
+        <div class="flex flex-wrap items-center gap-2 px-3 pt-2 text-xs ptah-c-muted" role="status" data-ptah-calendar-empty>
+            <span>{{ __('ptah::ui.calendar_empty_month') }}</span>
+            @if ($cal['nearest'])
+                <button type="button" wire:click="calendarGoTo('{{ $cal['nearest'] }}')" class="font-semibold underline underline-offset-2" style="color: var(--ptah-primary)">
+                    {{ __('ptah::ui.calendar_go_nearest', ['month' => \Carbon\CarbonImmutable::createFromFormat('!Y-m', $cal['nearest'])->locale(app()->getLocale())->translatedFormat('F Y')]) }}
+                </button>
+            @endif
+        </div>
+    @endif
+
     @if ($cal['overflow'])
         <div class="px-3 pt-2"><x-forge-alert color="warn">{{ __('ptah::ui.calendar_overflow') }}</x-forge-alert></div>
     @endif

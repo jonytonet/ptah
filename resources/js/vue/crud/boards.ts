@@ -345,18 +345,18 @@ export const PtahCrudKanban = defineComponent({
                                                   {
                                                       id: selectId,
                                                       class: 'pc-kanban-move',
-                                                      value: col.other ? '' : col.value,
+                                                      value: '',
                                                       onChange: (event: Event) => {
                                                           const target = event.target as HTMLSelectElement;
                                                           const to = target.value;
                                                           // Back to the current column until the board says otherwise.
-                                                          target.value = col.other ? '' : col.value;
+                                                          target.value = '';
                                                           void move(id, col.value, to);
                                                       },
                                                   },
                                                   [
-                                                      col.other ? h('option', { value: '', disabled: true }, `${words.moveTo}…`) : null,
-                                                      ...choices.map((option) => h('option', { key: option.value, value: option.value }, `${words.moveTo}: ${option.label}`)),
+                                                      h('option', { value: '', disabled: true }, words.movePlaceholder),
+                                                      ...choices.map((option) => h('option', { key: option.value, value: option.value }, option.label)),
                                                   ],
                                               ),
                                           ]
@@ -472,6 +472,26 @@ export const PtahCrudCalendar = defineComponent({
                 ]),
                 error.value ? h(ForgeAlert, { color: 'danger' }, () => error.value) : null,
                 current.overflow ? h('div', { class: 'pc-cal-alert' }, [h(ForgeAlert, { color: 'warn' }, () => words.calendarOverflow)]) : null,
+                // An empty month says so and points at the closest one with records (1.61.0).
+                current.empty
+                    ? h('div', { class: 'pc-cal-empty', role: 'status' }, [
+                          h('span', words.calendarEmpty),
+                          current.nearest
+                              ? h(
+                                    'button',
+                                    {
+                                        type: 'button',
+                                        class: 'pc-cal-goto',
+                                        onClick: () => {
+                                            month = current.nearest ?? '';
+                                            void load();
+                                        },
+                                    },
+                                    words.calendarGoTo.replace(':month', monthTitle(current.nearest, props.locale)),
+                                )
+                              : null,
+                      ])
+                    : null,
                 h('div', { class: 'pc-cal-scroll' }, [
                     h('table', { class: 'pc-cal-table' }, [
                         h('thead', [h('tr', words.weekdays.map((weekday) => h('th', { key: weekday, scope: 'col' }, weekday)))]),
@@ -653,7 +673,8 @@ export const PtahCrudCards = defineComponent({
             const sortId = `pc-cards-sort-${props.crud.screen}`;
 
             return h('div', { class: 'pc-sortbar', role: 'group', 'aria-label': words.sortGroup }, [
-                h('label', { for: sortId, class: 'pc-sr-only' }, words.sortBy),
+                // A visible label (1.61.0): a wide select showing only "ID" did not say it was the order.
+                h('label', { for: sortId, class: 'pc-sortbar-lbl' }, `${words.sortBy}:`),
                 icon('sortBar', 16, undefined, 'pc-sortbar-icon'),
                 h(
                     'select',

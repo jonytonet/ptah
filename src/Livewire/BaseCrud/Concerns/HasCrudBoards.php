@@ -257,10 +257,18 @@ trait HasCrudBoards
         $this->calendarMonth = $this->calendarStart()->addMonths(max(-12, min(12, $months)))->format('Y-m');
     }
 
+    /** Opens a given month (`Y-m`), as the empty month's "Go to" does (1.61.0). */
+    public function calendarGoTo(string $month): void
+    {
+        if (preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month) === 1) {
+            $this->calendarMonth = $month;
+        }
+    }
+
     /**
      * Weeks (Sunday first) of the month, each day with its records.
      *
-     * @return array{month: string, weeks: list<list<array{date: string, day: int, in_month: bool, today: bool, items: list<array{id: mixed, title: string, subtitle: string}>}>>, overflow: bool}
+     * @return array{month: string, weeks: list<list<array{date: string, day: int, in_month: bool, today: bool, items: list<array{id: mixed, title: string, subtitle: string}>}>>, overflow: bool, empty: bool, nearest: string|null}
      */
     #[ServerOnly]
     public function calendarGrid(): array
@@ -320,7 +328,43 @@ trait HasCrudBoards
             ];
         }
 
-        return ['month' => $monthStart->format('Y-m'), 'weeks' => array_values($weeks), 'overflow' => $overflow];
+        // Mes vazio (1.61.0): abria em branco e parecia que a tela nao tinha
+        // dados. Diz que o mes esta vazio e aponta o mes com registro mais proximo.
+        $nearest = $byDate === [] ? $this->calendarNearestMonth($monthStart) : null;
+
+        return ['month' => $monthStart->format('Y-m'), 'weeks' => array_values($weeks), 'overflow' => $overflow, 'empty' => $byDate === [], 'nearest' => $nearest];
+    }
+
+    /** `Y-m` of the record closest to the given month (before or after it), or null. */
+    protected function calendarNearestMonth(CarbonImmutable $monthStart): ?string
+    {
+        $model = $this->resolveEloquentModel();
+        if (! $model || ! $this->calendarEnabled()) {
+            return null;
+        }
+
+        $start = $model->getTable().'.'.$this->crudConfig['calendarConfig']['start'];
+        $from = $monthStart->startOfMonth()->startOfDay();
+        $to = $monthStart->endOfMonth()->endOfDay();
+
+        try {
+            [$after] = $this->buildBaseQuery($model);
+            [$before] = $this->buildBaseQuery($model);
+            $next = $after->where($start, '>', $to)->min($start);
+            $prev = $before->where($start, '<', $from)->max($start);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        $next = $next !== null ? CarbonImmutable::parse((string) $next) : null;
+        $prev = $prev !== null ? CarbonImmutable::parse((string) $prev) : null;
+        $pick = match (true) {
+            $next === null => $prev,
+            $prev === null => $next,
+            default => $from->diffInDays($prev, true) <= $to->diffInDays($next, true) ? $prev : $next,
+        };
+
+        return $pick?->format('Y-m');
     }
 
     protected function calendarStart(): CarbonImmutable

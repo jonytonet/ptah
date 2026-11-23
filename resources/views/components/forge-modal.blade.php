@@ -67,7 +67,10 @@
     @if ($hasWireModel) x-data="{ open: @entangle($wireModel) }" @endif
     x-show="open"
     x-cloak
-    @keydown.escape.window="if (open) { typeof closeModal === 'function' ? closeModal() : (open = false) }"
+    {{-- Quem define closeModal() (o formulario do BaseCrud) trata o proprio Esc:
+         os dois ouvintes juntos fechavam o aviso de descarte e o reabriam no mesmo
+         toque (1.61.0). --}}
+    @keydown.escape.window="if (open && typeof closeModal !== 'function') open = false"
     class="fixed inset-0 z-50 flex items-center justify-center"
     {{ $rootAttributes }}
 >
@@ -160,7 +163,7 @@
 
         {{-- Footer --}}
         @if (isset($footer))
-            <div class="shrink-0 px-6 py-4 border-t border-gray-100 dark:border-slate-700 flex justify-end gap-3">
+            <div class="shrink-0 px-6 py-4 border-t border-gray-100 dark:border-slate-700 flex flex-wrap items-center justify-end gap-3">
                 {{ \Ptah\Support\CssFramework::slot($footer, $attributes) }}
             </div>
         @endif

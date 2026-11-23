@@ -84,13 +84,13 @@ describe('<PtahCrud> (Vue)', () => {
 
         await fireEvent.click(screen.getByRole('button', { name: 'Novo' }));
         const dialog = await readyDialog();
-        await fireEvent.click(within(dialog).getByRole('button', { name: 'Criar' }));
+        await fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
 
         expect(await within(dialog).findByText('Nome is required.')).toBeTruthy();
         expect(within(dialog).getByLabelText(/Nome/).getAttribute('aria-invalid')).toBe('true');
 
         await fireEvent.update(within(dialog).getByLabelText(/Nome/), 'Delta');
-        await fireEvent.click(within(dialog).getByRole('button', { name: 'Criar' }));
+        await fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
 
         await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
         expect(await screen.findByText('Delta')).toBeTruthy();
@@ -116,7 +116,7 @@ describe('<PtahCrud> (Vue)', () => {
         expect((within(dialog).getByLabelText(/Nome/) as HTMLInputElement).value).toBe('Alfa');
 
         await fireEvent.update(within(dialog).getByLabelText(/Nome/), 'Alfa 2');
-        await fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar Alterações' }));
+        await fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar alterações' }));
 
         expect(await screen.findByText('Alfa 2')).toBeTruthy();
         expect(items().find((item) => item.id === 1)?.name).toBe('Alfa 2');

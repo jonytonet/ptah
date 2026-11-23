@@ -74,7 +74,8 @@ describe('boards (React)', () => {
         await screen.findByText('Orçar cliente A');
 
         const select = within(column('A fazer')).getByLabelText('Mover para') as HTMLSelectElement;
-        expect([...select.options].map((option) => option.text)).toEqual(['Mover para: A fazer', 'Mover para: Fazendo']);
+        // 1.61.0: a disabled "Mover para…" first, then only the OTHER columns.
+        expect([...select.options].map((option) => option.text)).toEqual(['Mover para…', 'Fazendo']);
         // A locked column lets no card out: no "Move to" there.
         expect(within(column('Feito')).queryByLabelText('Mover para')).toBeNull();
 
@@ -189,7 +190,7 @@ describe('boards (React)', () => {
         fireEvent.click(within(card).getByRole('checkbox', { name: 'Selecionar linha 1' }));
         expect(crud.getState().selection).toEqual(['1']);
 
-        fireEvent.change(screen.getByLabelText('Ordenar por'), { target: { value: 'title' } });
+        fireEvent.change(screen.getByLabelText('Ordenar por:'), { target: { value: 'title' } });
         await waitFor(() => expect(server.calls.filter((call) => call.path === '/crud/tasks').at(-1)?.query.get('sort')).toBe('title'));
         fireEvent.click(screen.getByRole('button', { name: /Ordem decrescente/ }));
         await waitFor(() => expect(screen.getByRole('button', { name: /Ordem crescente/ }).getAttribute('aria-pressed')).toBe('true'));

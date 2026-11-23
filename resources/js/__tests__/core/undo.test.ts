@@ -14,10 +14,29 @@ describe('"Undo" on the toast of a delete', () => {
         crud.toast('Salvo!', 'success');
         expect(crud.getState().toasts.map((toast) => toast.undo ?? null)).toEqual([2, null]);
 
-        // The plain toast goes at 4 s; the one with Undo waits until 6 s.
+        // The plain toast goes at 4 s; the one with Undo waits until 10 s (1.61.0).
         vi.advanceTimersByTime(4100);
         expect(crud.getState().toasts.map((toast) => toast.text)).toEqual(['Excluído.']);
-        vi.advanceTimersByTime(2000);
+        vi.advanceTimersByTime(5000);
+        expect(crud.getState().toasts.map((toast) => toast.text)).toEqual(['Excluído.']);
+        vi.advanceTimersByTime(1000);
+        expect(crud.getState().toasts).toEqual([]);
+        crud.destroy();
+    });
+
+    it('hovering a toast pauses its clock (1.61.0)', async () => {
+        const crud = new CrudController('items', { api: fakeApi().api });
+        await crud.init();
+        vi.useFakeTimers();
+
+        crud.toast('Salvo!', 'success');
+        const id = crud.getState().toasts[0].id;
+        vi.advanceTimersByTime(3000);
+        crud.pauseToast(id);
+        vi.advanceTimersByTime(60000);
+        expect(crud.getState().toasts.map((toast) => toast.text)).toEqual(['Salvo!']);
+        crud.resumeToast(id);
+        vi.advanceTimersByTime(1100);
         expect(crud.getState().toasts).toEqual([]);
         crud.destroy();
     });

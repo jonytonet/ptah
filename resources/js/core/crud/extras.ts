@@ -144,7 +144,7 @@ const en = {
     draftRestored: 'Your unsaved draft was restored.',
     draftDiscarded: 'This record changed since your draft, so the draft was discarded.',
     draftKept: 'Your changes are kept as a draft in this browser until you save.',
-    draftClear: 'Clear all',
+    draftClear: 'Discard draft',
     draftRevert: 'Revert to original',
     // Form
     saveAndNew: 'Save & add another',
@@ -183,7 +183,7 @@ const ptBR: ExtrasWords = {
     draftRestored: 'Seu rascunho não salvo foi restaurado.',
     draftDiscarded: 'Este registro mudou desde o seu rascunho, e o rascunho foi descartado.',
     draftKept: 'Suas alterações ficam guardadas como rascunho neste navegador até você salvar.',
-    draftClear: 'Limpar tudo',
+    draftClear: 'Descartar rascunho',
     draftRevert: 'Voltar ao original',
     saveAndNew: 'Salvar e criar outro',
     showDetails: 'Ver detalhes',

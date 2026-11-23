@@ -9,6 +9,8 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import type { HTMLAttributes, ReactNode } from 'react';
 import { controlOf, debounce, fromInput, inputType, isWide, toInput } from '../../core/form';
+import { isFailedLookup } from '../../core/controller';
+import { trapFocus } from '../../core/focus';
 import type { CrudController, CrudState, FormState } from '../../core/controller';
 import type { Words } from '../../core/i18n';
 import type { Field, LookupItem } from '../../core/types';
@@ -400,9 +402,14 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
     const [text, setText] = useState(label || value);
     const [items, setItems] = useState<LookupItem[] | null>(null);
     const [active, setActive] = useState(-1);
+    // 1.61.0: on a slow server the list kept the previous answer while the new
+    // one was on its way, and a failed request read "No results".
+    const [loading, setLoading] = useState(false);
+    const [failed, setFailed] = useState(false);
     const seq = useRef(0);
     const ref = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const chosen = label || value;
 
     useEffect(() => setText(label || value), [label, value]);
     // Locked again (the parent was cleared): the list closes.
@@ -411,13 +418,23 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
             setItems(null);
         }
     }, [disabled]);
+    // An error on the field: the list closes so the message under it shows.
+    useEffect(() => {
+        if (invalid) {
+            setItems(null);
+        }
+    }, [invalid]);
 
     const fetchNow = (query: string) => {
         const mine = ++seq.current;
+        setLoading(true);
+        setItems((current) => current ?? []);
         void search(query).then((found) => {
             if (mine === seq.current) {
+                setFailed(isFailedLookup(found));
                 setItems(found);
                 setActive(-1);
+                setLoading(false);
             }
         });
     };
@@ -440,9 +457,34 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
         setItems(null);
         onPick(item);
     };
+    const optionId = (index: number) => `${id}-opt-${index}`;
+    const shown = loading ? null : items;
+    const moveTo = (next: number) => {
+        setActive(next);
+        document.getElementById(optionId(next))?.scrollIntoView?.({ block: 'nearest' });
+    };
 
     return (
-        <div className="pc-combo" ref={ref}>
+        <div
+            className="pc-combo"
+            ref={ref}
+            onBlur={(event) => {
+                // Leaving the field (Tab) closes the list (1.61.0). A typed search
+                // that was not picked goes: the chosen item comes back — the text
+                // looked chosen and was not.
+                if (ref.current?.contains(event.relatedTarget as Node | null)) {
+                    return;
+                }
+                run.cancel();
+                seq.current++;
+                setItems(null);
+                setLoading(false);
+                setActive(-1);
+                if (text !== '' && text !== chosen) {
+                    setText(chosen);
+                }
+            }}
+        >
             <div className="pc-combo-field">
                 <input
                     ref={inputRef}
@@ -452,6 +494,7 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
                     aria-expanded={items !== null}
                     aria-controls={`${id}-list`}
                     aria-autocomplete="list"
+                    aria-activedescendant={shown !== null && active >= 0 ? optionId(active) : undefined}
                     aria-invalid={invalid || undefined}
                     aria-describedby={describedBy}
                     autoComplete="off"
@@ -459,7 +502,7 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
                     placeholder={placeholder ?? t.typeToSearch}
                     disabled={disabled}
                     value={text}
-                    onFocus={() => run(text === (label || value) ? '' : text)}
+                    onFocus={() => run(text === chosen ? '' : text)}
                     onChange={(event) => {
                         setText(event.target.value);
                         if (event.target.value === '') {
@@ -468,18 +511,24 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
                         run(event.target.value);
                     }}
                     onKeyDown={(event) => {
-                        if (!items) {
+                        if (event.key === 'ArrowDown' && items === null) {
+                            event.preventDefault();
+                            fetchNow(text === chosen ? '' : text);
+
+                            return;
+                        }
+                        if (!shown) {
                             return;
                         }
                         if (event.key === 'ArrowDown') {
                             event.preventDefault();
-                            setActive(Math.min(items.length - 1, active + 1));
+                            moveTo(Math.min(shown.length - 1, active + 1));
                         } else if (event.key === 'ArrowUp') {
                             event.preventDefault();
-                            setActive(Math.max(0, active - 1));
-                        } else if (event.key === 'Enter' && active >= 0) {
+                            moveTo(Math.max(0, active - 1));
+                        } else if (event.key === 'Enter' && active >= 0 && shown[active]) {
                             event.preventDefault();
-                            pick(items[active]);
+                            pick(shown[active]);
                         } else if (event.key === 'Escape') {
                             event.stopPropagation();
                             setItems(null);
@@ -500,7 +549,7 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
                             setItems(null);
                         } else {
                             inputRef.current?.focus();
-                            fetchNow(text === (label || value) ? '' : text);
+                            fetchNow(text === chosen ? '' : text);
                         }
                     }}
                 >
@@ -508,10 +557,29 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
                 </button>
             </div>
             {items !== null && (
-                <ul className={`pc-combo-list${opensUp ? ' pc-combo-list--up' : ''}`} id={`${id}-list`} role="listbox">
-                    {items.length === 0 && <li className="pc-combo-note">{t.noResults}</li>}
-                    {items.map((item, index) => (
-                        <li key={String(item.value)} role="option" aria-selected={index === active} className="pc-combo-item" onMouseDown={(event) => event.preventDefault()} onClick={() => pick(item)}>
+                <ul className={`pc-combo-list${opensUp ? ' pc-combo-list--up' : ''}`} id={`${id}-list`} role="listbox" aria-busy={loading || undefined}>
+                    {loading && (
+                        <li className="pc-combo-note" role="status">
+                            {t.lookupLoading}
+                        </li>
+                    )}
+                    {!loading && failed && (
+                        <li className="pc-combo-note pc-combo-note--error" role="alert">
+                            {t.lookupFailed}
+                        </li>
+                    )}
+                    {shown !== null && !failed && shown.length === 0 && <li className="pc-combo-note">{t.noResults}</li>}
+                    {(shown ?? []).map((item, index) => (
+                        <li
+                            key={String(item.value)}
+                            id={optionId(index)}
+                            role="option"
+                            aria-selected={index === active}
+                            className="pc-combo-item"
+                            onMouseMove={() => setActive(index)}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => pick(item)}
+                        >
                             {String(item.label)}
                             {optionLines(item).map((line, n) => (
                                 <span key={n} className="pc-combo-line">
@@ -551,7 +619,28 @@ export function PtahCrudFormModal({ crud, state, t, locale }: PtahCrudFormModalP
     const [dirty, setDirty] = useState(false);
     const [confirming, setConfirming] = useState(false);
     const body = useRef<HTMLDivElement>(null);
+    const panel = useRef<HTMLDivElement>(null);
+    const mini = useRef<HTMLDivElement>(null);
     const instance = form?.instance ?? 0;
+
+    // Tab stays in the modal and the focus goes back on close (1.61.0); the
+    // discard question traps it too while it is open.
+    useEffect(() => (panel.current ? trapFocus(panel.current) : undefined), []);
+    useEffect(() => (confirming && mini.current ? trapFocus(mini.current) : undefined), [confirming]);
+
+    // A save that came back with errors: to the first one (1.61.0). In a long
+    // form it was out of sight and nothing seemed to happen.
+    const errorKeys = form ? Object.keys(form.errors).join('|') : '';
+    useEffect(() => {
+        if (errorKeys === '' || !body.current) {
+            return;
+        }
+        const target = body.current.querySelector<HTMLElement>('[aria-invalid="true"]') ?? body.current.querySelector<HTMLElement>('[role="alert"]');
+        target?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+        if (target && target.matches('input, select, textarea, [tabindex]')) {
+            target.focus({ preventScroll: true });
+        }
+    }, [errorKeys]);
 
     // A new opening (also "save & new", a draft reverted) starts clean and focused.
     useEffect(() => {
@@ -575,6 +664,13 @@ export function PtahCrudFormModal({ crud, state, t, locale }: PtahCrudFormModalP
     latest.current = { tryClose, confirming };
     useEffect(() => {
         const listen = (event: KeyboardEvent) => {
+            // Ctrl+Enter (or Cmd+Enter) saves (1.61.0), as on the Livewire modal.
+            if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !latest.current.confirming) {
+                event.preventDefault();
+                void crud.save();
+
+                return;
+            }
             if (event.key !== 'Escape') {
                 return;
             }
@@ -595,7 +691,7 @@ export function PtahCrudFormModal({ crud, state, t, locale }: PtahCrudFormModalP
     return (
         <>
             <div className="pc-root pc-fm-back" onMouseDown={(event) => event.target === event.currentTarget && tryClose()}>
-                <div className="pc-fm-panel pc-fm" data-size="2xl" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-busy={form ? undefined : true}>
+                <div ref={panel} className="pc-fm-panel pc-fm" data-size="2xl" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-busy={form ? undefined : true}>
                     <form
                         noValidate
                         onSubmit={(event) => {
@@ -625,6 +721,11 @@ export function PtahCrudFormModal({ crud, state, t, locale }: PtahCrudFormModalP
                                     {form.errors._general && (
                                         <p className="pc-alert" role="alert">
                                             {form.errors._general}
+                                        </p>
+                                    )}
+                                    {form.slow && (
+                                        <p className="pc-alert" role="alert">
+                                            {t.saveSlow}
                                         </p>
                                     )}
                                     <PtahCrudFormDraft crud={crud} locale={locale} />
@@ -661,7 +762,7 @@ export function PtahCrudFormModal({ crud, state, t, locale }: PtahCrudFormModalP
             </div>
             {confirming && (
                 <div className="pc-root pc-fm-back pc-fm-back--top" onMouseDown={(event) => event.target === event.currentTarget && setConfirming(false)}>
-                    <div className="pc-fm-mini" role="alertdialog" aria-modal="true" aria-labelledby={`${titleId}-discard`} aria-describedby={`${titleId}-discard-text`}>
+                    <div ref={mini} className="pc-fm-mini" role="alertdialog" aria-modal="true" aria-labelledby={`${titleId}-discard`} aria-describedby={`${titleId}-discard-text`}>
                         <p className="pc-fm-mini-ttl" id={`${titleId}-discard`}>
                             {t.unsavedTitle}
                         </p>

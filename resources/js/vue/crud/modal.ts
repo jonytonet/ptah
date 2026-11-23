@@ -3,9 +3,10 @@
  * history, attachments and import wizard draw inside it. Slots: default
  * (body) and `footer`. Mirrors react/crud/modal.tsx.
  */
-import { Comment, defineComponent, h, onBeforeUnmount, onMounted } from 'vue';
+import { Comment, defineComponent, h, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { PropType, VNode } from 'vue';
 import { icon } from '../icons';
+import { trapFocus } from '../../core/focus';
 
 let next = 0;
 
@@ -38,8 +39,19 @@ export const PtahCrudModal = defineComponent({
                 emit('close');
             }
         };
-        onMounted(() => document.addEventListener('keydown', onKey));
-        onBeforeUnmount(() => document.removeEventListener('keydown', onKey));
+        // Tab stays in the dialog; closing gives the focus back (1.61.0).
+        const panel = ref<HTMLElement | null>(null);
+        let release: (() => void) | null = null;
+        onMounted(() => {
+            document.addEventListener('keydown', onKey);
+            if (panel.value) {
+                release = trapFocus(panel.value);
+            }
+        });
+        onBeforeUnmount(() => {
+            document.removeEventListener('keydown', onKey);
+            release?.();
+        });
 
         return () => {
             const body = slots.default?.();
@@ -56,7 +68,7 @@ export const PtahCrudModal = defineComponent({
                     },
                 },
                 [
-                    h('div', { class: 'pc-fm-panel', 'data-size': props.size, role: props.role, 'aria-modal': 'true', 'aria-labelledby': titleId }, [
+                    h('div', { ref: panel, class: 'pc-fm-panel', 'data-size': props.size, role: props.role, 'aria-modal': 'true', 'aria-labelledby': titleId }, [
                         h('div', { class: 'pc-fm-head' }, [
                             h('div', [h('h3', { class: 'pc-fm-title', id: titleId }, props.title), props.subtitle ? h('p', { class: 'pc-fm-sub' }, props.subtitle) : null]),
                             h('button', { type: 'button', class: 'pc-fm-close', 'aria-label': props.closeLabel, title: props.closeLabel, onClick: () => emit('close') }, [icon('x', 20)]),

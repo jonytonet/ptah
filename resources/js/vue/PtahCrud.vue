@@ -611,12 +611,12 @@ const TOAST_ICONS: Record<string, string> = { success: 'checkCircle', warn: 'ale
                 class="pc-dialog"
                 role="alertdialog"
                 aria-modal="true"
-                :aria-label="fillWords(bulkAsk === 'force' ? w.bulkForceConfirm : w.bulkDeleteConfirm, { n: state.selection.length })"
+                :aria-label="fillWords(bulkAsk === 'force' ? w.bulkForceConfirm : crud.features.undoDelete ? w.bulkDeleteConfirmUndoable : w.bulkDeleteConfirm, { n: state.selection.length })"
             >
                 <div class="pc-dialog-row">
                     <div class="pc-dialog-icon"><Icon name="warning" :size="20" /></div>
                     <div>
-                        <p class="pc-dialog-ttl">{{ fillWords(bulkAsk === 'force' ? w.bulkForceConfirm : w.bulkDeleteConfirm, { n: state.selection.length }) }}</p>
+                        <p class="pc-dialog-ttl">{{ fillWords(bulkAsk === 'force' ? w.bulkForceConfirm : crud.features.undoDelete ? w.bulkDeleteConfirmUndoable : w.bulkDeleteConfirm, { n: state.selection.length }) }}</p>
                         <p v-if="bulkAsk === 'force'" class="pc-dialog-sub pc-dialog-sub--danger">{{ w.bulkIrreversible }}</p>
                     </div>
                 </div>
@@ -640,7 +640,7 @@ const TOAST_ICONS: Record<string, string> = { success: 'checkCircle', warn: 'ale
         <PtahConfirm
             v-if="state.deleting !== null"
             :title="t.deleteTitle"
-            :text="t.deleteMessage"
+            :text="crud.features.undoDelete ? t.deleteMessageUndoable : t.deleteMessage"
             :confirm="t.delete"
             :cancel="t.cancel"
             :close-label="t.close"
@@ -669,7 +669,17 @@ const TOAST_ICONS: Record<string, string> = { success: 'checkCircle', warn: 'ale
 
         <!-- Toasts (forge-toast-host) -->
         <div class="pc-toasts pc-tst-host" aria-live="polite">
-            <div v-for="toast in state.toasts" :key="toast.id" class="pc-tst" :data-color="toast.level" role="status">
+            <div
+                v-for="toast in state.toasts"
+                :key="toast.id"
+                class="pc-tst"
+                :data-color="toast.level"
+                role="status"
+                @mouseenter="crud.pauseToast(toast.id)"
+                @mouseleave="crud.resumeToast(toast.id)"
+                @focusin="crud.pauseToast(toast.id)"
+                @focusout="crud.resumeToast(toast.id)"
+            >
                 <Icon v-if="TOAST_ICONS[toast.level]" :name="TOAST_ICONS[toast.level]" />
                 <span class="pc-toast-text">{{ toast.text }}</span>
                 <button v-if="toast.undo !== undefined && toast.undo !== null" type="button" class="pc-tst-undo" @click="crud.undo(toast.id)">{{ t.undo }}</button>

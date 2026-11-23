@@ -75,7 +75,8 @@ describe('boards (Vue)', () => {
         await screen.findByText('Orçar cliente A');
 
         const select = within(column('A fazer')).getByLabelText('Mover para') as HTMLSelectElement;
-        expect([...select.options].map((option) => option.text)).toEqual(['Mover para: A fazer', 'Mover para: Fazendo']);
+        // 1.61.0: a disabled "Mover para…" first, then only the OTHER columns.
+        expect([...select.options].map((option) => option.text)).toEqual(['Mover para…', 'Fazendo']);
         expect(within(column('Feito')).queryByLabelText('Mover para')).toBeNull();
 
         await fireEvent.update(select, 'doing');
@@ -96,7 +97,7 @@ describe('boards (Vue)', () => {
         await waitFor(() => expect(toasts(crud)).toContain('Recusado pelo servidor.'));
         await waitFor(() => expect(within(column('A fazer')).getByText('Orçar cliente A')).toBeTruthy());
         expect(within(column('Fazendo')).queryByText('Orçar cliente A')).toBeNull();
-        expect((within(column('A fazer')).getByLabelText('Mover para') as HTMLSelectElement).value).toBe('todo');
+        expect((within(column('A fazer')).getByLabelText('Mover para') as HTMLSelectElement).value).toBe('');
         expect(server.tasks().find((task) => task.id === 1)?.status).toBe('todo');
     });
 
@@ -189,7 +190,7 @@ describe('boards (Vue)', () => {
         await fireEvent.click(within(card).getByRole('checkbox', { name: 'Selecionar linha 1' }));
         expect(crud.getState().selection).toEqual(['1']);
 
-        await fireEvent.update(screen.getByLabelText('Ordenar por'), 'title');
+        await fireEvent.update(screen.getByLabelText('Ordenar por:'), 'title');
         await waitFor(() => expect(server.calls.filter((call) => call.path === '/crud/tasks').at(-1)?.query.get('sort')).toBe('title'));
         await fireEvent.click(screen.getByRole('button', { name: /Ordem decrescente/ }));
         await waitFor(() => expect(screen.getByRole('button', { name: /Ordem crescente/ }).getAttribute('aria-pressed')).toBe('true'));

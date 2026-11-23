@@ -32,7 +32,9 @@
         _show(title, color, undoId = null) {
             if (!title) return;
             const id = ++this._seq;
-            const duration = undoId ? 6000 : 3500;
+            // 1.61.0: o Desfazer durava 6 s, longe de onde se clicou — pouco para
+            // achar o botao. Erro fica mais tempo que sucesso: precisa ser lido.
+            const duration = undoId ? 10000 : (color === 'danger' ? 7000 : 3500);
             const toast = { id, title, color: color || 'success', undoId, duration, startedAt: Date.now(), timer: null };
             toast.timer = setTimeout(() => this._dismiss(id), duration);
             this._toasts.push(toast);

@@ -240,7 +240,7 @@ trait HasCrudFilters
             $shown = match ($value) {
                 self::FILTER_EMPTY => trans('ptah::ui.filters_op_is_null'),
                 self::FILTER_FILLED => trans('ptah::ui.filters_op_is_not_null'),
-                default => $value,
+                default => $this->filterChipValue((string) $field, $value),
             };
             $badges[] = ['label' => $label, 'field' => $field, 'value' => $shown];
         }
@@ -347,6 +347,29 @@ trait HasCrudFilters
         }
 
         $this->updatedFilters();
+    }
+
+    /**
+     * What a filter chip shows (1.61.0): the name the person chose, not the
+     * stored id or code — "Categoria: Vacinação", not "Categoria: 8"; "Situação:
+     * Aberto", not "open".
+     */
+    protected function filterChipValue(string $field, mixed $value): mixed
+    {
+        $label = $this->sdFilterLabels[$field] ?? null;
+        if (is_scalar($label) && (string) $label !== '') {
+            return $label;
+        }
+
+        $options = $this->findColByField($field)['colsSelect'] ?? null;
+        if (is_array($options) && is_scalar($value)) {
+            $found = array_search((string) $value, array_map('strval', $options), true);
+            if (is_string($found)) {
+                return $found;
+            }
+        }
+
+        return $value;
     }
 
     public function removeTextFilterBadge(string $field): void

@@ -303,4 +303,34 @@ class CrudBoardsTest extends TestCase
             ->call('setViewMode', 'kanban')->assertNotSet('viewMode', 'kanban')
             ->call('setViewMode', 'calendar')->assertNotSet('viewMode', 'calendar');
     }
+
+    #[Test]
+    public function a_cards_move_select_starts_on_a_placeholder_and_lists_only_the_other_columns(): void
+    {
+        // 1.61.0: the card already in "A fazer" showed "Mover para: A fazer".
+        $html = $this->crud()->call('setViewMode', 'kanban')->html();
+
+        $this->assertStringContainsString('<option value="" selected disabled>'.e(__('ptah::ui.kanban_move_placeholder')).'</option>', $html);
+        $this->assertStringNotContainsString(__('ptah::ui.kanban_move_to').': ', $html);
+        preg_match('/<select id="kanban-move-\d+".*?<\/select>/s', $html, $m);
+        $this->assertNotEmpty($m, 'No move select.');
+        $this->assertStringNotContainsString('value="todo"', $m[0], 'The card of "A fazer" was offered its own column.');
+    }
+
+    #[Test]
+    public function an_empty_calendar_month_says_so_and_points_at_the_closest_month_with_records(): void
+    {
+        $crud = $this->crud()->call('setViewMode', 'calendar')->set('calendarMonth', '2026-11');
+        $grid = $crud->instance()->calendarGrid();
+
+        $this->assertTrue($grid['empty']);
+        $this->assertSame('2026-09', $grid['nearest']);
+        $crud->assertSee(__('ptah::ui.calendar_empty_month'));
+
+        $crud->call('calendarGoTo', $grid['nearest'])->assertSet('calendarMonth', '2026-09');
+        $this->assertFalse($crud->instance()->calendarGrid()['empty']);
+
+        // A month the server would not read is ignored.
+        $crud->call('calendarGoTo', '2026-13')->assertSet('calendarMonth', '2026-09');
+    }
 }
