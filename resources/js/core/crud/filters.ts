@@ -639,6 +639,8 @@ const en = {
     title: 'Filters',
     active: (count: number) => `${count} active`,
     clearAll: 'Clear all',
+    /** The label before the chips (1.61.0): the list IS filtered. */
+    applied: 'Filters applied',
     close: 'Close',
     loading: 'Loading…',
     loadError: 'Could not load the filters.',
@@ -724,6 +726,7 @@ const ptBR: FiltersWords = {
     title: 'Filtros',
     active: (count: number) => `${count} ${count === 1 ? 'ativo' : 'ativos'}`,
     clearAll: 'Limpar tudo',
+    applied: 'Filtros aplicados',
     close: 'Fechar',
     loading: 'Carregando…',
     loadError: 'Não foi possível carregar os filtros.',

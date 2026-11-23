@@ -58,12 +58,13 @@
                             <select id="kanban-move-{{ $card['id'] }}"
                                 class="mt-2 w-full text-xs rounded-md px-1.5 py-1 ptah-c-fp_input ptah-c-control"
                                 x-on:change="$wire.moveCard(@js((string) $card['id']), $event.target.value)">
-                                @if ($isOther)
-                                    <option value="" selected disabled>{{ __('ptah::ui.kanban_move_to') }}…</option>
-                                @endif
+                                {{-- 1.61.0: o card ja na coluna Fechado mostrava "Mover para:
+                                     Fechado". Agora o seletor sempre comeca em "Mover para…" e so
+                                     oferece as OUTRAS colunas. --}}
+                                <option value="" selected disabled>{{ __('ptah::ui.kanban_move_placeholder') }}</option>
                                 @foreach ($kanbanOptions as $optLabel => $optValue)
-                                    @continue($optValue !== $column['value'] && ! in_array($optValue, $cardTargets, true))
-                                    <option value="{{ $optValue }}" @selected($optValue === $column['value'])>{{ __('ptah::ui.kanban_move_to') }}: {{ $optLabel }}</option>
+                                    @continue($optValue === $column['value'] || ! in_array($optValue, $cardTargets, true))
+                                    <option value="{{ $optValue }}">{{ $optLabel }}</option>
                                 @endforeach
                             </select>
                         @endif

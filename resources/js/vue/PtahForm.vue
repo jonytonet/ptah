@@ -13,6 +13,7 @@ import { PtahFormField, PtahFormSection } from './crud/form';
 import { PtahCrudFormChanges, PtahCrudFormDraft, PtahCrudSaveAndNew } from './crud/extras';
 import { PtahCrudRecordButtons } from './crud/records';
 import { Icon } from './icons';
+import { trapFocus } from '../core/focus';
 
 const props = defineProps<{ crud: CrudController; state: CrudState; t: Words; locale?: string }>();
 
@@ -47,13 +48,40 @@ watch(
     { immediate: true },
 );
 
-// The confirmation opens on "Keep editing", the safe choice.
+// The confirmation opens on "Keep editing", the safe choice — and holds the Tab key (1.61.0).
 const keepButton = ref<HTMLButtonElement | null>(null);
+const mini = ref<HTMLElement | null>(null);
+let releaseMini: (() => void) | null = null;
 watch(confirming, (open) => {
+    releaseMini?.();
+    releaseMini = null;
     if (open) {
-        void nextTick(() => keepButton.value?.focus());
+        void nextTick(() => {
+            keepButton.value?.focus();
+            if (mini.value) {
+                releaseMini = trapFocus(mini.value);
+            }
+        });
     }
 });
+
+// A save that came back with errors: to the first one (1.61.0). In a long
+// form it was out of sight and nothing seemed to happen.
+watch(
+    () => (form.value ? Object.keys(form.value.errors).join('|') : ''),
+    (keys) => {
+        if (keys === '') {
+            return;
+        }
+        void nextTick(() => {
+            const target = body.value?.querySelector<HTMLElement>('[aria-invalid="true"]') ?? body.value?.querySelector<HTMLElement>('[role="alert"]');
+            target?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+            if (target && target.matches('input, select, textarea, [tabindex]')) {
+                target.focus({ preventScroll: true });
+            }
+        });
+    },
+);
 
 const touch = () => {
     dirty.value = true;
@@ -69,6 +97,13 @@ const tryClose = () => {
 
 // The confirmation takes the Escape first; a panel over the form (history, attachments) too.
 const onKey = (event: KeyboardEvent) => {
+    // Ctrl+Enter (or Cmd+Enter) saves (1.61.0), as on the Livewire modal.
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !confirming.value) {
+        event.preventDefault();
+        void props.crud.save();
+
+        return;
+    }
     if (event.key !== 'Escape') {
         return;
     }
@@ -79,20 +114,28 @@ const onKey = (event: KeyboardEvent) => {
     }
 };
 
+// Tab stays in the modal and the focus goes back on close (1.61.0).
+const panel = ref<HTMLElement | null>(null);
 let release: (() => void) | null = null;
+let releaseTrap: (() => void) | null = null;
 onMounted(() => {
     document.addEventListener('keydown', onKey);
     release = lockBodyScroll();
+    if (panel.value) {
+        releaseTrap = trapFocus(panel.value);
+    }
 });
 onBeforeUnmount(() => {
     document.removeEventListener('keydown', onKey);
     release?.();
+    releaseMini?.();
+    releaseTrap?.();
 });
 </script>
 
 <template>
     <div v-if="state.schema && (form || crud.formOpening)" class="pc-root pc-fm-back" @mousedown.self="tryClose()">
-        <div class="pc-fm-panel pc-fm" data-size="2xl" role="dialog" aria-modal="true" :aria-labelledby="titleId" :aria-busy="form ? undefined : true">
+        <div ref="panel" class="pc-fm-panel pc-fm" data-size="2xl" role="dialog" aria-modal="true" :aria-labelledby="titleId" :aria-busy="form ? undefined : true">
             <form novalidate @submit.prevent="crud.save()">
                 <div class="pc-fm-head">
                     <div>
@@ -108,6 +151,7 @@ onBeforeUnmount(() => {
                     </div>
                     <template v-else>
                         <p v-if="form.errors._general" class="pc-alert" role="alert">{{ form.errors._general }}</p>
+                        <p v-if="form.slow" class="pc-alert" role="alert">{{ t.saveSlow }}</p>
                         <PtahCrudFormDraft :crud="crud" :locale="locale" />
                         <PtahCrudFormChanges :crud="crud" />
                         <!-- Typing anywhere in the fields makes the form dirty, as the Blade's @input/@change. -->
@@ -134,7 +178,7 @@ onBeforeUnmount(() => {
         </div>
     </div>
     <div v-if="confirming" class="pc-root pc-fm-back pc-fm-back--top" @mousedown.self="confirming = false">
-        <div class="pc-fm-mini" role="alertdialog" aria-modal="true" :aria-labelledby="`${titleId}-discard`" :aria-describedby="`${titleId}-discard-text`">
+        <div ref="mini" class="pc-fm-mini" role="alertdialog" aria-modal="true" :aria-labelledby="`${titleId}-discard`" :aria-describedby="`${titleId}-discard-text`">
             <p :id="`${titleId}-discard`" class="pc-fm-mini-ttl">{{ t.unsavedTitle }}</p>
             <p :id="`${titleId}-discard-text`" class="pc-fm-mini-sub">{{ t.unsavedConfirm }}</p>
             <div class="pc-fm-mini-foot">

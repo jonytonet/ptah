@@ -20,6 +20,18 @@ import type {
     GroupBreak,
 } from './types';
 
+/** How long a save may take before the form says so and gives the buttons back (1.61.0). */
+export const SAVE_SLOW_MS = 20000;
+
+/** A lookup that failed: an empty list marked as a failure, not "no results". */
+export function failedLookup(): LookupItem[] {
+    return Object.assign([] as LookupItem[], { failed: true });
+}
+
+export function isFailedLookup(items: LookupItem[] | null | undefined): boolean {
+    return !!items && (items as LookupItem[] & { failed?: boolean }).failed === true;
+}
+
 export interface Toast extends Message {
     id: number;
 }
@@ -33,6 +45,12 @@ export interface FormState {
     files: Record<string, File>;
     errors: Record<string, string>;
     saving: boolean;
+    /**
+     * The save has been on its way longer than SAVE_SLOW_MS (1.61.0): the
+     * buttons come back so the person can wait, retry or cancel — before, a
+     * stuck request left "Saving…" forever.
+     */
+    slow?: boolean;
     /** Opened by "duplicate": a new record that starts from another one. */
     copy?: boolean;
     /** Grows on every opening (Livewire's `formInstanceKey`): a new opening resets what the form tracks. */
@@ -121,6 +139,9 @@ export class CrudController {
     private readonly options: ControllerOptions;
     private requests = 0;
     private toastSeq = 0;
+    /** Running timer of each toast, so hovering it can pause it (1.61.0). */
+    private readonly toastTimers = new Map<number, { timer: ReturnType<typeof setTimeout> | null; left: number; at: number }>();
+    private saveSeq = 0;
     private readonly timers = new Set<ReturnType<typeof setTimeout>>();
     private stopRealtime: () => void = () => undefined;
     private realtimeKey = '';
@@ -676,10 +697,21 @@ export class CrudController {
             return false;
         }
 
-        this.set({ form: { ...form, saving: true, errors: {} } });
+        this.set({ form: { ...form, saving: true, slow: false, errors: {} } });
+
+        const seq = ++this.saveSeq;
+        const guard = setTimeout(() => {
+            this.timers.delete(guard);
+            if (seq === this.saveSeq && this.state.form?.saving) {
+                this.set({ form: { ...this.state.form, saving: false, slow: true } });
+            }
+        }, SAVE_SLOW_MS);
+        this.timers.add(guard);
 
         try {
             const result = await this.api.save(this.screen, form.id, form.data, form.files);
+            clearTimeout(guard);
+            this.timers.delete(guard);
             this.say(result.messages);
 
             if (!result.ok) {
@@ -713,7 +745,9 @@ export class CrudController {
     lookup(field: string, query: string, forFilter = false): Promise<LookupItem[]> {
         const context = forFilter ? this.state.list.filters : (this.state.form?.data ?? {});
 
-        return this.api.lookup(this.screen, field, query, context, forFilter).catch(() => []);
+        // A failed request is not "no results" (1.61.0): the list says it could
+        // not search, instead of making the person think the record is missing.
+        return this.api.lookup(this.screen, field, query, context, forFilter).catch(() => failedLookup());
     }
 
     field(name: string): Field | undefined {
@@ -826,15 +860,40 @@ export class CrudController {
         const id = ++this.toastSeq;
         this.set({ toasts: [...this.state.toasts, undo === null ? { id, text, level } : { id, text, level, undo }] });
 
-        // A toast that offers Undo stays longer (6 s against 3.5 s on the Livewire host).
-        const ms = this.options.toastMs ?? (undo === null ? 4000 : 6000);
+        // 1.61.0, as the Livewire host: Undo stays 10 s (it was 6), an error 7 s —
+        // it has to be read. Hovering or focusing the toast pauses it.
+        const ms = this.options.toastMs ?? (undo !== null ? 10000 : level === 'danger' || level === 'error' ? 7000 : 4000);
         if (ms > 0) {
-            const timer = setTimeout(() => {
-                this.timers.delete(timer);
-                this.dismiss(id);
-            }, ms);
-            this.timers.add(timer);
+            this.toastTimers.set(id, { timer: null, left: ms, at: 0 });
+            this.resumeToast(id);
         }
+    }
+
+    /** The pointer or the focus is on a toast: its clock stops. */
+    pauseToast(id: number): void {
+        const entry = this.toastTimers.get(id);
+        if (!entry || entry.timer === null) {
+            return;
+        }
+        clearTimeout(entry.timer);
+        this.timers.delete(entry.timer);
+        entry.timer = null;
+        entry.left = Math.max(0, entry.left - (Date.now() - entry.at));
+    }
+
+    resumeToast(id: number): void {
+        const entry = this.toastTimers.get(id);
+        if (!entry || entry.timer !== null) {
+            return;
+        }
+        entry.at = Date.now();
+        const timer = setTimeout(() => {
+            this.timers.delete(timer);
+            this.toastTimers.delete(id);
+            this.dismiss(id);
+        }, entry.left);
+        entry.timer = timer;
+        this.timers.add(timer);
     }
 
     /** "Undo" on the toast of a delete: brings the record back and closes the toast. */
@@ -847,6 +906,12 @@ export class CrudController {
     }
 
     dismiss(id: number): void {
+        const entry = this.toastTimers.get(id);
+        if (entry?.timer) {
+            clearTimeout(entry.timer);
+            this.timers.delete(entry.timer);
+        }
+        this.toastTimers.delete(id);
         this.set({ toasts: this.state.toasts.filter((toast) => toast.id !== id) });
     }
 }

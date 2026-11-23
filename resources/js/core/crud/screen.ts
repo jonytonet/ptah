@@ -55,6 +55,7 @@ const en = {
     bulkRestore: 'Restore selected', // bulk_restore_btn
     bulkCancel: 'Cancel selection', // bulk_cancel
     bulkDeleteConfirm: 'Delete :n selected record(s)? This action cannot be undone.', // bulk_delete_confirm
+    bulkDeleteConfirmUndoable: 'Delete :n selected record(s)? They go to the deleted list and can be restored from “View deleted”.', // bulk_delete_confirm_undoable
     bulkForceConfirm: 'Permanently remove :n record(s)? This action is irreversible.', // bulk_force_delete_confirm
     bulkIrreversible: 'This action cannot be undone.', // bulk_force_irreversible
     bulkActionConfirm: 'Apply to the :n selected record(s)?', // bulk_action_confirm
@@ -128,6 +129,7 @@ const ptBR: ScreenWords = {
     bulkRestore: 'Restaurar selecionados',
     bulkCancel: 'Cancelar seleção',
     bulkDeleteConfirm: 'Excluir :n registro(s) selecionado(s)? Esta ação não pode ser desfeita.',
+    bulkDeleteConfirmUndoable: 'Excluir :n registro(s) selecionado(s)? Eles vão para os excluídos e podem ser restaurados em “Ver excluídos”.',
     bulkForceConfirm: 'Remover permanentemente :n registro(s)? Esta ação é irreversível.',
     bulkIrreversible: 'Esta ação não pode ser desfeita.',
     bulkActionConfirm: 'Aplicar aos :n registro(s) selecionado(s)?',

@@ -158,13 +158,14 @@ class FormParityApiTest extends TestCase
         app()->setLocale('pt_BR');
         $blank = $this->getJson(self::BASE.'/items/create')->assertOk()->json();
         $this->assertSame('Nova Conta', $blank['title']);
-        $this->assertSame(__('ptah::ui.modal_create_subtitle'), $blank['subtitle']);
+        // A form with a required field says what the * means (1.61.0).
+        $this->assertSame(__('ptah::ui.form_required_hint'), $blank['subtitle']);
         $this->assertSame([], $blank['previews']);
 
         $id = FormItem::where('name', 'Alfa')->value('id');
         $record = $this->getJson(self::BASE."/items/{$id}")->assertOk()->json();
         $this->assertSame(__('ptah::ui.modal_edit_prefix').' Conta', $record['title']);
-        $this->assertSame(__('ptah::ui.modal_edit_subtitle'), $record['subtitle']);
+        $this->assertSame(__('ptah::ui.form_required_hint'), $record['subtitle']);
         $this->assertSame(asset('storage/fotos/alfa.png'), $record['previews']['status']);
 
         // A copy is a new record: "Nova", with the copied image's preview.

@@ -6,11 +6,32 @@
         open: @entangle('showModal'),
         _dirty: false,
         _confirmDiscard: false,
+        {{-- Mesmo aviso para fechar com alteracoes e para Descartar rascunho. --}}
+        _confirmKind: 'close',
+        {{-- Faixa Rascunho restaurado dentro do modal (1.61.0): o toast ficava no
+             canto da tela, longe do formulario, e sumia sozinho. --}}
+        _draftBanner: false,
         _markDirty() { this._dirty = true; },
+        _askDraftClear() { this._confirmKind = 'draft'; this._confirmDiscard = true; },
+        {{-- Depois de um erro, leva ate o primeiro campo com erro (ou a faixa geral):
+             num formulario longo ele ficava fora da tela e parecia que nada tinha
+             acontecido (1.61.0). --}}
+        _revealError() {
+            setTimeout(() => {
+                {{-- Montado em partes: a palavra inteira no HTML parece, a um leitor do
+                     markup (e a um teste), um campo ja marcado com erro. --}}
+                const f = $el.querySelector('[aria-' + 'invalid=true]');
+                const target = f || $el.querySelector('[data-ptah-form-general]');
+                if (! target) return;
+                target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                if (f) f.focus({ preventScroll: true });
+            }, 60);
+        },
         closeModal() { this._tryClose(); },
         _tryClose() {
             // Com rascunho ativo, fechar nao perde nada: sem o aviso de descarte.
             if (this._dirty && ! (this._draft && this._draft.key)) {
+                this._confirmKind = 'close';
                 this._confirmDiscard = true;
 
                 return;
@@ -116,7 +137,7 @@
             }
             if (d.restored) {
                 this._draftDirty = true;
-                this._draftToast(this._draftText.restored, 'info');
+                this._draftBanner = true;
                 this._endLoading();
                 return;
             }
@@ -137,7 +158,7 @@
                 this._restorePending = true;
                 this._startLoading();
                 $wire.restoreFormDraft(item.v);
-                this._draftToast(this._draftText.restored, 'info');
+                this._draftBanner = true;
             }
         },
         _draftTouch() {
@@ -169,10 +190,12 @@
             if (this._draft && this._draft.key === key) this._draft = null;
         },
         _draftClear() {
+            this._draftBanner = false;
             if (this._draft) this._draftForget(this._draft.key);
             $wire.clearFormDraft();
         },
         _draftRevert() {
+            this._draftBanner = false;
             if (this._draft) this._draftForget(this._draft.key);
             $wire.revertFormToOriginal();
         },
@@ -202,12 +225,17 @@
             document.body.style.overflow = '';
             _dirty = false;
             _confirmDiscard = false;
+            _draftBanner = false;
         }
     "
     @ptah:form-ready.window="_focusFirst(); if (! _draftOn) _endLoading()"
     @ptah:form-draft.window="_draftInit($event.detail)"
     @ptah-form-opening.window="_draftStage('new'); _startLoading()"
     @ptah:form-draft-saved.window="_draftSaved($event.detail.key)"
+    @ptah:form-invalid.window="if (open) _revealError()"
+    {{-- Ctrl+Enter (ou Cmd+Enter) salva (1.61.0). --}}
+    @keydown.window.ctrl.enter="if (open && ! _confirmDiscard && ! _formLoading) { $event.preventDefault(); $wire.save(); }"
+    @keydown.window.meta.enter="if (open && ! _confirmDiscard && ! _formLoading) { $event.preventDefault(); $wire.save(); }"
     x-init="
         _draftPurge(@js($this->formDraftUser()));
         {{-- Editar: o botao e wire:click, que dispara na fase normal; este ouvinte
@@ -238,13 +266,24 @@
 >
     <x-forge-modal
         :title="($editingId ? __('ptah::ui.modal_edit_prefix') : $this->modalNewPrefix()) . ' ' . $crudTitleSingular"
-        :subtitle="$editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle')"
+        :subtitle="collect($this->getFormViewCols())->contains(fn ($c) => $this->fieldIsRequired($c)) ? __('ptah::ui.form_required_hint') : ($editingId ? __('ptah::ui.modal_edit_subtitle') : __('ptah::ui.modal_create_subtitle'))"
         size="2xl"
         draggable
     >
         {{-- Erro geral --}}
+        @if ($formDraftMode !== '')
+            <div x-show="_draftBanner" x-cloak role="status" data-ptah-draft-banner
+                class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md px-3 py-2 text-xs ptah-c-draft_banner">
+                <span>{{ __('ptah::ui.form_draft_banner') }}</span>
+                @if ($formDraftMode === 'edit')
+                    <button type="button" @click="_draftRevert()" class="font-semibold underline underline-offset-2">{{ __('ptah::ui.btn_form_draft_revert') }}</button>
+                @else
+                    <button type="button" @click="_askDraftClear()" class="font-semibold underline underline-offset-2">{{ __('ptah::ui.btn_form_draft_clear') }}</button>
+                @endif
+            </div>
+        @endif
         @if (!empty($formErrors['_general']))
-            <div class="mb-4">
+            <div class="mb-4" data-ptah-form-general>
                 <x-forge-alert type="danger">{{ $formErrors['_general'] }}</x-forge-alert>
             </div>
         @endif
@@ -289,7 +328,9 @@
                                 $fTipo = 'select';
                             }
 
-                            $fRequired = in_array($col['colsRequired'] ?? false, [true, 'S', 1, '1'], true);
+                            // colsRequired, ou coluna NOT NULL sem DEFAULT (1.61.0): o
+                            // asterisco aparece antes do erro, nao so depois.
+                            $fRequired = $this->fieldIsRequired($col);
                             $fError    = $formErrors[$fField] ?? null;
                             $fMask     = $col['colsMask'] ?? null;
                             // Resolvido do registro (PtahMask). null quando o nome nao
@@ -342,14 +383,14 @@
                                     };
                                 @endphp
                                 <div class="w-full">
-                                    <span class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">{{ $fLabel }}</span>
+                                    <span class="block mb-1.5 text-xs font-medium ptah-c-form_lbl">{{ $fLabel }}</span>
                                     <div class="text-sm whitespace-pre-wrap break-words ptah-c-form_ro" data-ptah-readonly="{{ $fField }}">{{ $roText !== '' ? $roText : '—' }}</div>
                                 </div>
 
                             @elseif ($fToggle)
                                 {{-- ── Chave liga/desliga (boolean NOT NULL, 1.48.0) ── --}}
                                 <div class="w-full">
-                                    <span class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                    <span class="block mb-1.5 text-xs font-medium ptah-c-form_lbl">
                                         {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
                                     </span>
                                     <x-forge-switch :checked="(bool) $fValue" wire:model.live="formData.{{ $fField }}" aria-label="{{ $fLabel }}" data-ptah-toggle="{{ $fField }}" />
@@ -380,7 +421,7 @@
                                     $fOpenClass    = $fError ? 'ptah-c-form_sel_open ptah-c-form_sel_open_err' : 'ptah-c-form_sel_open';
                                 @endphp
                                 <div class="w-full">
-                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                    <label id="ptah-lbl-{{ $fField }}" class="block mb-1.5 text-xs font-medium ptah-c-form_lbl" @click="$el.parentElement.querySelector('[role=combobox]').focus()">
                                         {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
                                     </label>
                                     <div
@@ -408,7 +449,38 @@
                                             },
                                             isSelected(value) { return String(this.selected) === String(value); },
                                             toggle(value) { this.selected = String(value); this.open = false; },
-                                            clear() { this.selected = null; this.open = false; }
+                                            clear() { this.selected = null; this.open = false; },
+                                            {{-- Teclado (1.61.0): antes Enter so abria e fechava a lista,
+                                                 e quem preenchia com Tab nao tinha como escolher. As
+                                                 setas andam pelas opcoes (o vazio do opcional conta),
+                                                 Enter escolhe, Esc fecha so a lista. --}}
+                                            active: -1,
+                                            optional: @js(! $fRequired),
+                                            get items() { return (this.optional ? [{ value: null, label: this.placeholder }] : []).concat(this.options); },
+                                            show() {
+                                                this.open = true;
+                                                const i = this.items.findIndex(o => o.value === null ? (this.selected === null || this.selected === '') : this.isSelected(o.value));
+                                                this.active = i >= 0 ? i : 0;
+                                                this.$nextTick(() => this.reveal());
+                                            },
+                                            move(step) {
+                                                if (! this.open) { this.show(); return; }
+                                                const n = this.items.length;
+                                                if (n === 0) return;
+                                                this.active = step === 'first' ? 0 : (step === 'last' ? n - 1 : Math.min(n - 1, Math.max(0, this.active + step)));
+                                                this.$nextTick(() => this.reveal());
+                                            },
+                                            reveal() {
+                                                const el = this.$root.querySelector('[data-ptah-opt=\'' + this.active + '\']');
+                                                if (el) el.scrollIntoView({ block: 'nearest' });
+                                            },
+                                            choose(i) {
+                                                const o = this.items[i];
+                                                if (! o) return;
+                                                o.value === null ? this.clear() : this.toggle(o.value);
+                                                this.$refs.combo.focus();
+                                            },
+                                            onEnter() { this.open && this.active >= 0 ? this.choose(this.active) : this.show(); }
                                         }"
                                         @click.outside="open = false"
                                         class="relative"
@@ -431,13 +503,25 @@
                                             wire:model.live="formData.{{ $fField }}"
                                         >
                                         <div
+                                            x-ref="combo"
+                                            id="ptah-field-{{ $fField }}"
                                             tabindex="{{ $tabIdx }}"
                                             role="combobox"
                                             aria-haspopup="listbox"
+                                            aria-labelledby="ptah-lbl-{{ $fField }}"
+                                            aria-controls="ptah-list-{{ $fField }}"
                                             :aria-expanded="open"
+                                            :aria-activedescendant="open && active >= 0 ? 'ptah-opt-{{ $fField }}-' + active : null"
                                             @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
-                                            @keydown.space.prevent @keydown.enter.prevent="open = !open"
-                                            @click="open = !open"
+                                            @keydown.space.prevent="open ? onEnter() : show()"
+                                            @keydown.enter.prevent="onEnter()"
+                                            @keydown.arrow-down.prevent="move(1)"
+                                            @keydown.arrow-up.prevent="move(-1)"
+                                            @keydown.home.prevent="move('first')"
+                                            @keydown.end.prevent="move('last')"
+                                            @keydown.escape="if (open) { open = false; $event.stopPropagation(); }"
+                                            @keydown.tab="open = false"
+                                            @click="open ? (open = false) : show()"
                                             :class="open ? '{{ $fOpenClass }}' : '{{ $fBorderNormal }}'"
                                             class="relative flex items-center justify-between rounded-md border px-3 py-2.5 text-sm select-none transition-colors duration-150 ptah-c-form_sel"
                                         >
@@ -459,22 +543,32 @@
                                             x-transition:enter-start="opacity-0 -translate-y-1"
                                             x-transition:enter-end="opacity-100 translate-y-0"
                                             class="absolute z-20 w-full mt-1 overflow-auto border rounded-md max-h-48 ptah-c-dd">
-                                            <ul class="py-1">
+                                            <ul class="py-1" role="listbox" id="ptah-list-{{ $fField }}" aria-labelledby="ptah-lbl-{{ $fField }}">
                                                 @unless ($fRequired)
                                                     {{-- Opcional: volta ao vazio (1.47.0). Grava '' e o save()
                                                          converte em null quando a coluna aceita nulo. --}}
                                                     <li
                                                         @click="clear()"
                                                         data-ptah-select-clear
-                                                        :class="(selected === null || selected === '') ? 'ptah-c-dd_item_sel' : 'ptah-c-dd_item'"
+                                                        data-ptah-opt="0"
+                                                        id="ptah-opt-{{ $fField }}-0"
+                                                        role="option"
+                                                        :aria-selected="(selected === null || selected === '') ? 'true' : 'false'"
+                                                        @mousemove="active = 0"
+                                                        :class="[(selected === null || selected === '') ? 'ptah-c-dd_item_sel' : 'ptah-c-dd_item', active === 0 ? 'ptah-c-dd_item_active' : '']"
                                                         class="px-4 py-2 text-sm cursor-pointer ptah-c-fp_muted"
                                                         x-text="placeholder"
                                                     ></li>
                                                 @endunless
-                                                <template x-for="option in options" :key="option.value">
+                                                <template x-for="(option, i) in options" :key="option.value">
                                                     <li
                                                         @click="toggle(option.value)"
-                                                        :class="isSelected(option.value) ? 'ptah-c-dd_item_sel' : 'ptah-c-dd_item'"
+                                                        :data-ptah-opt="i + (optional ? 1 : 0)"
+                                                        :id="'ptah-opt-{{ $fField }}-' + (i + (optional ? 1 : 0))"
+                                                        role="option"
+                                                        :aria-selected="isSelected(option.value) ? 'true' : 'false'"
+                                                        @mousemove="active = i + (optional ? 1 : 0)"
+                                                        :class="[isSelected(option.value) ? 'ptah-c-dd_item_sel' : 'ptah-c-dd_item', active === i + (optional ? 1 : 0) ? 'ptah-c-dd_item_active' : '']"
                                                         class="flex items-center justify-between px-4 py-2 text-sm cursor-pointer"
                                                     >
                                                         <span x-text="option.label"></span>
@@ -503,7 +597,7 @@
                                         : null;
                                 @endphp
                                 <div class="w-full">
-                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                    <label for="ptah-field-{{ $fField }}" class="block mb-1.5 text-xs font-medium ptah-c-form_lbl">
                                         {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
                                     </label>
                                     <div
@@ -518,6 +612,11 @@
                                             {{-- O rotulo que o servidor conhece: so uma mudanca real
                                                  dele mexe no campo, nao cada resposta do componente. --}}
                                             _label: '',
+                                            {{-- A pessoa digitou desde a ultima escolha (1.61.0): com
+                                                 isso a lista abre tambem sem resultado, e mostra
+                                                 o aviso de nenhum resultado em vez de nao abrir. --}}
+                                            typed: false,
+                                            active: -1,
                                             init() {
                                                 const first = this.$wire.sdLabels ? this.$wire.sdLabels['{{ $fField }}'] : undefined;
                                                 this._label = (first === undefined || first === null) ? '' : String(first);
@@ -530,23 +629,79 @@
                                                     if (label === this._label) return;
                                                     this._label = label;
                                                     this.displayVal = label;
+                                                    this.typed = false;
                                                 });
                                                 this.$wire.$watch('sdResults', (val) => {
                                                     const res = val['{{ $fField }}'];
-                                                    this.open = Array.isArray(res) && res.length > 0;
+                                                    this.active = -1;
+                                                    {{-- So abre com o foco no campo: a resposta de uma busca
+                                                         que chega depois de sair dele nao reabre a lista. --}}
+                                                    const here = document.activeElement === this.$refs.input;
+                                                    this.open = here && Array.isArray(res) && (res.length > 0 || (this.typed && this.displayVal.trim() !== ''));
                                                 });
+                                            },
+                                            onInput() {
+                                                this.typed = true;
+                                                this.active = -1;
+                                                if (this.displayVal.trim() !== '') this.open = true;
+                                            },
+                                            opts() { return this.$refs.list ? [...this.$refs.list.querySelectorAll('[data-sd-opt]')] : []; },
+                                            move(step) {
+                                                const o = this.opts();
+                                                if (! this.open) { this.open = true; if (! o.length) $wire.openDropdown('{{ $fField }}'); return; }
+                                                if (! o.length) return;
+                                                this.active = Math.min(o.length - 1, Math.max(0, this.active + step));
+                                                o[this.active].scrollIntoView({ block: 'nearest' });
+                                            },
+                                            pickActive() {
+                                                const o = this.opts();
+                                                if (this.open && this.active >= 0 && o[this.active]) o[this.active].click();
+                                            },
+                                            {{-- Sair do campo sem escolher (1.61.0): com um item ja
+                                                 escolhido, volta a mostra-lo; sem nenhum, o texto da
+                                                 busca sai — ele parecia escolhido e nao era. --}}
+                                            leave() {
+                                                this.open = false;
+                                                this.active = -1;
+                                                this.typed = false;
+                                                {{-- Apagou tudo e saiu: e limpar a escolha, mesmo que a
+                                                     busca vazia (debounce) ainda nao tenha ido. --}}
+                                                if (this.displayVal.trim() === '') {
+                                                    this.displayVal = '';
+                                                    if (this._label !== '') $wire.searchDropdown('{{ $fField }}', '');
+                                                    return;
+                                                }
+                                                if (this.displayVal !== this._label) this.displayVal = this._label;
+                                            },
+                                            clearChoice() {
+                                                this.displayVal = '';
+                                                this.typed = false;
+                                                this.open = false;
+                                                $wire.searchDropdown('{{ $fField }}', '');
+                                                this.$refs.input.focus();
                                             }
                                         }"
-                                        {{-- Sair sem escolher, com um item ja escolhido: o campo
-                                             volta a mostrar esse item, e nao o texto da busca. --}}
-                                        @click.outside="open = false; if (displayVal !== '' && displayVal !== _label && _label !== '') displayVal = _label"
+                                        @click.outside="if (open || displayVal !== _label) leave()"
+                                        @focusout="if (! $el.contains($event.relatedTarget)) leave()"
                                         class="relative"
                                     >
                                         <div class="relative flex items-center">
                                             <input type="text"
+                                                x-ref="input"
+                                                id="ptah-field-{{ $fField }}"
                                                 x-model="displayVal"
+                                                role="combobox"
+                                                aria-autocomplete="list"
+                                                aria-controls="ptah-list-{{ $fField }}"
+                                                :aria-expanded="open ? 'true' : 'false'"
+                                                :aria-activedescendant="open && active >= 0 ? 'ptah-sdopt-{{ $fField }}-' + active : null"
+                                                @input="onInput()"
                                                 wire:keyup.debounce.300ms="searchDropdown('{{ $fField }}', $event.target.value)"
                                                 @focus="if (! ($wire.sdResults?.['{{ $fField }}'] || []).length) $wire.openDropdown('{{ $fField }}')"
+                                                @keydown.arrow-down.prevent="move(1)"
+                                                @keydown.arrow-up.prevent="move(-1)"
+                                                @keydown.enter="if (open && active >= 0) { $event.preventDefault(); pickActive(); }"
+                                                @keydown.escape="if (open) { open = false; active = -1; $event.stopPropagation(); }"
                                                 placeholder="{{ $sdParentEmpty
                                                     ? __('ptah::ui.sd_select_parent_first', ['parent' => $sdParentLabel])
                                                     : ($sdSettings['placeholder'] ?: __('ptah::ui.search_entity', ['label' => $fLabel])) }}"
@@ -554,8 +709,24 @@
                                                 tabindex="{{ $tabIdx }}"
                                                 @if ($sdParentEmpty) disabled @endif
                                                 @if ($fError) aria-invalid="true" aria-describedby="ptah-form-err-{{ $fField }}" @endif
-                                                class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 pr-9 text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in disabled:opacity-60 disabled:cursor-not-allowed"
+                                                class="block w-full rounded-md border {{ $fBorderClass }} outline-none px-3 py-2.5 {{ $fRequired ? 'pr-9' : 'pr-16' }} text-sm transition-colors duration-150 focus:ring-2 ptah-c-form_in disabled:opacity-60 disabled:cursor-not-allowed"
                                             />
+                                            @unless ($fRequired || $sdParentEmpty)
+                                                {{-- Limpar a escolha (1.61.0): apagar o texto ja limpava,
+                                                     mas pouca gente descobria. --}}
+                                                <button type="button"
+                                                    x-show="_label !== ''" x-cloak
+                                                    tabindex="-1"
+                                                    @mousedown.prevent="clearChoice()"
+                                                    class="absolute right-8 p-0.5 rounded ptah-c-fp_chevron hover:opacity-80"
+                                                    title="{{ __('ptah::ui.sd_clear', ['label' => $fLabel]) }}"
+                                                    aria-label="{{ __('ptah::ui.sd_clear', ['label' => $fLabel]) }}"
+                                                    data-ptah-sd-clear>
+                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                                    </svg>
+                                                </button>
+                                            @endunless
                                             <button type="button"
                                                 tabindex="-1"
                                                 @if ($sdParentEmpty) disabled @endif
@@ -568,24 +739,39 @@
                                             </button>
                                         </div>
                                         <input type="hidden" wire:model="formData.{{ $fField }}" />
-                                        <div x-show="open" x-cloak
+                                        <div x-show="open" x-cloak x-ref="list" id="ptah-list-{{ $fField }}" role="listbox"
                                             class="absolute z-30 w-full {{ $sdSettings['startList'] === 'top' ? 'bottom-full mb-1' : 'mt-1' }} overflow-y-auto rounded-md max-h-48 ptah-c-dd">
-                                            @forelse ($sdResults[$fField] ?? [] as $opt)
-                                                <button type="button"
-                                                    wire:click="selectDropdownOption({{ \Illuminate\Support\Js::from($fField) }}, {{ \Illuminate\Support\Js::from($opt['value']) }}, {{ \Illuminate\Support\Js::from((string) $opt['label']) }})"
-                                                    @click="open = false"
-                                                    class="block w-full px-4 py-2 text-sm text-left ptah-c-dd_opt">
-                                                    {{ $opt['label'] }}
-                                                    @if (array_key_exists('labelTwo', $opt))
-                                                        <span class="block text-[11px] opacity-70">{{ $opt['labelTwo'] }}</span>
-                                                    @endif
-                                                    @if (array_key_exists('labelThree', $opt))
-                                                        <span class="block text-[11px] opacity-70">{{ $opt['labelThree'] }}</span>
-                                                    @endif
-                                                </button>
-                                            @empty
-                                                <p class="px-4 py-3 text-xs italic ptah-c-fp_muted">{{ __('ptah::ui.no_results') }}</p>
-                                            @endforelse
+                                            {{-- Enquanto a busca vai e volta, "Buscando..." no lugar da
+                                                 lista anterior: escolher um item que nao corresponde ao
+                                                 texto digitado era facil (1.61.0). --}}
+                                            <p wire:loading.flex wire:target="searchDropdown" class="items-center gap-2 px-4 py-3 text-xs ptah-c-fp_muted" role="status">
+                                                <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+                                                {{ __('ptah::ui.sd_loading') }}
+                                            </p>
+                                            <div wire:loading.remove wire:target="searchDropdown">
+                                                @forelse ($sdResults[$fField] ?? [] as $opt)
+                                                    <button type="button"
+                                                        data-sd-opt
+                                                        id="ptah-sdopt-{{ $fField }}-{{ $loop->index }}"
+                                                        role="option"
+                                                        tabindex="-1"
+                                                        @mousemove="active = {{ $loop->index }}"
+                                                        :class="active === {{ $loop->index }} ? 'ptah-c-dd_opt_active' : ''"
+                                                        wire:click="selectDropdownOption({{ \Illuminate\Support\Js::from($fField) }}, {{ \Illuminate\Support\Js::from($opt['value']) }}, {{ \Illuminate\Support\Js::from((string) $opt['label']) }})"
+                                                        @click="open = false; typed = false; active = -1"
+                                                        class="block w-full px-4 py-2 text-sm text-left ptah-c-dd_opt">
+                                                        {{ $opt['label'] }}
+                                                        @if (array_key_exists('labelTwo', $opt))
+                                                            <span class="block text-[11px] opacity-70">{{ $opt['labelTwo'] }}</span>
+                                                        @endif
+                                                        @if (array_key_exists('labelThree', $opt))
+                                                            <span class="block text-[11px] opacity-70">{{ $opt['labelThree'] }}</span>
+                                                        @endif
+                                                    </button>
+                                                @empty
+                                                    <p class="px-4 py-3 text-xs italic ptah-c-fp_muted" data-ptah-sd-empty>{{ __('ptah::ui.no_results') }}</p>
+                                                @endforelse
+                                            </div>
                                         </div>
                                     </div>
                                     @if ($fError)
@@ -630,7 +816,7 @@
                                             this.previewUrl = this.savedUrl;
                                         }
                                     }">
-                                    <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                    <label class="block mb-1.5 text-xs font-medium ptah-c-form_lbl">
                                         {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
                                     </label>
 
@@ -805,7 +991,7 @@
                                             }
                                         }"
                                     >
-                                        <label for="ptah-color-in-{{ $fField }}" class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                        <label for="ptah-color-in-{{ $fField }}" class="block mb-1.5 text-xs font-medium ptah-c-form_lbl">
                                             {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
                                         </label>
 
@@ -911,7 +1097,7 @@
                                             }
                                         }"
                                     >
-                                        <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                        <label class="block mb-1.5 text-xs font-medium ptah-c-form_lbl">
                                             {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
                                         </label>
                                         <input
@@ -951,7 +1137,7 @@
                                                 }
                                             }"
                                         >
-                                            <label class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                            <label class="block mb-1.5 text-xs font-medium ptah-c-form_lbl">
                                                 {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
                                             </label>
                                             <input
@@ -1118,7 +1304,7 @@
                                             }
                                         }"
                                     >
-                                        <label for="ptah-mask-in-{{ $fField }}" class="block mb-1.5 text-xs font-semibold uppercase tracking-wide ptah-c-form_lbl">
+                                        <label for="ptah-mask-in-{{ $fField }}" class="block mb-1.5 text-xs font-medium ptah-c-form_lbl">
                                             {{ $fLabel }}@if($fRequired)<span class="ptah-c-field_err ml-0.5">*</span>@endif
                                         </label>
                                         <input
@@ -1182,43 +1368,60 @@
         </div>
 
         <x-slot name="footer">
-            @if ($editingId && $this->attachmentsEnabled())
-                <x-forge-button wire:click="openAttachments({{ json_encode($editingId) }})" color="dark" flat>
-                    {{ __('ptah::ui.btn_attachments') }} ({{ $this->attachmentCount($editingId) }})
-                </x-forge-button>
-            @endif
-            @if ($editingId && $this->historyEnabled())
-                <x-forge-button wire:click="openHistory({{ json_encode($editingId) }})" color="dark" flat class="mr-auto">
-                    {{ __('ptah::ui.btn_history') }}
-                </x-forge-button>
-            @endif
-            {{-- Rascunho: "Limpar tudo" no Novo e "Voltar ao original" na edicao,
-                 so quando algum campo difere do que o modal abriu. --}}
-            @if ($formDraftMode === 'new')
-                <x-forge-button x-show="_draftDirty" x-cloak @click="_draftClear()" color="dark" flat :disabled="$creating">
-                    {{ __('ptah::ui.btn_form_draft_clear') }}
-                </x-forge-button>
-            @elseif ($formDraftMode === 'edit')
-                <x-forge-button x-show="_draftDirty" x-cloak @click="_draftRevert()" color="dark" flat :disabled="$creating">
-                    {{ __('ptah::ui.btn_form_draft_revert') }}
-                </x-forge-button>
-            @endif
+            {{-- Rodape (1.61.0): o que nao e salvar/cancelar fica num grupo a esquerda,
+                 e tudo quebra linha no celular em vez de estourar a largura. --}}
+            <div class="flex flex-wrap items-center gap-2 mr-auto">
+                @if ($editingId && $this->attachmentsEnabled())
+                    <x-forge-button wire:click="openAttachments({{ json_encode($editingId) }})" color="dark" flat>
+                        {{ __('ptah::ui.btn_attachments') }} ({{ $this->attachmentCount($editingId) }})
+                    </x-forge-button>
+                @endif
+                @if ($editingId && $this->historyEnabled())
+                    <x-forge-button wire:click="openHistory({{ json_encode($editingId) }})" color="dark" flat>
+                        {{ __('ptah::ui.btn_history') }}
+                    </x-forge-button>
+                @endif
+                {{-- Rascunho: "Descartar rascunho" no Novo (pede confirmacao: apagava
+                     tudo num clique, colado ao Cancelar) e "Voltar ao original" na
+                     edicao, so quando algum campo difere do que o modal abriu. --}}
+                @if ($formDraftMode === 'new')
+                    <x-forge-button x-show="_draftDirty" x-cloak @click="_askDraftClear()" color="dark" flat :disabled="$creating" data-ptah-draft-clear>
+                        {{ __('ptah::ui.btn_form_draft_clear') }}
+                    </x-forge-button>
+                @elseif ($formDraftMode === 'edit')
+                    <x-forge-button x-show="_draftDirty" x-cloak @click="_draftRevert()" color="dark" flat :disabled="$creating">
+                        {{ __('ptah::ui.btn_form_draft_revert') }}
+                    </x-forge-button>
+                @endif
+            </div>
             <x-forge-button @click="_tryClose()" color="dark" flat :disabled="$creating">
                 {{ __('ptah::ui.btn_cancel') }}
             </x-forge-button>
+            {{-- Salvando (1.61.0): $creating vai e volta na mesma requisicao, entao o
+                 :loading nunca aparecia; quem clicava de novo mandava outro save. O
+                 wire:loading mostra e trava enquanto o save esta a caminho. --}}
             @if (! $editingId)
-                <x-forge-button wire:click="saveAndNew" color="primary" flat :disabled="$creating">
+                <x-forge-button wire:click="saveAndNew" color="primary" flat :disabled="$creating"
+                    wire:loading.attr="disabled" wire:target="save,saveAndNew">
                     {{ __('ptah::ui.btn_save_and_new') }}
                 </x-forge-button>
             @endif
-            <x-forge-button wire:click="save" color="primary" :loading="$creating" :disabled="$creating">
-                {{ $editingId ? __('ptah::ui.btn_save_changes') : __('ptah::ui.btn_create') }}
+            <x-forge-button wire:click="save" color="primary" :disabled="$creating"
+                wire:loading.attr="disabled" wire:target="save,saveAndNew" data-ptah-save>
+                <span wire:loading.remove wire:target="save,saveAndNew">{{ $editingId ? __('ptah::ui.btn_save_changes') : __('ptah::ui.btn_create') }}</span>
+                <span wire:loading.inline-flex wire:target="save,saveAndNew" class="items-center gap-1.5" role="status">
+                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+                    {{ __('ptah::ui.form_saving') }}
+                </span>
             </x-forge-button>
         </x-slot>
     </x-forge-modal>
 
     {{-- Unsaved-changes confirmation (replaces the native confirm() dialog) --}}
-    <div x-show="_confirmDiscard" x-cloak
+    {{-- x-trap (1.61.0): o aviso ficava fora da armadilha de foco do painel, e o
+         Tab nunca chegava a "Continuar editando" / "Descartar". Abre com o foco
+         no botao que nao perde nada. Serve tambem a "Descartar rascunho". --}}
+    <div x-show="_confirmDiscard" x-cloak x-trap="_confirmDiscard"
          class="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/40" @click="_confirmDiscard = false"></div>
         <div x-transition:enter="transition ease-out duration-200"
@@ -1226,10 +1429,11 @@
              x-transition:enter-end="opacity-100 scale-100"
              class="relative w-full max-w-sm rounded-lg shadow-2xl p-5 ptah-c-modal_card"
              role="alertdialog" aria-modal="true">
-            <p class="text-sm font-semibold ptah-c-modal_ttl">
+            <p class="text-sm font-semibold ptah-c-modal_ttl"
+                x-text="_confirmKind === 'draft' ? @js(__('ptah::ui.form_draft_clear_confirm')) : @js(__('ptah::ui.modal_unsaved_title'))">
                 {{ __('ptah::ui.modal_unsaved_title') }}
             </p>
-            <p class="text-xs mt-1 ptah-c-modal_sub">
+            <p class="text-xs mt-1 ptah-c-modal_sub" x-show="_confirmKind !== 'draft'">
                 {{ __('ptah::ui.modal_unsaved_confirm') }}
             </p>
             <div class="flex justify-end gap-2 mt-5">
@@ -1237,8 +1441,9 @@
                     class="px-4 py-2 text-sm font-semibold rounded-md ptah-c-discard_keep">
                     {{ __('ptah::ui.modal_unsaved_keep') }}
                 </button>
-                <button @click="_forceClose()"
-                    class="px-4 py-2 text-sm font-semibold rounded-md ptah-c-ink_on_accent bg-danger-dark hover:opacity-90">
+                <button @click="_confirmKind === 'draft' ? (_confirmDiscard = false, _draftClear()) : _forceClose()"
+                    class="px-4 py-2 text-sm font-semibold rounded-md ptah-c-ink_on_accent bg-danger-dark hover:opacity-90"
+                    x-text="_confirmKind === 'draft' ? @js(__('ptah::ui.form_draft_clear_confirm_yes')) : @js(__('ptah::ui.modal_unsaved_discard'))">
                     {{ __('ptah::ui.modal_unsaved_discard') }}
                 </button>
             </div>

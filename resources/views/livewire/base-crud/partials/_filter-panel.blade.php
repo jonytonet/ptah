@@ -51,8 +51,15 @@
                 ];
             @endphp
             @if ($hasDateFilterCols)
+                @php
+                    // A qual campo os atalhos se aplicam (1.61.0): sem isso, "Hoje"
+                    // nao dizia se era criado, resolvido ou vencimento.
+                    $qdCol = (string) ($quickDateColumn ?: 'created_at');
+                    $qdLabel = collect($crudConfig['cols'] ?? [])->firstWhere('colsNomeFisico', $qdCol)['colsNomeLogico'] ?? null;
+                    $qdLabel = $qdLabel ?: __($qdCol === 'created_at' ? 'ptah::ui.col_created_at' : $qdCol);
+                @endphp
                 <div>
-                    <p class="mb-2 text-xs font-semibold tracking-wider uppercase ptah-c-fp_label">{{ __('ptah::ui.filters_date_shortcuts') }}</p>
+                    <p class="mb-2 text-xs font-semibold tracking-wider uppercase ptah-c-fp_label">{{ __('ptah::ui.filters_date_shortcuts') }} ({{ $qdLabel }})</p>
                     <div class="flex flex-wrap gap-1.5">
                         @foreach ($quickLabels as $period => $qlabel)
                             <button wire:click="applyQuickDateFilter('{{ $period }}')"

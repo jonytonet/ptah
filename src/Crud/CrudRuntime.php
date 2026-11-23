@@ -492,7 +492,9 @@ final class CrudRuntime extends BaseCrud
                 'field' => $field,
                 'label' => (string) ($col['colsNomeLogico'] ?? $field),
                 'type' => $this->isBooleanToggle($col) ? 'switch' : (string) ($col['colsTipo'] ?? 'text'),
-                'required' => $this->ptahBool($col['colsRequired'] ?? false),
+                // colsRequired, or NOT NULL without a DEFAULT: the * shows
+                // before the error, as in the Livewire form (1.61.0).
+                'required' => $this->fieldIsRequired($col),
                 'readonly' => $this->ptahBool($col['colsReadonly'] ?? false),
                 'options' => self::options($col['colsSelect'] ?? null),
                 'mask' => $col['colsMask'] ?? null,
@@ -584,6 +586,9 @@ final class CrudRuntime extends BaseCrud
             'responsiveCards' => (bool) config('ptah.crud.responsive_cards', true),
             // The copy / filter buttons over a cell (editor → General).
             'copyCell' => (bool) ($this->crudConfig['uiPreferences']['copyCell'] ?? true),
+            // Delete goes to the deleted list and the toast offers Undo: the
+            // confirmation must not say "cannot be undone" (1.61.0).
+            'undoDelete' => $this->deleteIsUndoable(),
         ];
     }
 
@@ -706,7 +711,11 @@ final class CrudRuntime extends BaseCrud
             'data' => $this->formData,
             'labels' => $this->sdLabels,
             'title' => trim(($editing ? (string) __('ptah::ui.modal_edit_prefix') : $this->modalNewPrefix()).' '.$this->humanTitle(singular: true)),
-            'subtitle' => (string) __($editing ? 'ptah::ui.modal_edit_subtitle' : 'ptah::ui.modal_create_subtitle'),
+            // As the Livewire modal (1.61.0): with a required field, the
+            // subtitle says what the * means.
+            'subtitle' => (string) __(collect($this->getFormViewCols())->contains(fn (array $c): bool => $this->fieldIsRequired($c))
+                ? 'ptah::ui.form_required_hint'
+                : ($editing ? 'ptah::ui.modal_edit_subtitle' : 'ptah::ui.modal_create_subtitle')),
             'previews' => $this->imagePreviews(),
         ];
     }

@@ -717,7 +717,7 @@ function SaveFooter({ crud, t }: { crud: CrudController; t: FiltersWords }) {
 export function PtahCrudFilterBadges({ crud, locale }: FilterPieceProps) {
     const state = useCrud(crud);
     const ready = state.status === 'ready';
-    const [, filters] = useFilterSession(crud, ready);
+    const [session, filters] = useFilterSession(crud, ready);
     const t = useMemo(() => filtersWords(locale), [locale]);
 
     if (!ready) {
@@ -733,6 +733,8 @@ export function PtahCrudFilterBadges({ crud, locale }: FilterPieceProps) {
 
     return (
         <div className="pc-chips" role="group" aria-label={t.title}>
+            {/* The list IS filtered (1.61.0): search and filters come back from the last visit. */}
+            <span className="pc-chips-lbl">{t.applied}:</span>
             {list.search !== '' && (
                 <span className="pc-chip">
                     <Icon name="search" size={12} className="pc-chip-ico" />
@@ -747,6 +749,11 @@ export function PtahCrudFilterBadges({ crud, locale }: FilterPieceProps) {
                     <RemoveButton label={t.removeFilter(badge.label)} title={t.clearFilters} onClick={() => void removeBadge(crud, badge.key)} />
                 </span>
             ))}
+            {(list.search !== '' ? 1 : 0) + badges.length > 1 && (
+                <button type="button" className="pc-chips-clear" onClick={() => void clearAllFilters(crud, session)}>
+                    {t.clearAll}
+                </button>
+            )}
         </div>
     );
 }

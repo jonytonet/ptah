@@ -3,9 +3,10 @@
  * confirmation (_modal-delete), for React. The form modal, history,
  * attachments and import wizard draw inside it. Mirrors vue/crud/modal.ts.
  */
-import { useEffect, useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { modalButton } from '../../core/crud/form';
+import { trapFocus } from '../../core/focus';
 import { Icon } from '../icons';
 
 export interface PtahCrudModalProps {
@@ -32,6 +33,10 @@ export interface PtahCrudModalProps {
  */
 export function PtahCrudModal({ title, subtitle, size = 'md', onClose, closeLabel, footer, children, role = 'dialog', escape = true }: PtahCrudModalProps) {
     const titleId = useId();
+    const panel = useRef<HTMLDivElement>(null);
+
+    // Tab stays in the dialog; closing gives the focus back (1.61.0).
+    useEffect(() => (panel.current ? trapFocus(panel.current) : undefined), []);
 
     useEffect(() => {
         if (!escape) {
@@ -49,7 +54,7 @@ export function PtahCrudModal({ title, subtitle, size = 'md', onClose, closeLabe
 
     return (
         <div className="pc-root pc-fm-back" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-            <div className="pc-fm-panel" data-size={size} role={role} aria-modal="true" aria-labelledby={titleId}>
+            <div ref={panel} className="pc-fm-panel" data-size={size} role={role} aria-modal="true" aria-labelledby={titleId}>
                 <div className="pc-fm-head">
                     <div>
                         <h3 className="pc-fm-title" id={titleId}>

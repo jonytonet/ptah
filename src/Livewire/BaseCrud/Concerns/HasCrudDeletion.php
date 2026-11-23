@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Ptah\Contracts\GuardsDeletion;
 use Ptah\Exceptions\CrudHookAbort;
+use Ptah\Support\ServerOnly;
 use Ptah\Traits\HasAuditFields;
 
 /**
@@ -95,7 +96,8 @@ trait HasCrudDeletion
         $this->dispatch(
             'ptah-toast',
             title: trans('ptah::ui.toast_deleted'),
-            color: 'warn',
+            // Excluiu como pedido: e um sucesso, nao um alerta (1.61.0).
+            color: 'success',
             undoId: $this->usesSoftDeletes($record) ? $record->getKey() : null,
         );
     }
@@ -205,6 +207,19 @@ trait HasCrudDeletion
 
         $record->deleted_by = Auth::id();
         $record->saveQuietly();
+    }
+
+    /**
+     * Deleting on this screen can be undone (1.61.0): the model has
+     * SoftDeletes, so the record goes to the deleted list and the toast offers
+     * "Undo". The confirmation said "this cannot be undone" right before it.
+     */
+    #[ServerOnly]
+    public function deleteIsUndoable(): bool
+    {
+        $model = $this->resolveEloquentModel();
+
+        return $model !== null && $this->usesSoftDeletes($model);
     }
 
     private function usesSoftDeletes(Model $record): bool

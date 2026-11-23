@@ -322,6 +322,8 @@ input[type='color'].pc-input { padding: 2px; height: 36px; }
 .pc-combo-item { padding: 7px 9px; border-radius: 6px; cursor: pointer; }
 .pc-combo-item:hover, .pc-combo-item[aria-selected='true'] { background: var(--pc-bg-hover); }
 .pc-combo-note { padding: 7px 9px; color: var(--pc-text-muted); }
+/* A failed lookup is not "no results" (1.61.0). */
+.pc-combo-note--error { color: var(--color-danger, #dc2626); font-style: normal; }
 
 .pc-toasts { position: fixed; right: 16px; bottom: 16px; z-index: 1100; display: flex; flex-direction: column; gap: 8px; max-width: 360px; }
 .pc-toast {
@@ -1393,6 +1395,8 @@ button.pl-bell-item:disabled { cursor: default; }
 
 /* Search and filter chips under the toolbar row (.ptah-c-chip). */
 .pc-chips { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem; padding: 0 1rem .625rem; margin-top: -.25rem; }
+.pc-chips-lbl { font-size: .75rem; font-weight: 600; color: var(--pc-text-muted); margin-right: .125rem; }
+.pc-chips-clear { font-size: .75rem; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; color: var(--pc-text-muted); background: none; border: 0; padding: 0 0 0 .25rem; cursor: pointer; }
 .pc-chip { display: inline-flex; align-items: center; gap: .25rem; padding: .125rem .25rem .125rem .5rem; border: 1px solid var(--pc-on-line); border-radius: 9999px; background: var(--pc-on-bg-2); color: var(--pc-on-ink); font-size: .7rem; font-weight: 600; white-space: nowrap; }
 .pc-chip-key { opacity: .6; margin-right: .125rem; }
 .pc-chip button { display: inline-flex; padding: .1rem; border: 0; border-radius: 9999px; background: transparent; color: var(--pc-accent-ink); opacity: .6; cursor: pointer; }
@@ -1609,6 +1613,8 @@ button.pl-bell-item:disabled { cursor: default; }
 .pc-tst[data-color='danger'] { background: var(--color-danger-dark, #dc2626); }
 .pc-tst-x { display: inline-flex; margin-left: .25rem; padding: 0; border: 0; background: transparent; color: inherit; opacity: .7; cursor: pointer; }
 .pc-tst-x:hover { opacity: 1; }
+/* Keyboard focus on the toast's close (1.61.0): it had none. */
+.pc-tst-x:focus-visible { opacity: 1; outline: 2px solid currentColor; outline-offset: 2px; border-radius: 2px; }
 @keyframes pc-tst-in { from { opacity: 0; transform: translateY(.5rem); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1627,6 +1633,7 @@ button.pl-bell-item:disabled { cursor: default; }
     transition: background-color .15s, border-color .15s;
 }
 .pc-sortbar-select { flex: 1; min-width: 0; cursor: pointer; }
+.pc-sortbar-lbl { font-size: .75rem; font-weight: 500; color: var(--pc-text-muted); flex-shrink: 0; }
 .pc-sortbar-dir { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; cursor: pointer; }
 .pc-sortbar-select:hover, .pc-sortbar-dir:hover:not(:disabled) { background: var(--pc-bg-hover); }
 .pc-sortbar-select:focus-visible, .pc-sortbar-dir:focus-visible { outline: none; border-color: var(--pc-primary); box-shadow: 0 0 0 3px var(--pc-ring); }
@@ -1697,6 +1704,9 @@ button.pl-bell-item:disabled { cursor: default; }
 .pc-cal-btn:hover { background: var(--pc-ghost); }
 .pc-cal-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--pc-ring); }
 .pc-cal-alert { padding: .5rem .75rem 0; }
+/* Empty month (1.61.0): says so and offers the closest month with records. */
+.pc-cal-empty { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .5rem .75rem 0; font-size: .75rem; color: var(--pc-muted, var(--ptah-text-muted)); }
+.pc-cal-goto { font-weight: 600; text-decoration: underline; text-underline-offset: 2px; color: var(--pc-primary, var(--ptah-primary)); background: none; border: 0; padding: 0; cursor: pointer; }
 .pc-cal-scroll { overflow-x: auto; }
 .pc-cal-table { width: 100%; min-width: 640px; table-layout: fixed; border-collapse: collapse; font-size: .875rem; }
 .pc-cal-table th { padding: .375rem .5rem; color: var(--pc-text-muted); font-size: .75rem; font-weight: 600; text-align: left; }
@@ -1767,7 +1777,7 @@ button.pl-bell-item:disabled { cursor: default; }
 }
 .pc-fm-btn:hover:not(:disabled) { background: var(--color-primary-dark, color-mix(in srgb, var(--pc-primary) 85%, #000)); }
 .pc-fm-btn:active:not(:disabled) { opacity: .8; }
-.pc-fm-btn:focus-visible { outline: none; box-shadow: 0 0 0 1px var(--pc-raised), 0 0 0 3px color-mix(in srgb, var(--pc-primary) 40%, transparent); }
+.pc-fm-btn:focus-visible { outline: none; box-shadow: 0 0 0 1px var(--pc-raised), 0 0 0 3px color-mix(in srgb, var(--pc-primary) 65%, transparent); }
 .pc-fm-btn:disabled { opacity: .5; cursor: not-allowed; }
 .pc-fm-btn--sm { gap: .375rem; padding: .375rem .75rem; font-size: var(--pc-control-fs, .75rem); line-height: 1rem; }
 .pc-fm-btn--danger { background: var(--color-danger-dark, #dc2626); }
@@ -1778,6 +1788,10 @@ button.pl-bell-item:disabled { cursor: default; }
 .ptah-dark .pc-fm-btn--flat:hover:not(:disabled), .dark .pc-fm-btn--flat:hover:not(:disabled) { background: color-mix(in srgb, var(--pc-bg-hover) 45%, transparent); color: var(--ptah-text, var(--pc-text)); }
 .pc-fm-btn--flat-primary { background: transparent; box-shadow: none; color: var(--pc-primary); }
 .pc-fm-btn--flat-primary:hover:not(:disabled) { background: var(--color-primary-light, color-mix(in srgb, var(--pc-primary) 12%, transparent)); }
+/* "Save and create another" on the dark panel was ~3:1 (1.61.0): lighter text for AA. */
+.ptah-dark .pc-fm-btn--flat-primary, .dark .pc-fm-btn--flat-primary { color: color-mix(in srgb, var(--pc-primary) 55%, #fff); }
+/* The native select and date picker of the form open dark on a dark panel. */
+.ptah-dark .pc-fm-panel, .dark .pc-fm-panel { color-scheme: dark; }
 .pc-fm-btn--flat-danger { background: transparent; box-shadow: none; color: var(--pc-danger); }
 .pc-fm-btn--flat-danger:hover:not(:disabled) { background: var(--color-danger-light, color-mix(in srgb, var(--pc-danger) 12%, transparent)); }
 /* The "attach a file" / "import" picker: a .ptah-c-btn label (rounded-md border px-3 py-2 text-sm). */

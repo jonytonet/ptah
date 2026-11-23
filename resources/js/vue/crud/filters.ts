@@ -728,7 +728,7 @@ export const PtahCrudFilterBadges = defineComponent({
     setup(props) {
         const crud = props.crud;
         const state = usePtahCrud(crud);
-        const { filters } = useFilterSession(crud, state);
+        const { session, filters } = useFilterSession(crud, state);
         const t = computed(() => filtersWords(props.locale));
 
         return () => {
@@ -744,7 +744,8 @@ export const PtahCrudFilterBadges = defineComponent({
                 return null;
             }
 
-            const chips: VNodeChild[] = [];
+            // The list IS filtered (1.61.0): search and filters come back from the last visit.
+            const chips: VNodeChild[] = [h('span', { class: 'pc-chips-lbl' }, `${words.applied}:`)];
             if (list.search !== '') {
                 chips.push(h('span', { class: 'pc-chip' }, [icon('search', 12, undefined, 'pc-chip-ico'), limitText(list.search, 30), removeButton(words.clearSearch, () => void crud.setSearch(''), words.clearFilters)]));
             }
@@ -756,6 +757,10 @@ export const PtahCrudFilterBadges = defineComponent({
                         removeButton(words.removeFilter(badge.label), () => void removeBadge(crud, badge.key), words.clearFilters),
                     ]),
                 );
+            }
+
+            if ((list.search !== '' ? 1 : 0) + badges.length > 1) {
+                chips.push(h('button', { type: 'button', class: 'pc-chips-clear', onClick: () => void clearAllFilters(crud, session) }, words.clearAll));
             }
 
             return h('div', { class: 'pc-chips', role: 'group', 'aria-label': words.title }, chips);

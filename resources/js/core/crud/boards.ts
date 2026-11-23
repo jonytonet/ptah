@@ -61,6 +61,10 @@ export interface CalendarGrid {
     weeks: CalendarDay[][];
     /** More records than the calendar shows: refine the filters. */
     overflow: boolean;
+    /** No record this month (1.61.0): the view says so instead of a blank grid. */
+    empty?: boolean;
+    /** 'Y-m' of the closest month with records, for the empty month's "Go to". */
+    nearest?: string | null;
 }
 
 export interface MoveResult {
@@ -253,14 +257,14 @@ export function canDrop(board: KanbanBoard, from: string | null, to: string): bo
 }
 
 /**
- * The "Move to" choices of a card, as the Blade select lists them: its own
- * column first-in-order and selected, then only the allowed destinations.
- * A card of the "other values" column has no current option (a placeholder).
+ * The "Move to" choices of a card, as the Blade select lists them (1.61.0):
+ * only the OTHER columns it may go to — every select starts on a disabled
+ * "Move to…". The card in "Closed" used to show "Move to: Closed".
  */
 export function moveChoices(board: KanbanBoard, column: KanbanColumn): Option[] {
     const targets = targetsOf(board, column.value);
 
-    return board.options.filter((option) => option.value === column.value || targets.includes(option.value));
+    return board.options.filter((option) => option.value !== column.value && targets.includes(option.value));
 }
 
 /** The board with a card moved — drawn at once, put back if the server refuses. */
@@ -349,6 +353,10 @@ export interface BoardsWords {
     loadError: string;
     retry: string;
     moveTo: string;
+    /** The first, disabled option of every card's select (1.61.0). */
+    movePlaceholder: string;
+    calendarEmpty: string;
+    calendarGoTo: string;
     more: string;
     emptyColumn: string;
     otherHint: string;
@@ -391,6 +399,9 @@ const en: BoardsWords = {
     loadError: 'Could not load. Try again.',
     retry: 'Try again',
     moveTo: 'Move to',
+    movePlaceholder: 'Move to…',
+    calendarEmpty: 'No records this month.',
+    calendarGoTo: 'Go to :month',
     more: ':count more — refine the filters to see them',
     emptyColumn: 'Nothing here',
     otherHint: 'Their value is not one of the options — move them to a column.',
@@ -433,6 +444,9 @@ const ptBR: BoardsWords = {
     loadError: 'Não foi possível carregar. Tente de novo.',
     retry: 'Tentar de novo',
     moveTo: 'Mover para',
+    movePlaceholder: 'Mover para…',
+    calendarEmpty: 'Nenhum registro neste mês.',
+    calendarGoTo: 'Ir para :month',
     more: 'mais :count — refine os filtros para vê-los',
     emptyColumn: 'Nada aqui',
     otherHint: 'O valor destes não é uma das opções — mova para uma coluna.',

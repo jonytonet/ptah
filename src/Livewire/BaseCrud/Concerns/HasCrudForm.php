@@ -20,6 +20,7 @@ use Ptah\Support\CrudPermission;
 use Ptah\Support\PtahMask;
 use Ptah\Support\Scalar;
 use Ptah\Support\SearchDropdownMask;
+use Ptah\Support\ServerOnly;
 use Ptah\Support\UploadDisk;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
@@ -31,11 +32,14 @@ trait HasCrudForm
     // ── Form modal ─────────────────────────────────────────────────────────────
 
     /**
-     * Resets the create form state — called by the Alpine "New" button.
-     * Does NOT set showModal (Alpine handles visibility instantly on the client).
+     * Resets the create form state — called by the Alpine "New" button, which
+     * opens the modal on the client at once. The server confirms it open too
+     * (1.61.0): closing and clicking "New" right away, the answer of the
+     * close arrived after the click and shut the new form.
      */
     public function prepareCreate(): void
     {
+        $this->showModal = true;
         $this->formData = [];
         $this->formErrors = [];
         $this->editingId = null;
@@ -303,6 +307,7 @@ trait HasCrudForm
 
         if (! empty($this->formErrors)) {
             $this->creating = false;
+            $this->dispatch('ptah:form-invalid');
 
             return;
         }
@@ -432,6 +437,10 @@ trait HasCrudForm
         }
 
         $this->creating = false;
+        // Erro vindo do banco ou de um hook: o modal leva a pessoa ate ele (1.61.0).
+        if (! empty($this->formErrors)) {
+            $this->dispatch('ptah:form-invalid');
+        }
     }
 
     /**
@@ -1093,6 +1102,32 @@ trait HasCrudForm
      * Is this column of the screen's table nullable? Null when the schema
      * cannot be read or has no such column.
      */
+    /**
+     * Whether the form marks this field with * (1.61.0): colsRequired, or a
+     * NOT NULL column without a DEFAULT — the database refuses the row
+     * without it, and the person only found out after saving. Only the mark:
+     * validation still follows colsRequired, because a hook (beforeCreate) or
+     * the company scope may fill such a column on save.
+     *
+     * @param  array<string, mixed>  $col
+     */
+    #[ServerOnly]
+    public function fieldIsRequired(array $col): bool
+    {
+        if (in_array($col['colsRequired'] ?? false, [true, 'S', 1, '1'], true)) {
+            return true;
+        }
+
+        $field = (string) ($col['colsNomeFisico'] ?? '');
+        $tipo = (string) ($col['colsTipo'] ?? '');
+        if ($field === '' || str_contains($field, '.') || in_array($tipo, ['image', 'password', 'boolean'], true)
+            || in_array($field, $this->guardedFormFields(), true)) {
+            return false;
+        }
+
+        return $this->columnIsNullable($field) === false && $this->columnDefault($field) === null;
+    }
+
     protected function columnIsNullable(string $field): ?bool
     {
         $model = $this->resolveEloquentModel();

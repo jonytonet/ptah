@@ -39,7 +39,7 @@ describe('form draft (Vue)', () => {
 
         crud.setField('name', 'Rascunho');
         await waitFor(() => expect(stored('new')?.v).toEqual({ name: 'Rascunho', status: 'active' }));
-        expect(await screen.findByRole('button', { name: 'Limpar tudo' })).toBeTruthy();
+        expect(await screen.findByRole('button', { name: 'Descartar rascunho' })).toBeTruthy();
 
         crud.closeForm();
         expect(stored('new')).not.toBeNull();
@@ -48,10 +48,10 @@ describe('form draft (Vue)', () => {
         await waitFor(() => expect(crud.getState().form?.data.name).toBe('Rascunho'));
         expect(toasts(crud)).toContain('info: Seu rascunho não salvo foi restaurado.');
 
-        await fireEvent.click(await screen.findByRole('button', { name: 'Limpar tudo' }));
+        await fireEvent.click(await screen.findByRole('button', { name: 'Descartar rascunho' }));
         await waitFor(() => expect(crud.getState().form?.data.name).toBeNull());
         expect(stored('new')).toBeNull();
-        await waitFor(() => expect(screen.queryByRole('button', { name: 'Limpar tudo' })).toBeNull());
+        await waitFor(() => expect(screen.queryByRole('button', { name: 'Descartar rascunho' })).toBeNull());
     });
 
     it('forgets the draft once the record is saved', async () => {

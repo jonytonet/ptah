@@ -467,6 +467,7 @@
 
 .ptah-c-btn_label { display: none; }
 .ptah-c-toolbar_labels .ptah-c-btn_label { display: inline; }
+.ptah-c-btn_label_keep { display: inline; }
 
 /* ── Search input ── */
 .ptah-c-search { background-color: color-mix(in srgb, var(--ptah-field-muted) 60%, transparent); border-color: var(--ptah-line-strong); color: var(--ptah-text-strong); }
@@ -484,6 +485,8 @@
 .ptah-dark .ptah-c-btn    { background-color: var(--ptah-surface); border-color: var(--ptah-line-control); color: var(--ptah-text-secondary); }
 .ptah-dark .ptah-c-btn:hover { background-color: var(--ptah-surface-hover); }
 .ptah-dark .ptah-c-btn:focus-visible { border-color: var(--ptah-primary-lite); }
+/* Botao ligado (Filtros aberto, visao ativa) tambem mostra o foco do teclado (1.61.0). */
+.ptah-c-btn_on:focus-visible { box-shadow: 0 0 0 3px var(--ptah-primary-ring); outline: none; }
 
 /* ── Barra de ordenacao da visao em cards ─────────────────────────────────
    A visao em cards nao tinha ordenacao: a ordem vinha do que a tabela tinha
@@ -1161,6 +1164,12 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-dd_item:hover      { background-color: var(--ptah-menu-hover); }
 .ptah-dark .ptah-c-dd_item { color: var(--ptah-text); }
 .ptah-dark .ptah-c-dd_item:hover { background-color: color-mix(in srgb, var(--ptah-menu-hover) 60%, transparent); }
+/* Opcao ativa pelo teclado (1.61.0): o mesmo realce do hover. */
+.ptah-c-dd_item_active      { background-color: var(--ptah-menu-hover); }
+/* Faixa "rascunho restaurado" dentro do modal (1.61.0). */
+.ptah-c-draft_banner        { background-color: var(--ptah-primary-softer); color: var(--ptah-primary-strong); }
+.ptah-dark .ptah-c-draft_banner { background-color: color-mix(in srgb, var(--ptah-primary) 18%, transparent); color: var(--ptah-text); }
+.ptah-dark .ptah-c-dd_item_active { background-color: color-mix(in srgb, var(--ptah-menu-hover) 60%, transparent); }
 
 /* ── Modal genérico (forge-modal) ────────────────────────────────────────
    .ptah-modal-panel is the reusable dialog shell (forge-modal.blade.php),
@@ -1869,6 +1878,8 @@ html { scrollbar-gutter: stable; } /* reserva o espaço da scrollbar: evita layo
 .ptah-c-dd_opt:hover       { background-color: var(--ptah-primary-softer); color: var(--ptah-primary-strong); }
 .ptah-dark .ptah-c-dd_opt  { color: var(--ptah-text); }
 .ptah-dark .ptah-c-dd_opt:hover { background-color: color-mix(in srgb, var(--ptah-menu-hover) 60%, transparent); color: var(--ptah-text); }
+.ptah-c-dd_opt_active       { background-color: var(--ptah-primary-softer); color: var(--ptah-primary-strong); }
+.ptah-dark .ptah-c-dd_opt_active { background-color: color-mix(in srgb, var(--ptah-menu-hover) 60%, transparent); color: var(--ptah-text); }
 
 /* ── Selected item inside Alpine inline-select list ── */
 .ptah-c-dd_item_sel            { background-color: var(--ptah-primary-softer); color: var(--ptah-primary-strong); }

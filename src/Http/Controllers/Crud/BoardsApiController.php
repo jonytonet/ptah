@@ -155,7 +155,7 @@ class BoardsApiController extends Controller
             $weeks[] = $days;
         }
 
-        return response()->json(['month' => $grid['month'], 'weeks' => $weeks, 'overflow' => (bool) $grid['overflow']]);
+        return response()->json(['month' => $grid['month'], 'weeks' => $weeks, 'overflow' => (bool) $grid['overflow'], 'empty' => (bool) $grid['empty'], 'nearest' => $grid['nearest']]);
     }
 
     /**

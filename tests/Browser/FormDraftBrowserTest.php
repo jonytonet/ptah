@@ -91,10 +91,14 @@ class FormDraftBrowserTest extends DuskTestCase
             $this->nameIs($b, 'Ana');
             $this->close($b);
 
-            // 5. O Novo continua com o dele, e "Limpar tudo" o apaga.
+            // 5. O Novo continua com o dele, e "Descartar rascunho" o apaga —
+            // depois de confirmar (1.61.0: antes apagava num clique).
             $this->openNew($b);
             $this->nameIs($b, 'Rascunho do novo');
-            $b->press(__('ptah::ui.btn_form_draft_clear'));
+            $b->click('[data-ptah-draft-clear]');
+            $b->waitForText(__('ptah::ui.form_draft_clear_confirm'), 10);
+            $this->nameIs($b, 'Rascunho do novo');
+            $b->script("[...document.querySelectorAll('[role=alertdialog] button')].find(x => x.offsetParent !== null && x.textContent.trim() === ".json_encode(__('ptah::ui.form_draft_clear_confirm_yes')).').click();');
             $this->nameIs($b, '');
             $this->close($b);
             $this->openNew($b);
@@ -102,7 +106,8 @@ class FormDraftBrowserTest extends DuskTestCase
 
             // 6. Salvar com sucesso apaga o rascunho do Novo.
             $this->typeName($b, 'Vai ser salvo');
-            $b->press(__('ptah::ui.btn_create'))->waitUntilMissing(self::NAME, 30)->pause(500);
+            // O botao principal: "Salvar" tambem esta em "Salvar e criar outro".
+            $b->click('[data-ptah-save]')->waitUntilMissing(self::NAME, 30)->pause(500);
             $this->assertNull($b->script("return Object.keys(localStorage).find(k => k.endsWith(':new')) || null;")[0], 'O rascunho sobreviveu ao salvar.');
         });
     }

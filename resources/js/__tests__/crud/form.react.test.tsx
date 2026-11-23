@@ -52,8 +52,8 @@ describe('form parity (React)', () => {
         expect(within(dialog).getByText('Preencha os campos abaixo')).toBeTruthy();
         expect(within(dialog).getAllByText(/Dados gerais|Endereço|Extras|Somente leitura/).map((node) => node.textContent)).toEqual(['Dados gerais', 'Somente leitura', 'Endereço', 'Extras']);
         expect(within(dialog).getByText('Como aparece na lista.')).toBeTruthy();
-        expect(within(dialog).getByRole('button', { name: 'Criar' })).toBeTruthy();
-        expect(within(dialog).queryByRole('button', { name: 'Salvar' })).toBeNull();
+        expect(within(dialog).getByRole('button', { name: 'Salvar' })).toBeTruthy();
+        expect(within(dialog).queryByRole('button', { name: 'Salvar alterações' })).toBeNull();
 
         await waitFor(() => expect(document.activeElement).toBe(within(dialog).getByLabelText(/^Nome/)));
         expect(document.body.style.overflow).toBe('hidden');
@@ -124,7 +124,7 @@ describe('form parity (React)', () => {
         const dialog = await openEdit();
 
         expect(within(dialog).getByText('Altere os campos e salve')).toBeTruthy();
-        expect(within(dialog).getByRole('button', { name: 'Salvar Alterações' })).toBeTruthy();
+        expect(within(dialog).getByRole('button', { name: 'Salvar alterações' })).toBeTruthy();
         expect(within(dialog).queryByRole('button', { name: 'Salvar e criar outro' })).toBeNull();
 
         const secret = within(dialog).getByLabelText(/^Senha/) as HTMLInputElement;
@@ -212,7 +212,7 @@ describe('form parity (React)', () => {
 
         // While a chosen file is being sent, the field says so.
         fireEvent.change(dialog.querySelector('#pc-items-photo-file')!, { target: { files: [file] } });
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar Alterações' }));
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar alterações' }));
         expect(within(dialog).getByText('Enviando…')).toBeTruthy();
         await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
         expect(server.calls.find((call) => call.method === 'POST' && call.path === '/1')?.body?.files).toEqual(['files[photo]']);
@@ -222,13 +222,13 @@ describe('form parity (React)', () => {
         const { crud, server } = await mount();
         const dialog = await openNew();
 
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Criar' }));
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
         expect(await within(dialog).findByText('Nome é obrigatório.')).toBeTruthy();
         expect(crud.navigate).not.toHaveBeenCalled();
 
         fireEvent.change(within(dialog).getByLabelText(/^Nome/), { target: { value: 'Redirect' } });
         const lists = server.calls.filter((call) => call.method === 'GET' && call.path === '').length;
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Criar' }));
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Salvar' }));
 
         await waitFor(() => expect(crud.navigate).toHaveBeenCalledWith('/elsewhere'));
         expect(screen.queryByRole('dialog')).toBeNull();
@@ -254,7 +254,7 @@ describe('form parity (React)', () => {
         const dialog = await screen.findByRole('dialog');
         expect(within(dialog).getByRole('status').textContent).toContain('Carregando…');
         expect(dialog.getAttribute('aria-busy')).toBe('true');
-        expect(within(dialog).queryByRole('button', { name: 'Criar' })).toBeNull();
+        expect(within(dialog).queryByRole('button', { name: 'Salvar' })).toBeNull();
 
         // Closed before the answer: it never opens.
         fireEvent.click(within(dialog).getByRole('button', { name: 'Cancelar' }));

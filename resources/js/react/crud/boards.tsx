@@ -381,15 +381,13 @@ function Column({ board, column, t, drag, over, onOver, onDrag, onMove, onOpen }
                                     <label htmlFor={selectId} className="pc-sr-only">
                                         {t.moveTo}
                                     </label>
-                                    <select id={selectId} className="pc-kanban-move" value={column.other ? '' : column.value} onChange={(event) => onMove(id, column.value, event.target.value)}>
-                                        {column.other && (
-                                            <option value="" disabled>
-                                                {t.moveTo}…
-                                            </option>
-                                        )}
+                                    <select id={selectId} className="pc-kanban-move" value="" onChange={(event) => onMove(id, column.value, event.target.value)}>
+                                        <option value="" disabled>
+                                            {t.movePlaceholder}
+                                        </option>
                                         {choices.map((option) => (
                                             <option key={option.value} value={option.value}>
-                                                {t.moveTo}: {option.label}
+                                                {option.label}
                                             </option>
                                         ))}
                                     </select>
@@ -488,6 +486,24 @@ export function PtahCrudCalendar({ crud, locale }: BoardProps) {
             {grid.overflow && (
                 <div className="pc-cal-alert">
                     <ForgeAlert color="warn">{t.calendarOverflow}</ForgeAlert>
+                </div>
+            )}
+            {/* An empty month says so and points at the closest one with records (1.61.0). */}
+            {grid.empty && (
+                <div className="pc-cal-empty" role="status">
+                    <span>{t.calendarEmpty}</span>
+                    {grid.nearest && (
+                        <button
+                            type="button"
+                            className="pc-cal-goto"
+                            onClick={() => {
+                                month.current = grid.nearest ?? '';
+                                void load();
+                            }}
+                        >
+                            {t.calendarGoTo.replace(':month', monthTitle(grid.nearest, locale))}
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -629,8 +645,8 @@ function SortBar({ crud, state, t }: { crud: CrudController; state: CrudState; t
 
     return (
         <div className="pc-sortbar" role="group" aria-label={t.sortGroup}>
-            <label htmlFor={sortId} className="pc-sr-only">
-                {t.sortBy}
+            <label htmlFor={sortId} className="pc-sortbar-lbl">
+                {t.sortBy}:
             </label>
             <Icon name="sortBar" className="pc-sortbar-icon" />
             <select id={sortId} className="pc-sortbar-select" title={t.sortBy} value={state.list.sort} onChange={(event) => void crud.patchList({ sort: event.target.value })}>
