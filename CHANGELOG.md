@@ -7,6 +7,23 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.60.5] - 2026-11-23
+
+Found by driving the BaseCrud forms in a browser, in the Livewire, Bootstrap, React and Vue stacks.
+
+### Fixed
+
+- **The edit form showed the wrong name in a searchdropdown.** In model mode without `colsRelacao` (what the config editor writes by default), nothing filled the label of the record being edited. The field then opened blank, or with the label of the record edited before. Those labels were also saved in the user's preferences and came back on the next page load. In PetPlace, ticket #1 showed the agent "Diego Fontes" over Ana Ribeiro's id. The label is now read from `colsSDModel` for the record's own value, the previous form's label is dropped, and form labels are no longer saved in preferences. An old preference row that carries them is ignored. Duplicate and the restored draft get the right label too.
+- **Date fields opened blank in the edit form.** A `date`/`datetime` cast reached `<input type="date">` as ISO-8601 in UTC (`2026-03-15T00:00:00.000000Z`), which the input rejects. `date`, `datetime` and `time` fields now open in the format the native input reads, in the app's timezone. Saving untouched keeps the value.
+- **A NOT NULL column the screen does not mark as required showed raw SQL.** With `APP_DEBUG` on, saving without it showed the SQL error. With it off, the person got "could not save" and no hint of which field was missing. The error now goes to that field ("O campo X é obrigatório."), on SQLite, MySQL and PostgreSQL. This applies to the React/Vue API too.
+- **The filter panel's searchdropdown** kept the typed text next to the chosen chip, and its `x-data` changed on every render. That is the same cause as the form's loop fixed in 1.60.3. It is now static and the text clears on pick.
+- **Typing a hex colour mangled it.** Typing `#3366cc` in a `color` field saved `#333366`. Each keystroke came back through the field's own watcher and was normalised, and `#336` is a valid short hex. The field now ignores its own echo. Leaving the field still expands `#abc` to `#aabbcc`. React and Vue were not affected.
+- **pt_BR required message**: "Categoria é obrigatório." is now "O campo Categoria é obrigatório.", which works for any gender and matches Laravel's own message.
+
+### Upgrading
+
+Nothing to run. A host that published `lang/vendor/ptah/pt_BR/ui.php` keeps its own `validation_required` wording.
+
 ## [1.60.4] - 2026-11-22
 
 ### Fixed
