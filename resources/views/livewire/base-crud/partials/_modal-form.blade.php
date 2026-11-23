@@ -760,6 +760,10 @@
 
                                                 this.$wire.$watch('formData.{{ $fField }}', (val) => {
                                                     if (val === null || val === undefined) return;
+                                                    /* O eco da propria tecla (push abaixo) nao e
+                                                       normalizado: `#336` virava `#333366` no meio
+                                                       de `#3366cc` (1.60.5). */
+                                                    if (String(val) === String(this.hex)) return;
                                                     this.hex = this.normalize(val) ?? String(val);
                                                 });
                                             },

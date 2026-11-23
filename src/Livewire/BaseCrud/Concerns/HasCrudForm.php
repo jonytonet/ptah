@@ -6,6 +6,7 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -133,6 +134,8 @@ trait HasCrudForm
             unset($this->formData[$denied]);
         }
 
+        $this->temporalFormValues($record);
+
         // A password field opens EMPTY: the stored hash never goes to the
         // browser, and empty on save means "keep it" (1.48.0).
         foreach ($this->passwordFields() as $field) {
@@ -192,6 +195,7 @@ trait HasCrudForm
         }
 
         $this->formData = $data;
+        $this->temporalFormValues($record);
         $this->preloadSdLabels($record);
         $this->showModal = true;
         // Uma copia nao e o rascunho do "Novo": sem rascunho nesta abertura,
@@ -412,11 +416,59 @@ trait HasCrudForm
                 ['message' => $e->getMessage()]
             );
         } catch (\Throwable $e) {
-            report($e);
-            $this->formErrors['_general'] = $this->saveErrorMessage($e);
+            // A NOT NULL column the screen does not mark as required: the
+            // database refuses the row. That is a field left blank, not a
+            // crash — it goes to that field, like colsRequired would (1.60.5).
+            // Before, the person got raw SQL (debug) or "could not save".
+            $blank = $this->notNullViolationField($e, $formCols);
+            if ($blank !== null) {
+                $this->formErrors[$blank['colsNomeFisico']] = trans('ptah::ui.validation_required', [
+                    'label' => $blank['colsNomeLogico'] ?? $blank['colsNomeFisico'],
+                ]);
+            } else {
+                report($e);
+                $this->formErrors['_general'] = $this->saveErrorMessage($e);
+            }
         }
 
         $this->creating = false;
+    }
+
+    /**
+     * The form column a NOT NULL violation names, or null when the error is
+     * something else or names a column the form does not show. Reads the
+     * message of the three drivers ptah supports.
+     *
+     * @param  list<array<string, mixed>>  $formCols
+     * @return array<string, mixed>|null
+     */
+    protected function notNullViolationField(\Throwable $e, array $formCols): ?array
+    {
+        if (! $e instanceof PDOException) {
+            return null;
+        }
+
+        $message = $e->getMessage();
+        $patterns = [
+            '/NOT NULL constraint failed: (?:[\w"`]+\.)?["`]?(\w+)/i',     // SQLite
+            "/Column '(\w+)' cannot be null/i",                           // MySQL 1048
+            "/Field '(\w+)' doesn't have a default value/i",              // MySQL 1364
+            '/null value in column "(\w+)"/i',                              // PostgreSQL
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $message, $m) === 1) {
+                foreach ($formCols as $col) {
+                    if (($col['colsNomeFisico'] ?? null) === $m[1]) {
+                        return $col;
+                    }
+                }
+
+                return null;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1223,6 +1275,42 @@ trait HasCrudForm
         return $row[$field] ?? null;
     }
 
+    /**
+     * Date, datetime and time fields in the format the native input reads
+     * (1.60.5). toArray() serialises a date cast as ISO-8601 in UTC
+     * ("2026-03-15T00:00:00.000000Z"), which <input type="date"> rejects: the
+     * edit form opened with the date blank. The cast's own Carbon is used, so
+     * the value is in the app's timezone, not shifted to UTC. A masked field
+     * is a text input and keeps what it had.
+     */
+    protected function temporalFormValues(Model $record): void
+    {
+        foreach ($this->crudConfig['cols'] ?? [] as $col) {
+            $field = (string) ($col['colsNomeFisico'] ?? '');
+            $format = match ($col['colsTipo'] ?? '') {
+                'date' => 'Y-m-d',
+                'datetime', 'datetime-local' => 'Y-m-d\TH:i',
+                'time' => 'H:i',
+                default => null,
+            };
+            if ($format === null || ! empty($col['colsMask']) || ! array_key_exists($field, $this->formData)) {
+                continue;
+            }
+
+            $raw = $record->getAttribute($field);
+            if ($raw === null || $raw === '') {
+                continue;
+            }
+
+            try {
+                $date = $raw instanceof \DateTimeInterface ? $raw : Carbon::parse((string) $raw);
+                $this->formData[$field] = $date->format($format);
+            } catch (\Throwable) {
+                // Not a date the parser reads: the field keeps the raw value.
+            }
+        }
+    }
+
     protected function preloadSdLabels(Model $record): void
     {
         foreach ($this->crudConfig['cols'] ?? [] as $col) {
@@ -1233,6 +1321,22 @@ trait HasCrudForm
             $field = $col['colsNomeFisico'] ?? '';
             $rel = $col['colsRelacao'] ?? null;
             $exibe = $col['colsRelacaoExibe'] ?? null;
+
+            // The label always comes from THIS record: a label left from the
+            // previous form showed one name over another value (1.60.5).
+            unset($this->sdLabels[$field]);
+
+            // Model mode without colsRelacao (what the editor writes by
+            // default): the label is the row of colsSDModel itself. Nothing
+            // filled it, so the field opened blank — or with a stale label.
+            if (! ($rel && $exibe) && $this->sdSettings($col)['tipo'] === 'model') {
+                $label = $this->sdModelLabel($col, $record->getAttribute($field));
+                if ($label !== null) {
+                    $this->sdLabels[$field] = $label;
+                }
+
+                continue;
+            }
 
             if (! ($rel && $exibe) && $this->sdSettings($col)['tipo'] === 'service') {
                 $label = $this->sdServiceLabel($col, $record->getAttribute($field));

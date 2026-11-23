@@ -412,7 +412,7 @@ return [
     | Mensagens de validação (FormValidatorService)
     |--------------------------------------------------------------------------
     */
-    'validation_required' => ':label é obrigatório.',
+    'validation_required' => 'O campo :label é obrigatório.',
     'validation_min' => ':label deve ser no mínimo :param.',
     'validation_max' => ':label deve ser no máximo :param.',
     'validation_minlength' => ':label deve ter pelo menos :param caracteres.',

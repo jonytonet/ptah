@@ -162,6 +162,22 @@ class CrudFormInputTypesTest extends TestCase
     }
 
     #[Test]
+    public function the_hex_field_does_not_normalise_its_own_keystroke_echo(): void
+    {
+        // 1.60.5, PetPlace: typing #3366cc saved #333366. Each keystroke goes to
+        // formData, the $watch saw it come back and normalised it — and #336 is
+        // a valid short hex, so it became #333366 mid-typing. The watch now
+        // ignores the value the field itself just wrote; blur still normalises.
+        $html = $this->openForm(['colsTipo' => 'color']);
+
+        $this->assertMatchesRegularExpression(
+            '/\$watch\(\'formData\.[a-z_]+\', \(val\) => \{.*?if \(String\(val\) === String\(this\.hex\)\) return;.*?this\.hex = this\.normalize\(val\)/s',
+            $html
+        );
+        $this->assertStringContainsString('onTextBlur()', $html);
+    }
+
+    #[Test]
     public function the_color_picker_is_named_for_a_screen_reader(): void
     {
         // The visible <label> points at the text field; a control with no name

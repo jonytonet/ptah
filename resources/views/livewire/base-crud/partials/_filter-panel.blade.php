@@ -145,7 +145,6 @@
                             @php
                                 $cfFilterKey      = 'filter_' . $cfField;
                                 $cfFilterSelected = $sdFilterLabels[$cfField] ?? null;
-                                $cfFilterHasRes   = !empty($sdResults[$cfFilterKey]);
                                 $cfSdSettings     = $this->sdSettings($col);
                             @endphp
                             <div>
@@ -172,10 +171,16 @@
                                     </div>
                                 @endif
 
+                                {{-- Static x-data (1.60.5): with the open state written into
+                                     it, every render changed the attribute and the morph
+                                     restarted the dropdown — same cause as the form's
+                                     searchdropdown loop fixed in 1.60.3. --}}
                                 <div
                                     x-data="{
-                                        open: {{ $cfFilterHasRes ? 'true' : 'false' }},
+                                        open: false,
                                         init() {
+                                            const res0 = this.$wire.sdResults ? this.$wire.sdResults['{{ $cfFilterKey }}'] : undefined;
+                                            this.open = Array.isArray(res0) && res0.length > 0;
                                             this.$wire.$watch('sdResults', (val) => {
                                                 const res = val['{{ $cfFilterKey }}'];
                                                 this.open = Array.isArray(res) && res.length > 0;
@@ -208,7 +213,7 @@
                                         @forelse ($sdResults[$cfFilterKey] ?? [] as $opt)
                                             <button type="button"
                                                 wire:click="selectFilterDropdownOption({{ \Illuminate\Support\Js::from($cfField) }}, {{ \Illuminate\Support\Js::from($opt['value']) }}, {{ \Illuminate\Support\Js::from((string) $opt['label']) }})"
-                                                @click="open = false"
+                                                    @click="open = false; $root.querySelector('input').value = ''"
                                                 class="block w-full px-3 py-2 text-sm text-left ptah-c-dd_opt">
                                                 {{ $opt['label'] }}
                                                 @if (array_key_exists('labelTwo', $opt))

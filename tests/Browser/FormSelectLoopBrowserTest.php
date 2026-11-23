@@ -226,9 +226,11 @@ class FormSelectLoopBrowserTest extends DuskTestCase
 
             // Apagar tudo limpa a escolha, e o campo fica vazio.
             self::sdInput($browser)->sendKeys(str_repeat(WebDriverKeys::BACKSPACE, 8));
-            $browser->pause(1500);
+            // Espera a resposta, e nao um tempo fixo: numa maquina lenta a
+            // busca vazia ainda estava a caminho quando 1,5 s acabava.
+            $browser->waitUsing(15, 200, fn () => $browser->script('return '.self::WIRE.'.get("formData.parent_id");')[0] === null, 'Apagar o texto nao limpou a escolha.');
+            $browser->pause(500);
             $this->assertSame('', self::sdInput($browser)->getAttribute('value'), 'O campo apagado voltou a mostrar o item escolhido.');
-            $this->assertNull($browser->script('return '.self::WIRE.'.get("formData.parent_id");')[0], 'Apagar o texto nao limpou a escolha.');
         });
     }
 }
