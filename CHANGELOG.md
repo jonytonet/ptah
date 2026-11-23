@@ -7,6 +7,16 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.60.4] - 2026-11-22
+
+### Fixed
+
+- **`PTAH_CRUD_FORM_DRAFT=true` did nothing in a host with a published `config/ptah.php`** (yelll). `mergeConfigFrom` is shallow, so a `crud` block published before 1.60.3 replaced the package's and `crud.form_draft` never existed there. The provider now fills that key from the package default, as it already did for `forge.spa_navigation`; the host's own `crud` keys are untouched.
+
+### Upgrading
+
+Nothing to run. If you added `'form_draft'` to your published `config/ptah.php` by hand as a workaround, it keeps working.
+
 ## [1.60.3] - 2026-11-22
 
 ### Fixed
