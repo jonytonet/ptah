@@ -7,6 +7,66 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.61.0] - 2026-11-23
+
+Usability pass on the BaseCrud screens, from a UX review of the form, the listing and the React/Vue stacks.
+
+### Changed — form (Livewire, and React/Vue where noted)
+
+- **Selects work from the keyboard.** The arrows move through the options, and the optional "empty" counts as one. Enter picks, Escape closes only the list, and the active option is announced to screen readers. Before, Enter only opened and closed the list. Moving the mouse picks the hovered option; a list that opens under a resting pointer no longer steals the keyboard choice.
+- **The searchdropdown says what is happening.**
+  - It shows "Searching…" while the answer is on its way, instead of the previous list.
+  - A search without results shows "No results found." Before, the list did not open at all.
+  - In React/Vue, a failed request says the search failed, instead of "No results".
+  - Arrows and Enter work in the list.
+  - Leaving the field without picking drops the typed text. It used to look chosen and was not.
+  - An optional field has an ✕ that clears the choice.
+- **Saving shows "Saving…"** and the buttons stay disabled until the answer arrives. Before, a second click on a slow network sent another save. In React/Vue, a save that takes more than 20 s gives the buttons back with a note.
+- **After an error, the form takes you to it.** The first invalid field gets the focus and scrolls into view; a general error scrolls the banner into view. Livewire, React and Vue.
+- **Ctrl+Enter (Cmd+Enter) saves.** It is listed in the keyboard shortcuts (`?`). Livewire, React and Vue.
+- **The discard question works with Escape and Tab.** On Livewire, Escape used to close the question and reopen it in the same keystroke, and Tab could not reach its buttons. It now traps the focus, and opens on "Keep editing".
+- **React/Vue modals keep the focus.** Tab stays inside the modal, and closing it gives the focus back to the button that opened it.
+- **Draft.**
+  - "Clear all" is now "Discard draft", sits on the left of the footer and asks first. It used to wipe the form in one click, right next to Cancel.
+  - A restored draft shows a banner inside the modal, with "Discard draft" or "Revert to original", instead of a toast in the corner of the page.
+- **Required fields.** A NOT NULL column without a DEFAULT shows the * too; validation still follows `colsRequired`. The subtitle reads "Fields with * are required" whenever there is one. Livewire, and the React/Vue schema.
+- **Footer and labels.**
+  - Attachments, History and the draft button are a group on the left.
+  - The footer wraps on a phone.
+  - Every label of the form has the same style.
+  - Select and searchdropdown labels are tied to their control.
+  - "Save Changes" is now "Save changes", and "Create" is now "Save", to match "Save and create another". The labels are the same in React/Vue.
+- **Fix:** clicking "New" right after closing the form could close the new one, because the answer of the close arrived after the click. `prepareCreate()` now sets `showModal` too.
+
+### Changed — listing
+
+- **The delete question tells the truth.** When the model has SoftDeletes, it says the record goes to the deleted list and can be undone. Before, it said "This action cannot be undone" right before a toast offered Undo. The bulk delete says the same.
+- **Undo lasts longer.** The Undo toast stays 10 s (it was 6), an error stays 7 s, and hovering or focusing a toast pauses it. The delete toast is a success, no longer a warning. Livewire, React and Vue.
+- **The filter chips say the list is filtered.**
+  - A "Filters applied:" label leads the chips, and "Clear all" appears when there are two or more.
+  - A chip shows the option or record name: "Situação: Fechado", not "closed"; "Categoria: Vacinação", not "8".
+  - Each ✕ is named "Remove filter X".
+  - In React/Vue, the label and "Clear all" are new; they already showed names.
+- **Select all results.** After ticking the header checkbox, the bulk bar offers "Select all N results": every page, same filters, up to 1,000.
+- **Board.** A card's select starts on a disabled "Move to…" and lists only the other columns. The card in "Closed" used to show "Move to: Closed". "Other values" is now "No valid value". Livewire, React and Vue.
+- **Calendar.** An empty month says so and offers "Go to <month>", the closest month with records (`calendarGoTo()`; the calendar API returns `empty` and `nearest`). Livewire, React and Vue.
+- **Toolbar.**
+  - "Filters" keeps its label at every width.
+  - The density button has a rows icon instead of the loose characters ◈ ≡ ☰ ⊟.
+  - An active toolbar button shows the keyboard focus ring.
+- **Filter panel.** The date shortcuts name the column they apply to: "Date shortcuts (Created at)".
+- **Cards.** The sort select has a visible "Sort by:" label. Livewire, React and Vue.
+- **React/Vue, dark theme.**
+  - "Save and create another" now passes AA contrast.
+  - The native select and date picker of the form open dark.
+  - The toast ✕ and the modal buttons have a visible focus.
+
+### Upgrading
+
+- Nothing to run.
+- A host that published `lang/vendor/ptah/*/ui.php` keeps its own wording of the changed keys: `btn_create`, `btn_save_changes`, `btn_form_draft_clear`, `kanban_other`.
+- A host that overrides `_modal-form.blade.php` or `_toolbar.blade.php` should compare them with the package's.
+
 ## [1.60.5] - 2026-11-23
 
 Found by driving the BaseCrud forms in a browser, in the Livewire, Bootstrap, React and Vue stacks.
