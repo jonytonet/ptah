@@ -778,6 +778,49 @@ trait HasCrudSearchDropdown
     }
 
     /**
+     * The label of a stored value in model mode (1.60.5): the colsSDModel row
+     * whose colsSDValor is $value, read like a search result (dot-notation
+     * label, colsSDMaskOne). Static filters are not applied — a stored value
+     * that a filter would no longer offer still has a name. Null when the row
+     * is gone or the config cannot be read.
+     */
+    protected function sdModelLabel(array $col, mixed $value): ?string
+    {
+        $value = Scalar::of($value);
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $settings = $this->sdSettings($col);
+        $class = str_replace('/', '\\', (string) $settings['model']);
+        $fullClass = class_exists($class) ? $class : 'App\\Models\\'.$class;
+        $label = (string) $settings['label'];
+
+        if ($class === '' || ! class_exists($fullClass) || ! SqlIdentifier::isSafe((string) $settings['value'])) {
+            return null;
+        }
+
+        try {
+            $q = app($fullClass)->newQuery()->where($settings['value'], $value);
+            if (str_contains($label, '.')) {
+                $q->with(substr($label, 0, (int) strrpos($label, '.')));
+            }
+            $this->sdCompanyScope($q);
+            $item = $q->first();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($item === null) {
+            return null;
+        }
+
+        $text = $this->sdApplyMask(data_get($item, $label), $settings['masks']['one']);
+
+        return is_scalar($text) ? (string) $text : null;
+    }
+
+    /**
      * The label of a stored value in service mode (1.48.0) — see
      * SearchDropdownLabelSource. Without it, the service's searchDropdown()
      * (SearchDropdownSource, 1.49.0 — no name from the config is ever called)

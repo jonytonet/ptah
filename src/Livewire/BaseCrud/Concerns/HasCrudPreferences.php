@@ -46,7 +46,6 @@ trait HasCrudPreferences
                 'quickDate' => $this->quickDateFilter,
                 'quickDateColumn' => $this->quickDateColumn,
                 'search' => $this->search,
-                'sdLabels' => $this->sdLabels,
                 'sdFilterLabels' => $this->sdFilterLabels,
             ],
             'columns' => $this->formDataColumns,
@@ -160,7 +159,8 @@ trait HasCrudPreferences
         $this->quickDateFilter = $filterPrefs['quickDate'] ?? '';
         $this->quickDateColumn = $filterPrefs['quickDateColumn'] ?? ($this->crudConfig['quickDateColumn'] ?? 'created_at');
         $this->search = $filterPrefs['search'] ?? '';
-        $this->sdLabels = $filterPrefs['sdLabels'] ?? [];
+        // sdLabels are the FORM's labels: they were saved here and came back
+        // on the next page load, over records they did not belong to (1.60.5).
         $this->sdFilterLabels = $filterPrefs['sdFilterLabels'] ?? [];
 
         // Advanced search

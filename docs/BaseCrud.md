@@ -1315,7 +1315,7 @@ Fields of type `searchdropdown` offer Select2-like UX inside the create/edit mod
 }
 ```
 
-> **`colsRelacao` + `colsRelacaoExibe`** are used to pre-fill the label in **edit** mode: ptah looks up `$record->businessPartner->name` and displays it in the input.
+> **`colsRelacao` + `colsRelacaoExibe`** are used to pre-fill the label in **edit** mode: ptah looks up `$record->businessPartner->name` and displays it in the input. Without them, a model-mode dropdown reads the label from `colsSDModel`: it finds the row whose `colsSDValor` is the record's value and shows its `colsSDLabel` (since 1.60.5; before, the field opened blank). The listing column still needs `colsRelacao` to show the name instead of the id.
 
 ### Cascading (dependent) dropdowns
 
