@@ -7,6 +7,21 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.61.1] - 2026-11-24
+
+### Fixed
+
+- **ptah could not be installed on PHP 8.5 or 8.6.** It required `maatwebsite/excel` ^3.1, which only works with `phpoffice/phpspreadsheet` 1.x, and 1.x declares `php <8.5.0`. Its `ezyang/htmlpurifier` stops at 8.5 too. ptah now accepts `maatwebsite/excel` ^3.1 or ^4.0, and Composer picks the series the host can run:
+  - 4.x with `phpoffice/phpspreadsheet` 5.x, on PHP 8.3+ and Laravel 12/13. PhpSpreadsheet 5 no longer needs htmlpurifier, and nothing in the tree caps PHP 8.6.
+  - 3.1 with PhpSpreadsheet 1.x, on Laravel 11 or PHP 8.2, as before.
+- **xlsx import on maatwebsite/excel 4.** The import reader passed an anonymous object to `Excel::toArray()`, which 4.x types as `Concerns\Import`. It now implements `ToArray`, which exists in both series. Exports needed no change. Export and import tests pass on both series.
+
+### Upgrading
+
+- A host on PHP 8.5+ (or one that wants PhpSpreadsheet 5), on Laravel 12/13: run `composer update jonytonet/ptah maatwebsite/excel phpoffice/phpspreadsheet -W`.
+- If the host requires `maatwebsite/excel` itself, widen that constraint to `^3.1|^4.0` as well.
+- A host that calls PhpSpreadsheet or Laravel Excel directly should read their upgrade notes for 2.0–5.0 and 4.0.
+
 ## [1.61.0] - 2026-11-23
 
 Usability pass on the BaseCrud screens, from a UX review of the form, the listing and the React/Vue stacks.
