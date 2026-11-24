@@ -132,7 +132,8 @@ final class DashboardService
             'trend' => $this->trend($w),
             'latest' => $this->latest($w),
             'breakdown' => $this->breakdown($w),
-            default => throw new \InvalidArgumentException('Unknown widget type "'.($w['type'] ?? '').'" (stat, trend, breakdown, latest).'),
+            // Here 'type' is set: a missing one is 'stat' above.
+            default => throw new \InvalidArgumentException('Unknown widget type "'.(is_scalar($w['type']) ? (string) $w['type'] : get_debug_type($w['type'])).'" (stat, trend, breakdown, latest).'),
         };
     }
 
