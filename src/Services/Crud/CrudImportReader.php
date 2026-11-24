@@ -6,6 +6,7 @@ namespace Ptah\Services\Crud;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Concerns\ToArray;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Ptah\Support\Scalar;
@@ -210,7 +211,15 @@ final class CrudImportReader
      */
     private static function readSpreadsheet(string $path): array
     {
-        $sheets = Excel::toArray(new class {}, $path);
+        // maatwebsite/excel 4 types toArray()'s first argument as
+        // Concerns\Import, which 3.1 does not have. ToArray exists in both (in
+        // 4 it extends Import), so this reads the same file on both series —
+        // 4 is the one that installs on PHP 8.5+ (1.61.1).
+        $sheets = Excel::toArray(new class implements ToArray
+        {
+            /** @param  array<array-key, mixed>  $array */
+            public function array(array $array): void {}
+        }, $path);
 
         return array_values($sheets[0] ?? []);
     }
