@@ -589,6 +589,8 @@ final class CrudRuntime extends BaseCrud
             // Delete goes to the deleted list and the toast offers Undo: the
             // confirmation must not say "cannot be undone" (1.61.0).
             'undoDelete' => $this->deleteIsUndoable(),
+            // ptah.crud.filter_panel = 'modal': the filters open in a dialog.
+            'filterModal' => $this->filterPanelIsModal(),
         ];
     }
 

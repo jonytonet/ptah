@@ -259,6 +259,7 @@ function ValueFilter({ crud, item, list, t }: ControlProps) {
     const [typed, setTyped] = useState(text(value));
     const apply = useMemo(() => debounce((next: string) => void setFilterValue(crud, item.field, next), 400), [crud, item.field]);
     const numeric = item.kind === 'number';
+    const cents = item.money_cents === true;
     const nullOp = isNullOperator(op);
 
     useEffect(() => setTyped(text(value)), [value]);
@@ -284,10 +285,11 @@ function ValueFilter({ crud, item, list, t }: ControlProps) {
                 ) : (
                     <input
                         id={id}
-                        type={numeric ? 'number' : 'text'}
-                        step={numeric ? 'any' : undefined}
+                        type={numeric && !cents ? 'number' : 'text'}
+                        step={numeric && !cents ? 'any' : undefined}
+                        inputMode={cents ? 'decimal' : undefined}
                         className="pc-fp-in pc-fp-grow"
-                        placeholder={nullOp ? '—' : `${item.label}...`}
+                        placeholder={nullOp ? '—' : cents ? '0,00' : `${item.label}...`}
                         disabled={nullOp}
                         value={typed}
                         onChange={(event) => {

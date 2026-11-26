@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PtahCrud, PtahLayout } from '../../react';
-import { fakeApi } from '../fake-api';
+import { fakeApi, schema } from '../fake-api';
 
 /** The form's dialog once its fields arrived (it opens at once, loading). */
 async function readyDialog() {
@@ -72,6 +72,23 @@ describe('<PtahCrud> (React)', () => {
         fireEvent.change(await screen.findByLabelText('Situação'), { target: { value: 'archived' } });
 
         await waitFor(() => expect(rowNames()).toEqual(['Beta']));
+    });
+
+    it('opens the filters in a dialog when the screen says modal (1.62.0)', async () => {
+        const before = schema.features;
+        schema.features = { ...before, filterModal: true };
+        try {
+            await mount();
+            fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
+            const dialog = await screen.findByRole('dialog', { name: 'Filtros' });
+            fireEvent.change(await within(dialog).findByLabelText('Situação'), { target: { value: 'archived' } });
+            await waitFor(() => expect(rowNames()).toEqual(['Beta']));
+
+            fireEvent.keyDown(document, { key: 'Escape' });
+            await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Filtros' })).toBeNull());
+        } finally {
+            schema.features = before;
+        }
     });
 
     it('creates a record, showing the server errors on the field', async () => {

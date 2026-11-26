@@ -7,6 +7,7 @@ namespace Ptah\Livewire\BaseCrud\Concerns;
 use Carbon\Carbon;
 use Ptah\DTO\FilterDTO;
 use Ptah\Services\Crud\FilterService;
+use Ptah\Support\MoneyInput;
 use Ptah\Support\Scalar;
 
 /**
@@ -338,6 +339,11 @@ trait HasCrudFilters
             $this->dateRanges[$field.'_end'] = $day;
         } elseif ($type === 'select') {
             $this->filters[$field] = (string) $raw;
+            $this->filterOperators[$field] = '=';
+        } elseif ($this->isCentsColumn($col) && is_numeric($raw)) {
+            // Em reais (1.62.0): o filtro converte reais em centavos, e o chip
+            // mostra "2160.00", nao 216000.
+            $this->filters[$field] = MoneyInput::fromCents((int) $raw);
             $this->filterOperators[$field] = '=';
         } elseif (is_scalar($raw)) {
             $this->filters[$field] = (string) $raw;

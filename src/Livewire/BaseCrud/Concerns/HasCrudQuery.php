@@ -22,6 +22,7 @@ use Ptah\Enums\CrudConfigEnums;
 use Ptah\Models\UserPreference;
 use Ptah\Services\Crud\FilterService;
 use Ptah\Support\CrudJoins;
+use Ptah\Support\MoneyInput;
 use Ptah\Support\PtahMask;
 use Ptah\Support\RelationPath;
 use Ptah\Support\ServerOnly;
@@ -308,6 +309,13 @@ trait HasCrudQuery
             },
             ARRAY_FILTER_USE_KEY
         );
+        // Um intervalo (de/ate) numa coluna em centavos e em reais e numerico:
+        // nao passa pela estrategia de data (1.62.0).
+        $centsRanges = $this->centsRangeFilters($dateRanges);
+        if ($centsRanges !== []) {
+            $this->filterService->applyFilters($query, $centsRanges);
+        }
+        $dateRanges = array_filter($dateRanges, fn ($key) => ! $this->isCentsColumn($this->findColByField((string) preg_replace('/_(start|end|from|to)$/', '', (string) $key))), ARRAY_FILTER_USE_KEY);
         $drFilters = $this->filterService->processDateRangeFilters($dateRanges, $this->dateRangeOperators);
         if (! empty($drFilters)) {
             $this->filterService->applyFilters($query, $drFilters);
@@ -683,6 +691,54 @@ trait HasCrudQuery
      * digits, alnum, upper, lower, trim. A result that comes out empty (letters
      * typed in a CPF filter) keeps the original.
      */
+    /**
+     * A money column kept in cents (colsRenderer money + colsRendererCents):
+     * its filters take reais and compare cents (1.62.0).
+     *
+     * @param  array<string, mixed>|null  $col
+     */
+    protected function isCentsColumn(?array $col): bool
+    {
+        return $col !== null
+            && ($col['colsRenderer'] ?? '') === 'money'
+            && $this->ptahBool($col['colsRendererCents'] ?? false);
+    }
+
+    /**
+     * The de/ate bounds of cents columns, read in reais, as number filters.
+     * A bound that is not an amount is dropped.
+     *
+     * @param  array<string, mixed>  $ranges
+     * @return list<FilterDTO>
+     */
+    protected function centsRangeFilters(array $ranges): array
+    {
+        $filters = [];
+        foreach ($ranges as $key => $raw) {
+            if ($raw === null || $raw === '' || preg_match('/^(.+)_(start|end|from|to)$/', (string) $key, $m) !== 1) {
+                continue;
+            }
+            $col = $this->findColByField($m[1]);
+            if (! $this->isCentsColumn($col)) {
+                continue;
+            }
+            $cents = MoneyInput::toCents($raw, (string) ($col['colsRendererCurrency'] ?? ''));
+            if ($cents === null) {
+                continue;
+            }
+            $lower = in_array($m[2], ['start', 'from'], true);
+            $op = $this->dateRangeOperators[$key] ?? null;
+            $filters[] = new FilterDTO(
+                field: ! empty($col['colsSource']) ? (string) $col['colsSource'] : $m[1],
+                value: $cents,
+                operator: in_array($op, ['=', '>', '>=', '<', '<='], true) ? $op : ($lower ? '>=' : '<='),
+                type: 'number',
+            );
+        }
+
+        return $filters;
+    }
+
     protected function maskedSearchValue(array $col, string $value): string
     {
         $out = match ((string) ($col['colsMaskTransform'] ?? '')) {
@@ -955,6 +1011,24 @@ trait HasCrudQuery
                 continue;
             }
 
+            // Dinheiro guardado em centavos (1.62.0): quem filtra pensa em
+            // reais. "2.160,00", "2160" e "R$ 2.160,00" viram 216000; o que nao
+            // e valor descarta o filtro, em vez de cair num LIKE na coluna.
+            if ($this->isCentsColumn($col)) {
+                $cents = MoneyInput::toCents($value, (string) ($col['colsRendererCurrency'] ?? ''));
+                if ($cents === null) {
+                    continue;
+                }
+                $domainFilters[] = new FilterDTO(
+                    field: $filterField,
+                    value: $cents,
+                    operator: in_array($explicitOp, ['=', '!=', '<>', '>', '>=', '<', '<='], true) ? $explicitOp : '=',
+                    type: 'number',
+                );
+
+                continue;
+            }
+
             // O valor digitado com a mascara ("529.982.247-25") e comparado
             // como o banco guarda ("52998224725") — 1.46.1.
             if ($col && is_string($value)) {
@@ -1003,6 +1077,24 @@ trait HasCrudQuery
                 // A mesma regra dos filtros: sem ela, a busca avancada era a
                 // segunda porta para o mesmo oraculo.
                 if (! $this->fieldIsFilterable((string) $field)) {
+                    continue;
+                }
+
+                // Coluna em centavos: o valor e em reais, como no filtro (1.62.0).
+                $asfCol = $this->findColByField((string) $field);
+                if ($this->isCentsColumn($asfCol)) {
+                    $cents = MoneyInput::toCents($value, (string) ($asfCol['colsRendererCurrency'] ?? ''));
+                    if ($cents === null) {
+                        continue;
+                    }
+                    $domainFilters[] = new FilterDTO(
+                        field: $field,
+                        value: $cents,
+                        operator: in_array($operator, ['=', '!=', '<>', '>', '>=', '<', '<='], true) ? $operator : '=',
+                        type: 'number',
+                        options: ['logic' => $logic],
+                    );
+
                     continue;
                 }
 
