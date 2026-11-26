@@ -125,6 +125,7 @@ return [
     'filters_title' => 'Filtros',
     'filters_close' => 'Fechar filtros',
     'filters_clear_all' => 'Limpar tudo',
+    'filters_show_results' => 'Ver resultados',
     'filters_date_shortcuts' => 'Atalhos de data',
     'filters_date_from' => 'De',
     'filters_date_to' => 'Até',

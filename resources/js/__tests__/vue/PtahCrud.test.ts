@@ -91,6 +91,11 @@ describe('<PtahCrud> (Vue)', () => {
 
             await fireEvent.keyDown(document, { key: 'Escape' });
             await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Filtros' })).toBeNull());
+
+            // "Ver resultados" in the footer closes it too (1.62.1).
+            await fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
+            await fireEvent.click(within(await screen.findByRole('dialog', { name: 'Filtros' })).getByRole('button', { name: 'Ver resultados' }));
+            await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Filtros' })).toBeNull());
         } finally {
             schema.features = before;
         }

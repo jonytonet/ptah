@@ -155,7 +155,10 @@
             $ptahFormOnlyTargets = implode(',', array_merge(
                 ['formData', 'formDraftIncoming', 'imageUploads',
                  'openDropdown', 'searchDropdown', 'selectDropdownOption', 'applyFieldOnChange',
-                 'closeModal', 'restoreFormDraft', 'revertFormToOriginal', 'clearFormDraft'],
+                 'closeModal', 'restoreFormDraft', 'revertFormToOriginal', 'clearFormDraft',
+                 // Abrir/fechar os filtros e buscar num searchdropdown de filtro
+                 // nao mudam as linhas: a tabela nao pisca (1.62.1, modal de filtros).
+                 'toggleFilters', 'showFilters', 'openFilterDropdown', 'filterSearchDropdown'],
                 ($effectivePerms['canCreate'] ?? false) ? ['prepareCreate', 'openCreate', 'duplicateRecord'] : [],
                 ($effectivePerms['canUpdate'] ?? false) ? ['openEdit'] : [],
                 ($effectivePerms['canDelete'] ?? false) ? ['confirmDelete', 'cancelDelete'] : [],

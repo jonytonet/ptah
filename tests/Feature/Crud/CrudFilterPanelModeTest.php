@@ -76,10 +76,16 @@ class CrudFilterPanelModeTest extends TestCase
         $this->assertStringContainsString('ptah-c-fp_card', $html);
         $this->assertStringContainsString('filters.name', $html);
         $this->assertStringContainsString('data-ptah-filter-modal-close', $html);
+        // A footer button that says what happens (1.62.1).
+        $this->assertStringContainsString('data-ptah-filter-modal-done', $html);
+        $this->assertStringContainsString(e(__('ptah::ui.filters_show_results')), $html);
 
-        // Closed: nothing of it on the page.
+        // Closed, it is already on the page, hidden: it opens and closes in
+        // the browser, without a request (1.62.1).
         $closed = Livewire::test(BaseCrud::class, ['model' => PanelModeItem::class])->html();
-        $this->assertStringNotContainsString('data-ptah-filter-modal', $closed);
+        $this->assertStringContainsString('data-ptah-filter-modal', $closed);
+        $this->assertStringContainsString("x-data=\"{ open: \$wire.entangle('showFilters') }\" x-show=\"open\"", $closed);
+        $this->assertStringContainsString("\$wire.\$set('showFilters', ! \$wire.showFilters, false)", $closed);
     }
 
     #[Test]

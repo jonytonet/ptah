@@ -641,6 +641,8 @@ const en = {
     title: 'Filters',
     active: (count: number) => `${count} active`,
     clearAll: 'Clear all',
+    /** The footer button of the filters dialog (filters_show_results, 1.62.1). */
+    showResults: 'Show results',
     /** The label before the chips (1.61.0): the list IS filtered. */
     applied: 'Filters applied',
     close: 'Close',
@@ -728,6 +730,7 @@ const ptBR: FiltersWords = {
     title: 'Filtros',
     active: (count: number) => `${count} ${count === 1 ? 'ativo' : 'ativos'}`,
     clearAll: 'Limpar tudo',
+    showResults: 'Ver resultados',
     applied: 'Filtros aplicados',
     close: 'Fechar',
     loading: 'Carregando…',

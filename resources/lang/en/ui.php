@@ -124,6 +124,7 @@ return [
     'filters_title' => 'Filters',
     'filters_close' => 'Close filters',
     'filters_clear_all' => 'Clear all',
+    'filters_show_results' => 'Show results',
     'filters_date_shortcuts' => 'Date shortcuts',
     'filters_date_from' => 'From',
     'filters_date_to' => 'To',

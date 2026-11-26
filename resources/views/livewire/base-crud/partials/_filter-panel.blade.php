@@ -1,17 +1,20 @@
 {{-- ── Painel de Filtros ────────────────────────────────────────────── --}}
-@if ($showFilters)
-    @php
-        // PTAH_CRUD_FILTER_PANEL=modal (1.62.0): o MESMO painel, num dialogo
-        // sobre a tela; o acordeao continua o padrao. Esc, fundo e o ✕ fecham.
-        $fpModal = $this->filterPanelIsModal();
-    @endphp
+@php
+    // PTAH_CRUD_FILTER_PANEL=modal (1.62.0): o MESMO painel, num dialogo
+    // sobre a tela; o acordeao continua o padrao. Esc, fundo e o ✕ fecham.
+    // No modal o painel ja vem na pagina e abre/fecha no navegador (1.62.1):
+    // cada abertura esperava o servidor, e o React abria na hora.
+    $fpModal = $this->filterPanelIsModal();
+@endphp
+@if ($showFilters || $fpModal)
     @if ($fpModal)
         {{-- Tamanho e espaco em style, nao em utilitarios novos: um host que
              atualizou o ptah e nao recompilou o CSS via o modal sem limite de
              largura e colado no topo (visto no PetPlace, 1.62.1). --}}
-        <div class="fixed inset-0 z-50 flex items-start justify-center p-4" style="padding-top: min(4rem, 8vh)" x-data x-trap.noscroll="true"
-             @keydown.escape.window="$wire.toggleFilters()" data-ptah-filter-modal>
-            <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" wire:click="toggleFilters" aria-hidden="true"></div>
+        <div class="fixed inset-0 z-50 flex items-start justify-center p-4" style="padding-top: min(4rem, 8vh)"
+             x-data="{ open: $wire.entangle('showFilters') }" x-show="open" x-cloak x-trap.noscroll="open"
+             @keydown.escape.window="if (open) open = false" data-ptah-filter-modal>
+            <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" @click="open = false" aria-hidden="true"></div>
             <div role="dialog" aria-modal="true" aria-label="{{ __('ptah::ui.filters_title') }}"
                  class="relative w-full overflow-y-auto rounded-lg shadow-2xl" style="max-width: 56rem; max-height: calc(100vh - 2rem - min(4rem, 8vh))">
     @endif
@@ -19,7 +22,7 @@
 
         {{-- Clicar no cabecalho fecha o painel (1.60.3), como o botao Filtros da barra. --}}
         <div class="flex items-center justify-between px-5 py-3.5 border-b ptah-c-fp_hd cursor-pointer select-none"
-             wire:click="toggleFilters" title="{{ __('ptah::ui.filters_close') }}">
+             @if ($fpModal) @click="open = false" @else wire:click="toggleFilters" @endif title="{{ __('ptah::ui.filters_close') }}">
             <div class="flex items-center gap-2">
                 <svg class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -42,7 +45,7 @@
                 {{ __('ptah::ui.filters_clear_all') }}
             </x-forge-button>
             @if ($fpModal)
-                <button type="button" wire:click.stop="toggleFilters" class="ml-2 p-1 rounded-md ptah-c-fp_text hover:opacity-70"
+                <button type="button" @click.stop="open = false" class="ml-2 p-1 rounded-md ptah-c-fp_text hover:opacity-70"
                     title="{{ __('ptah::ui.filters_close') }}" aria-label="{{ __('ptah::ui.filters_close') }}" data-ptah-filter-modal-close>
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -417,6 +420,13 @@
             </template>
         </div>
 
+        @if ($fpModal)
+            {{-- Rodape do modal (1.62.1): so o ✕ para fechar era estranho — os
+                 filtros ja valem ao digitar, e o botao diz o que acontece. --}}
+            <div class="sticky bottom-0 flex flex-wrap items-center justify-end gap-2 px-5 py-3 border-t ptah-c-fp_hd" data-ptah-filter-modal-footer>
+                <x-forge-button @click="open = false" color="primary" size="sm" data-ptah-filter-modal-done>{{ __('ptah::ui.filters_show_results') }}</x-forge-button>
+            </div>
+        @endif
     </div>
     @if ($fpModal)
             </div>

@@ -26,13 +26,15 @@ class FilterPanelModalBrowserTest extends DuskTestCase
 
     private function openFilters(Browser $b): void
     {
-        $b->script("window.Livewire.all().find(c => c.name === 'ptah-base-crud').\$wire.call('toggleFilters');");
+        // As the toolbar button does: in the browser, no request (1.62.1). The
+        // fixture has no filterable column, so the button itself is not drawn.
+        $b->script("window.Livewire.all().find(c => c.name === 'ptah-base-crud').\$wire.\$set('showFilters', true, false);");
         $b->waitUntil('!!'.self::DIALOG.' && '.self::DIALOG.'.offsetParent !== null', 20)->pause(400);
     }
 
     private function closed(Browser $b): void
     {
-        $b->waitUntil('!document.querySelector("[data-ptah-filter-modal]")', 20);
+        $b->waitUntil('!'.self::DIALOG.' || '.self::DIALOG.'.offsetParent === null', 20);
     }
 
     #[Test]
@@ -57,6 +59,11 @@ class FilterPanelModalBrowserTest extends DuskTestCase
             // The ✕.
             $this->openFilters($b);
             $b->click('[data-ptah-filter-modal-close]');
+            $this->closed($b);
+
+            // "Show results" in the footer (1.62.1).
+            $this->openFilters($b);
+            $b->click('[data-ptah-filter-modal-done]');
             $this->closed($b);
         });
     }

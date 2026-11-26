@@ -64,10 +64,18 @@
                 this._raf = requestAnimationFrame(() => this._measure());
             });
             this._ro.observe(this.$el);
+            /* Cada resposta do componente redesenha a barra, e o morph tira a classe
+               que _measure() poe (o HTML do servidor nao a tem): depois de filtrar, os
+               rotulos sumiam com espaco sobrando ate a janela mudar de largura (1.62.1). */
+            this._offCommit = Livewire.hook('commit', ({ component, succeed }) => {
+                if (component.id !== this.$wire.$id) return;
+                succeed(() => this.$nextTick(() => this._measure()));
+            });
         },
         destroy() {
             if (this._ro) this._ro.disconnect();
             if (this._raf) cancelAnimationFrame(this._raf);
+            if (typeof this._offCommit === 'function') this._offCommit();
         }
      }">
 
@@ -128,9 +136,11 @@
             $filterableCols = collect($crudConfig['cols'] ?? [])->where('colsIsFilterable', 'S')->count();
             $hasFilterable  = $filterableCols > 0 || !empty($crudConfig['customFilters']);
             $activeFilterCount = count(array_filter($filters)) + count(array_filter($dateRanges)) + ($quickDateFilter !== '' ? 1 : 0);
+            // Modal: abre no navegador, sem esperar o servidor (1.62.1).
+            $fpModalBtn = $this->filterPanelIsModal();
         @endphp
         @if ($hasFilterable)
-            <button wire:click="toggleFilters"
+            <button @if ($fpModalBtn) x-on:click="$wire.$set('showFilters', ! $wire.showFilters, false)" @else wire:click="toggleFilters" @endif data-ptah-filters-toggle
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-150 focus:outline-none ptah-c-control
                        {{ $showFilters ? 'ptah-c-btn_on' : 'ptah-c-btn' }}"
                 title="{{ __('ptah::ui.btn_filters') }}"

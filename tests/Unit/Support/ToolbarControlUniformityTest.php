@@ -60,7 +60,9 @@ class ToolbarControlUniformityTest extends TestCase
             // mudanca que nao tem nada a ver com altura.
             '+ Novo (x-forge-button)' => ['/<x-forge-button @click="\$wire\.showModal = true; \$wire\.prepareCreate\(\)"[^>]*class="[^"]*ptah-c-control/'],
             'Busca (x-forge-input)' => ['/iconBefore=\'[^\']*\'\s*\n\s*class="ptah-c-search ptah-c-control"/'],
-            'Filtros' => ['/wire:click="toggleFilters"\s*\n\s*class="[^"]*ptah-c-control/'],
+            // 1.62.1: wire:click in accordion mode, x-on:click in modal mode — the
+            // button is found by its own marker.
+            'Filtros' => ['/data-ptah-filters-toggle\s*\n\s*class="[^"]*ptah-c-control/'],
             'Lixeira' => ['/wire:click="toggleTrashed"\s*\n\s*class="[^"]*ptah-c-control/'],
             'Exportar (trigger)' => ['/@click="open = !open"\s*\n\s*class="[^"]*ptah-c-btn ptah-c-control"\s*\n\s*title="\{\{ __\(\'ptah::ui\.btn_export\'\) \}\}"/'],
             'Colunas (trigger)' => ['/@click="open = !open"\s*\n\s*class="[^"]*ptah-c-control\s*\n[^"]*\{\{ \$hiddenColumnsCount/'],

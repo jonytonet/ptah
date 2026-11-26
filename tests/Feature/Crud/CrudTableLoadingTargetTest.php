@@ -66,7 +66,9 @@ class CrudTableLoadingTargetTest extends TestCase
             );
             $targets = explode(',', $m[1] !== '' ? $m[1] : $m[2]);
 
-            foreach (['formData', 'openDropdown', 'searchDropdown', 'selectDropdownOption', 'openCreate', 'closeModal'] as $formOnly) {
+            // 1.62.1: opening/closing the filters and searching a filter's
+            // dropdown do not change the rows either.
+            foreach (['formData', 'openDropdown', 'searchDropdown', 'selectDropdownOption', 'openCreate', 'closeModal', 'toggleFilters', 'showFilters', 'openFilterDropdown', 'filterSearchDropdown'] as $formOnly) {
                 $this->assertContains($formOnly, $targets, "[{$marker}] lights up for {$formOnly}.");
             }
             // What changes the rows must still light it up.

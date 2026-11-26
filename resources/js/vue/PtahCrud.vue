@@ -27,6 +27,7 @@ import { PtahCrudCalendar, PtahCrudCards, PtahCrudKanban, PtahCrudViewSwitch, us
 import { PtahCrudColumnResizer, PtahCrudColumnsMenu, PtahCrudDetailRow, PtahCrudDetailToggle } from './crud/extras';
 import { PtahCrudFilterBadges, PtahCrudFilterPanel, PtahCrudUrlFilters } from './crud/filters';
 import { PtahCrudModal } from './crud/modal';
+import { modalButton } from '../core/crud/form';
 import { PtahCrudImport, PtahCrudImportButton } from './crud/import';
 import { PtahCrudAttachments, PtahCrudHistory } from './crud/records';
 import { Icon } from './icons';
@@ -401,6 +402,9 @@ const TOAST_ICONS: Record<string, string> = { success: 'checkCircle', warn: 'ale
         <!-- PTAH_CRUD_FILTER_PANEL=modal (1.62.0): the same panel in a dialog. -->
         <PtahCrudModal v-if="showFilters && crud.features.filterModal" :title="filtersWords(locale).title" size="4xl" :close-label="filtersWords(locale).close" @close="showFilters = false">
             <PtahCrudFilterPanel :crud="crud" :locale="locale" />
+            <template #footer>
+                <button type="button" :class="modalButton('primary')" @click="showFilters = false">{{ filtersWords(locale).showResults }}</button>
+            </template>
         </PtahCrudModal>
         <PtahCrudFilterPanel v-else-if="showFilters" :crud="crud" :locale="locale" />
         <div class="pc-loadbar" aria-hidden="true"><span v-if="state.busy" /></div>
