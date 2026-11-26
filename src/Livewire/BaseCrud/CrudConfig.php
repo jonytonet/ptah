@@ -532,6 +532,7 @@ class CrudConfig extends Component
             'colsRequired' => false,
             'colsAlign' => 'text-start',
             'colsIsFilterable' => true,
+            'colsFilterMultiple' => false,
             'colsNomeLogico' => ucfirst($this->formDataField['colsNomeFisico']),
             // Renderer DSL
             'colsRenderer' => '',

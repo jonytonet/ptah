@@ -18,6 +18,7 @@ import {
     applyUrlFiltersOnce,
     blankAdvancedRow,
     buildBadges,
+    chosenValues,
     clearAllFilters,
     clearDropdown,
     clearLinkFilters,
@@ -34,14 +35,17 @@ import {
     loadSavedFilter,
     operatorLabel,
     removeBadge,
+    removeDropdownValue,
     setAdvancedRows,
     setDateOperator,
     setDateValue,
     setFilterOperator,
     setFilterValue,
     toggleQuickDate,
+    toggleSelectValue,
+    valuesOf,
 } from '../../core/crud/filters';
-import type { AdvancedRow, FilterListState, FilterMetaItem, FilterSession, FilterSessionState, FiltersMeta, FiltersWords, UrlFilter } from '../../core/crud/filters';
+import type { AdvancedRow, FilterLabel, FilterListState, FilterMetaItem, FilterSession, FilterSessionState, FiltersMeta, FiltersWords, UrlFilter } from '../../core/crud/filters';
 import { ForgeModal } from '../forge';
 import { Icon } from '../icons';
 
@@ -211,7 +215,7 @@ interface ControlProps {
     session: FilterSession;
     item: FilterMetaItem;
     list: FilterListState;
-    labels: Record<string, string>;
+    labels: Record<string, FilterLabel>;
     meta: FiltersMeta;
     t: FiltersWords;
 }
@@ -307,6 +311,26 @@ function SelectFilter({ crud, item, list, meta, t }: ControlProps) {
     const id = useId();
     const value = text(list.filters[item.field]);
 
+    if (item.multiple) {
+        // More than one value (1.63.0): each option turns on and off.
+        const on = valuesOf(list.filters[item.field]);
+
+        return (
+            <div role="group" aria-labelledby={id}>
+                <p id={id} className="pc-fp-label">
+                    {item.label}
+                </p>
+                <div className="pc-fp-chips" data-ptah-filter-multi>
+                    {(item.options ?? []).map((option) => (
+                        <button key={option.value} type="button" className="pc-fp-ql" aria-pressed={on.includes(option.value)} onClick={() => void toggleSelectValue(crud, item.field, option.value)}>
+                            {option.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div>
             <label className="pc-fp-label" htmlFor={id}>
@@ -385,8 +409,8 @@ function DropdownFilter({ crud, session, item, list, labels, t }: ControlProps) 
     }, [parent, lookup]);
     useOutside(ref, () => lookup.close(), box.open);
 
-    const value = list.filters[item.field];
-    const selected = value === undefined || value === null || value === '' ? null : (labels[item.field] ?? String(value));
+    const chosen = chosenValues(list.filters[item.field], labels[item.field]);
+    const selected = chosen.length > 0 ? chosen : null;
     const op = list.operators[item.field] ?? '';
     const listId = `${id}-list`;
 
@@ -419,11 +443,17 @@ function DropdownFilter({ crud, session, item, list, labels, t }: ControlProps) 
                 ))}
             </select>
             {selected !== null && (
-                <div className="pc-fp-spaced">
-                    <span className="pc-chip">
-                        {selected}
-                        <RemoveButton label={t.removeFilter(item.label)} title={t.clearFilters} onClick={() => void clearDropdown(crud, session, item.field)} />
-                    </span>
+                <div className="pc-fp-spaced pc-fp-chips" data-ptah-filter-multi={item.multiple ? '' : undefined}>
+                    {selected.map((one) => (
+                        <span key={one.value} className="pc-chip">
+                            {one.label}
+                            {item.multiple ? (
+                                <RemoveButton label={t.removeFilter(`${item.label}: ${one.label}`)} title={t.removeFilter(one.label)} onClick={() => void removeDropdownValue(crud, session, item.field, one.value)} />
+                            ) : (
+                                <RemoveButton label={t.removeFilter(item.label)} title={t.clearFilters} onClick={() => void clearDropdown(crud, session, item.field)} />
+                            )}
+                        </span>
+                    ))}
                 </div>
             )}
             <div className="pc-fp-combo" ref={ref}>
@@ -437,7 +467,7 @@ function DropdownFilter({ crud, session, item, list, labels, t }: ControlProps) 
                     aria-activedescendant={box.open && box.active >= 0 ? `${id}-opt-${box.active}` : undefined}
                     autoComplete="off"
                     className="pc-fp-in pc-fp-combo-in"
-                    placeholder={selected !== null ? t.change : (item.placeholder ?? t.searchLabel(item.label))}
+                    placeholder={selected !== null && !item.multiple ? t.change : (item.placeholder ?? t.searchLabel(item.label))}
                     value={box.text}
                     onFocus={() => lookup.focus()}
                     onChange={(event) => lookup.type(event.target.value)}

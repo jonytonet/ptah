@@ -1796,6 +1796,7 @@ field:type:modifier:option=value:option=value...
 | `sortable` | `colsOrderBy = <field>` | Sortable by its own column |
 | `filterable` | `colsIsFilterable = true` | Filterable |
 | `not_filterable` | `colsIsFilterable = false` | Not filterable |
+| `filter_multiple` | `colsFilterMultiple = true` | Filter takes more than one value (select / searchdropdown) |
 
 **Options (key=value) — full `ColumnParser::$keyMap`:**
 
@@ -2494,6 +2495,7 @@ Properties of each column in `cols[]`:
 | `colsGravar` | bool | `true` | Save value to database |
 | `colsRequired` | bool | `false` | Required field |
 | `colsIsFilterable` | bool | `true` | Allows filtering by this column |
+| `colsFilterMultiple` | bool | `false` | (1.63.0) The filter of a `select` or `searchdropdown` column takes **more than one value**: the searchdropdown adds each choice as a chip, the select becomes toggle buttons. The listing uses `IN` (or `NOT IN` with the `!=` operator). At most 100 values. Ignored on other types. Editor: "Filtro aceita mais de um". |
 | `colsPermission` | string | `''` | Column-level visibility gate. With `ptah.permissions.driver = gate` (1.56.0) it is a **Gate ability** (`can('products.cost')` — Spatie, Bouncer, policies), no ptah module needed; with the default `ptah` driver it needs the `permissions` module and is an `obj_key` registered in `ptah_page_objects` — or, when that key collides across pages, its qualified form `{page.slug}::{obj_key}` (see [Permissions.md § Column-level permissions](Permissions.md#column-level-permissions)). Empty means public (no gate) — this is the default for every column. |
 | `colsVisibleList` | bool | `true` | Show in list |
 | `colsEditableForm` | bool | `true` | Shown in the form. `false` removes the field from the form |

@@ -19,6 +19,7 @@ import {
     applyUrlFiltersOnce,
     blankAdvancedRow,
     buildBadges,
+    chosenValues,
     clearAllFilters,
     clearDropdown,
     clearLinkFilters,
@@ -34,14 +35,17 @@ import {
     loadSavedFilter,
     operatorLabel,
     removeBadge,
+    removeDropdownValue,
     setAdvancedRows,
     setDateOperator,
     setDateValue,
     setFilterOperator,
     setFilterValue,
     toggleQuickDate,
+    toggleSelectValue,
+    valuesOf,
 } from '../../core/crud/filters';
-import type { AdvancedRow, FilterListState, FilterLookupState, FilterMetaItem, FilterSession, FilterSessionState, FiltersMeta, FiltersWords, UrlFilter } from '../../core/crud/filters';
+import type { AdvancedRow, FilterLabel, FilterListState, FilterLookupState, FilterMetaItem, FilterSession, FilterSessionState, FiltersMeta, FiltersWords, UrlFilter } from '../../core/crud/filters';
 import { ForgeModal } from '../forge';
 import { icon } from '../icons';
 import { usePtahCrud } from '../usePtahCrud';
@@ -104,7 +108,7 @@ interface ControlProps {
     session: FilterSession;
     item: FilterMetaItem;
     list: FilterListState;
-    labels: Record<string, string>;
+    labels: Record<string, FilterLabel>;
     meta: FiltersMeta;
     t: FiltersWords;
 }
@@ -114,7 +118,7 @@ const controlProps = {
     session: { type: Object as PropType<FilterSession>, required: true as const },
     item: { type: Object as PropType<FilterMetaItem>, required: true as const },
     list: { type: Object as PropType<FilterListState>, required: true as const },
-    labels: { type: Object as PropType<Record<string, string>>, required: true as const },
+    labels: { type: Object as PropType<Record<string, FilterLabel>>, required: true as const },
     meta: { type: Object as PropType<FiltersMeta>, required: true as const },
     t: { type: Object as PropType<FiltersWords>, required: true as const },
 };
@@ -300,6 +304,22 @@ const SelectFilter = defineComponent({
         return () => {
             const { item, list, meta, t, crud } = props;
 
+            if (item.multiple) {
+                // More than one value (1.63.0): each option turns on and off.
+                const on = valuesOf(list.filters[item.field]);
+
+                return h('div', { role: 'group', 'aria-labelledby': id }, [
+                    h('p', { id, class: 'pc-fp-label' }, item.label),
+                    h(
+                        'div',
+                        { class: 'pc-fp-chips', 'data-ptah-filter-multi': '' },
+                        (item.options ?? []).map((o) =>
+                            h('button', { key: o.value, type: 'button', class: 'pc-fp-ql', 'aria-pressed': on.includes(o.value) ? 'true' : 'false', onClick: () => void toggleSelectValue(crud, item.field, o.value) }, o.label),
+                        ),
+                    ),
+                ]);
+            }
+
             return h('div', [
                 h('label', { class: 'pc-fp-label', for: id }, item.label),
                 h('select', { id, class: 'pc-fp-in pc-fp-select', value: text(list.filters[item.field]), onChange: (event: Event) => void setFilterValue(crud, item.field, valueOf(event)) }, [
@@ -388,8 +408,8 @@ const DropdownFilter = defineComponent({
         return () => {
             const { item, list, labels, t, crud, session } = props;
             const state = box.value;
-            const value = list.filters[item.field];
-            const selected = value === undefined || value === null || value === '' ? null : (labels[item.field] ?? String(value));
+            const chosen = chosenValues(list.filters[item.field], labels[item.field]);
+            const selected = chosen.length > 0 ? chosen : null;
             const op = list.operators[item.field] ?? '';
             const listId = `${id}-list`;
 
@@ -401,7 +421,18 @@ const DropdownFilter = defineComponent({
                     item.operators.map((o) => option(o, operatorLabel(t, o))),
                 ),
                 selected !== null
-                    ? h('div', { class: 'pc-fp-spaced' }, [h('span', { class: 'pc-chip' }, [selected, removeButton(t.removeFilter(item.label), () => void clearDropdown(crud, session, item.field), t.clearFilters)])])
+                    ? h(
+                          'div',
+                          { class: 'pc-fp-spaced pc-fp-chips', 'data-ptah-filter-multi': item.multiple ? '' : undefined },
+                          selected.map((one) =>
+                              h('span', { key: one.value, class: 'pc-chip' }, [
+                                  one.label,
+                                  item.multiple
+                                      ? removeButton(t.removeFilter(`${item.label}: ${one.label}`), () => void removeDropdownValue(crud, session, item.field, one.value), t.removeFilter(one.label))
+                                      : removeButton(t.removeFilter(item.label), () => void clearDropdown(crud, session, item.field), t.clearFilters),
+                              ]),
+                          ),
+                      )
                     : null,
                 h('div', { class: 'pc-fp-combo', ref: root }, [
                     h('input', {
@@ -414,7 +445,7 @@ const DropdownFilter = defineComponent({
                         'aria-activedescendant': state.open && state.active >= 0 ? `${id}-opt-${state.active}` : undefined,
                         autocomplete: 'off',
                         class: 'pc-fp-in pc-fp-combo-in',
-                        placeholder: selected !== null ? t.change : (item.placeholder ?? t.searchLabel(item.label)),
+                        placeholder: selected !== null && !item.multiple ? t.change : (item.placeholder ?? t.searchLabel(item.label)),
                         value: state.text,
                         onFocus: () => lookup.focus(),
                         onInput: (event: Event) => lookup.type(valueOf(event)),

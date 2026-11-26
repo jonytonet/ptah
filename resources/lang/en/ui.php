@@ -1187,6 +1187,7 @@ return [
     'cfg_col_default_value' => 'Default value on New',
     'cfg_tip_cols_default_value' => 'Pre-filled when the user clicks New. For a boolean: 1 or 0.',
     'cfg_col_cb_filterable' => 'Filterable',
+    'cfg_col_cb_filter_multiple' => 'Filter by more than one',
     'cfg_col_cb_readonly' => 'Read-only',
 
     // Columns tab — column-level permission (requires the "permissions" module)
@@ -1941,6 +1942,7 @@ return [
     'cfg_tip_cols_gravar' => "Includes this field in the create/edit form and writes it back to the database. Turn off for JOIN/computed columns — writing to another table's column will fail or corrupt data.",
     'cfg_tip_cols_required' => 'Marks the field as mandatory in the form. Enforced client-side and by FormValidatorService on submit.',
     'cfg_tip_cols_is_filterable' => 'Shows this column in the filter panel so users can search/filter by it.',
+    'cfg_tip_cols_filter_multiple' => 'Select or search-dropdown column: in the filter panel the user can pick several values, and the listing shows records with any of them.',
     'cfg_tip_cols_readonly' => 'Shows the value in the form as text: nobody edits it and it is never saved.',
     'cfg_tip_cols_permission' => 'Restricts this column to users granted this page_object key. Starts CLOSED: after marking, only masters see the column until you grant it per role.',
     'cfg_tip_cols_form_block' => 'Groups this field under a section heading in the create/edit form. Fields sharing the same text appear together, in the order they were added.',

@@ -7,6 +7,37 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.63.0] - 2026-11-26
+
+### Added
+
+- **A filter can take more than one value** (`colsFilterMultiple`, editor checkbox "Filtro aceita mais de um" / "Filter by more than one"). It applies to `select` and `searchdropdown` columns and is off by default.
+  - **Searchdropdown:** each choice is added to the list, as a chip with its own ✕, instead of replacing the previous one. The last chip removed clears the filter, and its dependent filters with it.
+  - **Select:** the options become toggle buttons (`aria-pressed`).
+  - The listing filters with `IN`, or `NOT IN` when the operator is "diferente de" (`!=`). A nested relation column (`colsRelacao` with a dot) uses the same list through `whereHas`.
+  - The toolbar chip shows every label, comma separated.
+  - At most 100 values per filter. A column without the flag takes only the first value of a list, so a forged list never widens a single-value filter.
+  - Livewire (Tailwind and Bootstrap), React and Vue. The filter meta of the API says `multiple`. The labels endpoint stores a `value => label` map for a multiple filter, and refuses a map for a single-value one.
+  - CLI: modifier `filter_multiple` in `ptah:config --column`.
+  - New Livewire methods: `removeFilterValue($field, $value)` and `toggleFilterValue($field, $value)`.
+
+### Changed
+
+Adjustments to the filter modal, found by opening it in PetPlace (Livewire) and in a React app.
+
+- **The Livewire filter modal opens and closes in the browser**, without a round trip, as React and Vue already did. It took a server answer each time; now it opens in about 70 ms. The panel comes with the page, hidden. The accordion mode is unchanged.
+- **The filter modal has a "Show results" ("Ver resultados") button in its footer** (`filters_show_results`). The ✕ alone felt odd as the way out, since the filters already apply as you type. This applies to Livewire, React and Vue.
+
+### Fixed
+
+- **Opening or closing the filters made the table flash its loading bar.** The table now ignores `toggleFilters`, and also the searches of a filter's searchdropdown, which do not change the rows.
+- **After filtering, the toolbar dropped its labels and kept only the icons, even on a wide screen.** The redraw removed the class that the label measurement adds. The toolbar now measures again after each answer.
+- **The filter modal no longer depends on the host rebuilding its CSS.** In a host whose CSS bundle predates 1.62.0, the dialog spread over the whole width and stuck to the top. Its width (56rem), height and top margin are now inline.
+- **React/Vue:**
+  - The filter dialog is as wide as the Livewire one (56rem, new modal size `4xl`).
+  - The empty strip left by the panel's title is gone.
+  - No focus ring appears around the whole dialog.
+
 ## [1.62.0] - 2026-11-26
 
 ### Added

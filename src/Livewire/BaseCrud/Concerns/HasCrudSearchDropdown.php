@@ -330,6 +330,16 @@ trait HasCrudSearchDropdown
      */
     public function selectFilterDropdownOption(string $field, mixed $value, string $label): void
     {
+        // Mais de um (colsFilterMultiple, 1.63.0): cada escolha entra na lista,
+        // com o seu rotulo, em vez de trocar a anterior.
+        if ($this->filterAllowsMultiple($this->findColByField($field)) && is_scalar($value)) {
+            $this->addFilterValue($field, (string) $value, $label);
+            $this->sdResults['filter_'.$field] = [];
+            $this->resetSdFilterDependents($field);
+
+            return;
+        }
+
         $this->filters[$field] = $value;
         // Preserve a user-chosen operator (e.g. "!=" — different from); only
         // default to "=" when none was set. Lets searchdropdown filters do
@@ -341,6 +351,92 @@ trait HasCrudSearchDropdown
         $this->sdResults['filter_'.$field] = [];
         $this->resetSdFilterDependents($field);
         $this->resetPage();
+    }
+
+    /**
+     * Takes one value out of a multiple filter (1.63.0) — the ✕ of its chip.
+     * The last one out clears the filter.
+     */
+    public function removeFilterValue(string $field, string $value): void
+    {
+        $current = $this->filters[$field] ?? null;
+        if (! is_array($current)) {
+            if ((string) $current === $value) {
+                $this->clearFilterDropdownSelection($field);
+            }
+
+            return;
+        }
+
+        $list = array_values(array_filter($this->filterValueList($current), fn (string $v) => $v !== $value));
+        $labels = is_array($this->sdFilterLabels[$field] ?? null) ? $this->sdFilterLabels[$field] : [];
+        unset($labels[$value]);
+
+        if ($list === []) {
+            $this->clearFilterDropdownSelection($field);
+
+            return;
+        }
+
+        $this->filters[$field] = $list;
+        $this->sdFilterLabels[$field] = $labels;
+        $this->resetSdFilterDependents($field);
+        $this->updatedFilters();
+    }
+
+    /**
+     * A select option of a multiple filter: on when off, off when on (1.63.0).
+     * Only values the column offers.
+     */
+    public function toggleFilterValue(string $field, string $value): void
+    {
+        $col = $this->findColByField($field);
+        if (! $this->filterAllowsMultiple($col) || ! $this->fieldIsFilterable($field)) {
+            return;
+        }
+
+        $options = array_map('strval', array_values(is_array($col['colsSelect'] ?? null) ? $col['colsSelect'] : []));
+        if (! in_array($value, $options, true)) {
+            return;
+        }
+
+        $current = $this->filterValueList((array) ($this->filters[$field] ?? []));
+        if (in_array($value, $current, true)) {
+            $this->removeFilterValue($field, $value);
+
+            return;
+        }
+
+        $this->addFilterValue($field, $value, (string) array_search($value, array_map('strval', $col['colsSelect']), true));
+    }
+
+    /** Adds one value (and its label) to a multiple filter. */
+    protected function addFilterValue(string $field, string $value, string $label): void
+    {
+        if (! $this->fieldIsFilterable($field)) {
+            return;
+        }
+
+        $current = $this->filters[$field] ?? [];
+        $list = $this->filterValueList(is_array($current) ? $current : [$current]);
+        if (! in_array($value, $list, true) && count($list) < self::FILTER_LIST_MAX) {
+            $list[] = $value;
+        }
+
+        $labels = $this->sdFilterLabels[$field] ?? [];
+        if (! is_array($labels)) {
+            // A single choice made before the column turned multiple.
+            $labels = is_scalar($current) && $current !== '' ? [(string) $current => (string) $labels] : [];
+        }
+        $labels[$value] = $label;
+
+        $this->filters[$field] = $list;
+        $this->sdFilterLabels[$field] = $labels;
+        if (empty($this->filterOperators[$field])) {
+            $this->filterOperators[$field] = '=';
+        }
+        $this->resetPage();
+        $this->updatedFilters();
     }
 
     /**
@@ -680,7 +776,10 @@ trait HasCrudSearchDropdown
                 // Cascading dropdown: restrict the child list to the parent value.
                 // Column name is config-driven → guard it like every dynamic identifier.
                 if ($filterColumn !== null && SqlIdentifier::isSafe($filterColumn)) {
-                    $q->where($filterColumn, $filterValue);
+                    // A parent filter with more than one value (1.63.0): any of them.
+                    is_array($filterValue)
+                        ? $q->whereIn($filterColumn, $this->filterValueList($filterValue))
+                        : $q->where($filterColumn, $filterValue);
                 }
 
                 // Static filters (colsSDFilters) — already normalised (and

@@ -37,6 +37,8 @@ export interface FilterMetaItem {
     depends_on: string | null;
     /** Money kept in cents (1.62.0): typed in reais ("2.160,00"), so a text input. */
     money_cents?: boolean;
+    /** More than one value (1.63.0, `colsFilterMultiple`): a select or searchdropdown filtered by IN. */
+    multiple?: boolean;
     placeholder: string | null;
     /** Where the options open: under the input or above it. */
     start_list: 'top' | 'bottom' | null;
@@ -53,8 +55,17 @@ export interface FiltersMeta {
     /** The columns whose cells offer "filter by this value". */
     cell_fields: string[];
     /** The labels of the searchdropdown values chosen (kept with the preferences). */
-    labels: Record<string, string>;
+    labels: Record<string, FilterLabel>;
 }
+
+/**
+ * The label of a searchdropdown filter: the text of the one value chosen, or
+ * — a multiple filter (1.63.0) — the text of each value, by value.
+ */
+export type FilterLabel = string | Record<string, string>;
+
+/** The most values one multiple filter keeps (BaseCrud::FILTER_LIST_MAX). */
+export const FILTER_LIST_MAX = 100;
 
 /** One row of the advanced search. */
 export interface AdvancedRow {
@@ -108,7 +119,7 @@ export async function fetchUrlFilters(crud: CrudController, f: Record<string, un
 }
 
 /** Keeps (or forgets, with null) the labels of searchdropdown filters. */
-export function storeLabels(crud: CrudController, labels: Record<string, string | null>, state: Partial<FilterListState> | null, replace = false): Promise<{ ok: boolean }> {
+export function storeLabels(crud: CrudController, labels: Record<string, FilterLabel | null>, state: Partial<FilterListState> | null, replace = false): Promise<{ ok: boolean }> {
     return crud.api.call('PUT', path(crud, '/labels'), { labels, replace, ...(state ? { state } : {}) });
 }
 
@@ -125,7 +136,7 @@ export interface FilterSessionState {
     status: 'idle' | 'loading' | 'ready' | 'error';
     meta: FiltersMeta | null;
     /** Labels of the searchdropdown values chosen, by field. */
-    labels: Record<string, string>;
+    labels: Record<string, FilterLabel>;
     error: string | null;
 }
 
@@ -179,10 +190,10 @@ export class FilterSession {
      * listing state they belong to. A failure there only costs the label on
      * the next opening: the filter itself is the listing's.
      */
-    async setLabels(changes: Record<string, string | null>, state: Partial<FilterListState> | null, replace = false): Promise<void> {
+    async setLabels(changes: Record<string, FilterLabel | null>, state: Partial<FilterListState> | null, replace = false): Promise<void> {
         const labels = replace ? {} : { ...this.state.labels };
         for (const [field, label] of Object.entries(changes)) {
-            if (label === null || label === '') {
+            if (label === null || label === '' || (typeof label === 'object' && Object.keys(label).length === 0)) {
                 delete labels[field];
             } else {
                 labels[field] = label;
@@ -249,7 +260,41 @@ function dropLinks(list: FilterListState): Partial<FilterListState> {
     return hasKeys(list.f) ? { f: {} } : {};
 }
 
-const valued = (value: unknown) => value !== undefined && value !== null && value !== '';
+const valued = (value: unknown) => value !== undefined && value !== null && value !== '' && !(Array.isArray(value) && value.length === 0);
+
+/** The values of a multiple filter, as text (a single value becomes a list of one). */
+export function valuesOf(value: unknown): string[] {
+    if (Array.isArray(value)) {
+        return value.filter((v) => v !== null && v !== undefined && v !== '' && typeof v !== 'object').map(String);
+    }
+
+    return valued(value) && typeof value !== 'object' ? [String(value)] : [];
+}
+
+/** Whether a filter takes more than one value (`colsFilterMultiple`). */
+export function isMultiple(meta: FiltersMeta | null, field: string): boolean {
+    return meta?.filters.find((item) => item.field === field)?.multiple === true;
+}
+
+/** One chosen value of a searchdropdown filter, with the text it is shown by. */
+export interface ChosenValue {
+    value: string;
+    label: string;
+}
+
+/** The values chosen in a searchdropdown filter, each with its label (the chips of the panel). */
+export function chosenValues(value: unknown, label: FilterLabel | undefined): ChosenValue[] {
+    if (Array.isArray(value)) {
+        const map = label && typeof label === 'object' ? label : {};
+
+        return valuesOf(value).map((v) => ({ value: v, label: map[v] ?? v }));
+    }
+    if (!valued(value) || typeof value === 'object') {
+        return [];
+    }
+
+    return [{ value: String(value), label: typeof label === 'string' && label !== '' ? label : String(value) }];
+}
 
 /** A filter's value (`filters.<field>`); empty removes it. */
 export function setFilterValue(crud: CrudController, field: string, value: unknown): Promise<void> {
@@ -321,12 +366,31 @@ export function dependentsOf(meta: FiltersMeta | null, field: string, seen = new
  */
 export async function pickDropdown(crud: CrudController, session: FilterSession, field: string, item: LookupItem): Promise<void> {
     const list = listOf(crud);
-    const filters = { ...list.filters, [field]: item.value };
+    const text = String(item.label ?? item.value);
+    let label: FilterLabel = text;
+    let value: unknown = item.value;
+    if (isMultiple(session.getState().meta, field)) {
+        // A multiple filter (1.63.0): the value joins the ones already chosen.
+        const values = valuesOf(list.filters[field]);
+        const current = session.getState().labels[field];
+        const map: Record<string, string> = current && typeof current === 'object' ? { ...current } : {};
+        const key = String(item.value);
+        if (!values.includes(key)) {
+            if (values.length >= FILTER_LIST_MAX) {
+                return;
+            }
+            values.push(key);
+        }
+        map[key] = text;
+        value = values;
+        label = map;
+    }
+    const filters = { ...list.filters, [field]: value };
     const operators = { ...list.operators };
     if (!operators[field]) {
         operators[field] = '=';
     }
-    const labels: Record<string, string | null> = { [field]: String(item.label ?? item.value) };
+    const labels: Record<string, FilterLabel | null> = { [field]: label };
     for (const child of dependentsOf(session.getState().meta, field)) {
         delete filters[child];
         delete operators[child];
@@ -346,7 +410,7 @@ export async function clearDropdown(crud: CrudController, session: FilterSession
     const list = listOf(crud);
     const filters = { ...list.filters };
     const operators = { ...list.operators };
-    const labels: Record<string, string | null> = { [field]: null };
+    const labels: Record<string, FilterLabel | null> = { [field]: null };
     delete filters[field];
     if (!keepOperator) {
         delete operators[field];
@@ -359,6 +423,40 @@ export async function clearDropdown(crud: CrudController, session: FilterSession
 
     await session.setLabels(labels, { ...list, filters, operators });
     await patch(crud, { filters, operators });
+}
+
+/**
+ * Removes one value of a multiple searchdropdown filter (removeFilterValue()).
+ * The last one clears the filter, and with it its dependents.
+ */
+export async function removeDropdownValue(crud: CrudController, session: FilterSession, field: string, value: string): Promise<void> {
+    const list = listOf(crud);
+    const values = valuesOf(list.filters[field]).filter((v) => v !== value);
+    if (values.length === 0) {
+        await clearDropdown(crud, session, field);
+
+        return;
+    }
+    const current = session.getState().labels[field];
+    const map: Record<string, string> = current && typeof current === 'object' ? { ...current } : {};
+    delete map[value];
+    const filters = { ...list.filters, [field]: values };
+
+    await session.setLabels({ [field]: map }, { ...list, filters });
+    await patch(crud, { filters, ...dropLinks(list) });
+}
+
+/** One option of a multiple select filter turned on or off (toggleFilterValue()). */
+export function toggleSelectValue(crud: CrudController, field: string, value: string): Promise<void> {
+    const values = valuesOf(listOf(crud).filters[field]);
+    const at = values.indexOf(value);
+    if (at >= 0) {
+        values.splice(at, 1);
+    } else if (values.length < FILTER_LIST_MAX) {
+        values.push(value);
+    }
+
+    return setFilterValue(crud, field, values);
 }
 
 /** "Clear all" of the panel (clearFilters()): the search too, the trash view stays. */
@@ -528,7 +626,7 @@ export function limitText(text: string, length: number): string {
  * its option's label and a searchdropdown the label chosen, where Livewire
  * shows the raw value.
  */
-export function buildBadges(list: FilterListState, meta: FiltersMeta | null, labels: Record<string, string>, t: FiltersWords): FilterBadge[] {
+export function buildBadges(list: FilterListState, meta: FiltersMeta | null, labels: Record<string, FilterLabel>, t: FiltersWords): FilterBadge[] {
     const items = new Map((meta?.filters ?? []).map((item) => [item.field, item]));
     const labelOf = (field: string) => items.get(field)?.label ?? field;
     const empty = meta?.sentinels.empty ?? '__ptah_empty__';
@@ -541,14 +639,21 @@ export function buildBadges(list: FilterListState, meta: FiltersMeta | null, lab
         }
         const item = items.get(field);
         let shown = String(value);
-        if (value === empty) {
+        if (Array.isArray(value)) {
+            // A multiple filter (1.63.0): every value, by its label.
+            const texts =
+                item?.kind === 'select'
+                    ? valuesOf(value).map((v) => item.options?.find((option) => option.value === v)?.label ?? v)
+                    : chosenValues(value, labels[field]).map((chosen) => chosen.label);
+            shown = texts.join(', ');
+        } else if (value === empty) {
             shown = t.isNull;
         } else if (value === filled) {
             shown = t.isNotNull;
         } else if (item?.kind === 'select') {
             shown = item.options?.find((option) => option.value === String(value))?.label ?? shown;
-        } else if (item?.kind === 'searchdropdown' && labels[field]) {
-            shown = labels[field];
+        } else if (item?.kind === 'searchdropdown' && typeof labels[field] === 'string' && labels[field] !== '') {
+            shown = labels[field] as string;
         }
         badges.push({ key: field, label: labelOf(field), value: shown });
     }
@@ -893,7 +998,7 @@ export class FilterLookup {
             this.loaded = false;
             this.set({ open: false, items: [], loading: false, active: -1 });
             // filterSearchDropdown(''): erasing the text clears the filter.
-            if (valued(listOf(this.crud).filters[this.field])) {
+            if (valued(listOf(this.crud).filters[this.field]) && !isMultiple(this.session.getState().meta, this.field)) {
                 void clearDropdown(this.crud, this.session, this.field, true);
             }
 

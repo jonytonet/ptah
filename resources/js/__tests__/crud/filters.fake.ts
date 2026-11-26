@@ -2,7 +2,7 @@ import { CrudController } from '../../core/controller';
 import { PtahApi } from '../../core/api';
 import { NO_FEATURES } from '../../core/types';
 import type { Listing, Preferences, Schema } from '../../core/types';
-import type { FiltersMeta } from '../../core/crud/filters';
+import type { FilterLabel, FiltersMeta } from '../../core/crud/filters';
 
 export interface FakeCall {
     method: string;
@@ -62,12 +62,12 @@ export const filtersMeta: FiltersMeta = {
  * Records every call; `metaFails` answers 500 to the meta, `noFilters` a
  * screen with nothing to filter.
  */
-export function fakeFilters(options: { metaFails?: boolean; noFilters?: boolean; history?: string[]; saved?: Record<string, Record<string, unknown>>; labels?: Record<string, string> } = {}) {
+export function fakeFilters(options: { metaFails?: boolean; noFilters?: boolean; history?: string[]; saved?: Record<string, Record<string, unknown>>; labels?: Record<string, FilterLabel>; multiple?: string[] } = {}) {
     const calls: FakeCall[] = [];
     let metaFails = options.metaFails ?? false;
     let history = [...(options.history ?? [])];
     let saved: Record<string, Record<string, unknown>> = { ...(options.saved ?? {}) };
-    let labels: Record<string, string> = { ...(options.labels ?? {}) };
+    let labels: Record<string, FilterLabel> = { ...(options.labels ?? {}) };
 
     const preferences = (): Preferences => ({ columns: {}, column_order: [], column_widths: {}, view_mode: 'auto', view_density: 'global', saved_filters: saved, search_history: history });
 
@@ -123,7 +123,7 @@ export function fakeFilters(options: { metaFails?: boolean; noFilters?: boolean;
             }
             const meta: FiltersMeta = options.noFilters
                 ? { ...filtersMeta, filters: [], quick_dates: { ...filtersMeta.quick_dates, enabled: false }, advanced: { ...filtersMeta.advanced, fields: [] }, cell_fields: [], labels: {} }
-                : { ...filtersMeta, labels };
+                : { ...filtersMeta, filters: filtersMeta.filters.map((item) => (options.multiple?.includes(item.field) ? { ...item, multiple: true } : item)), labels };
 
             return json(200, meta);
         }
@@ -137,7 +137,7 @@ export function fakeFilters(options: { metaFails?: boolean; noFilters?: boolean;
             return json(200, { data });
         }
         if (path === '/crud/items/filters/labels' && method === 'PUT') {
-            const changes = (body?.labels ?? {}) as Record<string, string | null>;
+            const changes = (body?.labels ?? {}) as Record<string, FilterLabel | null>;
             if (body?.replace) {
                 labels = {};
             }

@@ -121,6 +121,48 @@ describe('filter panel (Vue)', () => {
         await waitFor(() => expect(fake.lastList()?.get('filters[category_id]')).toBeNull());
     });
 
+    it('a multiple filter (1.63.0): the searchdropdown adds each value as a chip, the select toggles its options', async () => {
+        const fake = fakeFilters({ multiple: ['category_id', 'status'] });
+        const crud = await fake.controller();
+        render(PtahCrudFilterPanel, { props: { crud, locale: 'pt_BR' } });
+        const category = (await screen.findByLabelText('Categoria')) as HTMLInputElement;
+
+        fireEvent.focus(category);
+        fireEvent.click(await screen.findByRole('option', { name: /Ferramentas/ }));
+        await waitFor(() => expect(fake.lastList()?.get('filters[category_id][0]')).toBe('1'));
+        fireEvent.focus(category);
+        fireEvent.click(await screen.findByRole('option', { name: /Peças/ }));
+        await waitFor(() => expect(fake.lastList()?.get('filters[category_id][1]')).toBe('2'));
+        expect(fake.calls.filter((call) => call.path === '/crud/items/filters/labels').at(-1)?.body).toMatchObject({ labels: { category_id: { '1': 'Ferramentas', '2': 'Peças' } } });
+        // The box stays a search, not "Alterar...".
+        expect(category.getAttribute('placeholder')).not.toBe('Alterar...');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Remover o filtro Categoria: Ferramentas' }));
+        await waitFor(() => expect(fake.lastList()?.get('filters[category_id][0]')).toBe('2'));
+        expect(fake.lastList()?.get('filters[category_id][1]')).toBeNull();
+        expect(screen.getByText('Peças')).toBeTruthy();
+
+        // The select: one button per option, pressed when on.
+        const status = screen.getByRole('group', { name: 'Situação' });
+        fireEvent.click(within(status).getByRole('button', { name: 'Ativo' }));
+        await waitFor(() => expect(fake.lastList()?.get('filters[status][0]')).toBe('active'));
+        fireEvent.click(within(status).getByRole('button', { name: 'Arquivado' }));
+        await waitFor(() => expect(fake.lastList()?.get('filters[status][1]')).toBe('archived'));
+        expect(within(status).getByRole('button', { name: 'Ativo' }).getAttribute('aria-pressed')).toBe('true');
+        fireEvent.click(within(status).getByRole('button', { name: 'Ativo' }));
+        await waitFor(() => expect(fake.lastList()?.get('filters[status][0]')).toBe('archived'));
+    });
+
+    it('a multiple filter shows every label in its toolbar chip', async () => {
+        const fake = fakeFilters({ multiple: ['category_id', 'status'], labels: { category_id: { '1': 'Ferramentas', '2': 'Peças' } } });
+        const crud = await fake.controller();
+        await crud.patchList({ filters: { category_id: ['1', '2'], status: ['active', 'archived'] } });
+        render(PtahCrudFilterBadges, { props: { crud, locale: 'pt_BR' } });
+
+        expect(await screen.findByText('Ferramentas, Peças')).toBeTruthy();
+        expect(screen.getByText('Ativo, Arquivado')).toBeTruthy();
+    });
+
     it('builds the advanced search rows with and/or and removes them', async () => {
         const fake = fakeFilters();
         const crud = await fake.controller();

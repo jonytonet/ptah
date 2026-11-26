@@ -137,6 +137,7 @@ class ColumnParser
         'sortable',
         'filterable',
         'not_filterable',
+        'filter_multiple',
     ];
 
     /**
@@ -382,6 +383,7 @@ class ColumnParser
             'sortable' => array_merge($config, ['colsOrderBy' => $config['colsNomeFisico']]),
             'filterable' => array_merge($config, ['colsIsFilterable' => true]),
             'not_filterable' => array_merge($config, ['colsIsFilterable' => false]),
+            'filter_multiple' => array_merge($config, ['colsFilterMultiple' => true]),
         };
     }
 

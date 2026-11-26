@@ -20,7 +20,7 @@ final class ColumnKeys
     /** @var list<string> */
     public const KNOWN = [
         'colsAlign', 'colsCellClass', 'colsCellIcon', 'colsCellStyle',
-        'colsCss', 'colsDefaultValue', 'colsEditableForm', 'colsFilterType',
+        'colsCss', 'colsDefaultValue', 'colsEditableForm', 'colsFilterMultiple', 'colsFilterType',
         'colsFormBlock', 'colsGravar', 'colsHelpText', 'colsHelper', 'colsIsFilterable',
         'colsMask', 'colsMaskEmpty', 'colsMaskTransform', 'colsMetodoCustom', 'colsMetodoRaw', 'colsMinWidth',
         'colsNomeFisico', 'colsNomeLogico', 'colsOnChange', 'colsOperator', 'colsOrderBy',

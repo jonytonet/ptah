@@ -386,6 +386,8 @@ export function columnBlocks(sub: string, form: ConfigEntry, ctx: BuildContext):
                 { kind: 'check', key: 'colsGravar', label: t.cfg_col_cb_save, tip: tip('cols_gravar') },
                 { kind: 'check', key: 'colsRequired', label: t.cfg_col_cb_required, tip: tip('cols_required') },
                 { kind: 'check', key: 'colsIsFilterable', label: t.cfg_col_cb_filterable, tip: tip('cols_is_filterable') },
+                // 1.63.0: a select / searchdropdown filter that takes several values.
+                { kind: 'check', key: 'colsFilterMultiple', label: t.cfg_col_cb_filter_multiple, tip: tip('cols_filter_multiple') },
                 { kind: 'check', key: 'colsReadonly', label: t.cfg_col_cb_readonly, tip: tip('cols_readonly') },
                 { kind: 'text', key: 'colsDefaultValue', label: t.cfg_col_default_value, tip: tip('cols_default_value'), wide: true },
             ];

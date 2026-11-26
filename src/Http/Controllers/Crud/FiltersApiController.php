@@ -70,8 +70,14 @@ class FiltersApiController extends Controller
 
         $labels = [];
         foreach ($crud->sdFilterLabels as $field => $label) {
-            if (in_array($field, $dropdowns, true) && is_scalar($label) && (string) $label !== '') {
+            if (! in_array($field, $dropdowns, true)) {
+                continue;
+            }
+            if (is_scalar($label) && (string) $label !== '') {
                 $labels[(string) $field] = (string) $label;
+            } elseif (is_array($label) && $label !== []) {
+                // A multiple filter (1.63.0): value => label.
+                $labels[(string) $field] = (object) array_map('strval', array_filter($label, 'is_scalar'));
             }
         }
 
@@ -189,15 +195,30 @@ class FiltersApiController extends Controller
         }
 
         $crud = $this->resolver->resolve($request, $screen, restore: true);
-        $dropdowns = array_column(array_filter(
+        $definitions = array_filter(
             $this->filterDefinitions($crud, $crud->schema()),
             fn (array $f) => ! $f['custom'] && $f['kind'] === 'searchdropdown'
-        ), 'field');
+        );
+        $dropdowns = array_column($definitions, 'field');
+        $multiple = array_column(array_filter($definitions, fn (array $f) => ($f['multiple'] ?? false) === true), 'field');
 
         $errors = [];
         foreach ($labels as $field => $label) {
             if (! is_string($field) || ! in_array($field, $dropdowns, true)) {
                 $errors[(string) $field] = 'unknown';
+            } elseif (is_array($label)) {
+                // A multiple filter (1.63.0): value => label, bounded. A filter
+                // of one value keeps one text.
+                if (! in_array($field, $multiple, true) || count($label) > CrudRuntime::FILTER_LIST_MAX) {
+                    $errors[$field] = 'invalid';
+                } else {
+                    foreach ($label as $v => $l) {
+                        if (! is_scalar($l) || mb_strlen((string) $l) > 255 || mb_strlen((string) $v) > 255) {
+                            $errors[$field] = 'invalid';
+                            break;
+                        }
+                    }
+                }
             } elseif ($label !== null && (! is_scalar($label) || mb_strlen((string) $label) > 255)) {
                 $errors[$field] = 'invalid';
             }
@@ -209,7 +230,13 @@ class FiltersApiController extends Controller
 
         $current = $request->boolean('replace') ? [] : $crud->sdFilterLabels;
         foreach ($labels as $field => $label) {
-            if ($label === null || (string) $label === '') {
+            if (is_array($label)) {
+                if ($label === []) {
+                    unset($current[$field]);
+                } else {
+                    $current[$field] = array_map('strval', $label);
+                }
+            } elseif ($label === null || (string) $label === '') {
                 unset($current[$field]);
             } else {
                 $current[$field] = (string) $label;
@@ -277,6 +304,9 @@ class FiltersApiController extends Controller
                 // Money kept in cents (1.62.0): typed in reais, so a text input
                 // that takes "2.160,00" — the server converts.
                 'money_cents' => ($col['colsRenderer'] ?? '') === 'money' && filter_var($col['colsRendererCents'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                // More than one value at once (colsFilterMultiple, 1.63.0): select
+                // and searchdropdown filters keep a list, read as IN / NOT IN.
+                'multiple' => $crud->filterAllowsMultiple($col),
             ];
         }
 
@@ -310,6 +340,7 @@ class FiltersApiController extends Controller
                 'placeholder' => null,
                 'start_list' => null,
                 'money_cents' => false,
+                'multiple' => false,
             ];
         }
 

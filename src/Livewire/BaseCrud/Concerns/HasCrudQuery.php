@@ -692,6 +692,50 @@ trait HasCrudQuery
      * typed in a CPF filter) keeps the original.
      */
     /**
+     * The filter of this column takes more than one value (1.63.0):
+     * `colsFilterMultiple` on a select or searchdropdown column.
+     *
+     * @param  array<string, mixed>|null  $col
+     */
+    #[ServerOnly]
+    public function filterAllowsMultiple(?array $col): bool
+    {
+        return $col !== null
+            && in_array($col['colsTipo'] ?? '', ['select', 'searchdropdown'], true)
+            && $this->ptahBool($col['colsFilterMultiple'] ?? false);
+    }
+
+    /** Most values one multiple filter takes: the list comes from the client. */
+    public const FILTER_LIST_MAX = 100;
+
+    /**
+     * A client-sent list of filter values: scalars, not empty, not a sentinel,
+     * unique, at most FILTER_LIST_MAX.
+     *
+     * @param  array<mixed>  $raw
+     * @return list<string>
+     */
+    protected function filterValueList(array $raw): array
+    {
+        $out = [];
+        foreach ($raw as $v) {
+            if (! is_scalar($v)) {
+                continue;
+            }
+            $v = (string) $v;
+            if ($v === '' || $v === self::FILTER_EMPTY || $v === self::FILTER_FILLED || in_array($v, $out, true)) {
+                continue;
+            }
+            $out[] = $v;
+            if (count($out) >= self::FILTER_LIST_MAX) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * A money column kept in cents (colsRenderer money + colsRendererCents):
      * its filters take reais and compare cents (1.62.0).
      *
@@ -925,6 +969,41 @@ trait HasCrudQuery
                 );
 
                 continue;
+            }
+
+            // ── More than one value (colsFilterMultiple, 1.63.0) ──────────────
+            // A list chosen in a select or searchdropdown filter is "any of
+            // these" (IN); with the "different" operator, "none of these".
+            // The list comes from the client: scalars only, a bounded count,
+            // and only where the column allows it — otherwise its first value.
+            if (is_array($value)) {
+                $list = $this->filterValueList($value);
+                if ($list === []) {
+                    continue;
+                }
+                if (! $this->filterAllowsMultiple($col)) {
+                    $value = $list[0];
+                } else {
+                    $inOp = in_array($explicitOp, ['!=', '<>', 'NOT IN'], true) ? 'NOT IN' : 'IN';
+                    $relation = (string) ($col['colsRelacao'] ?? '');
+                    if ($relation !== '' && ! empty($col['colsRelacaoExibe']) && str_contains($relation, '.')) {
+                        $domainFilters[] = new FilterDTO(
+                            field: $relation,
+                            value: $list,
+                            operator: $inOp,
+                            type: 'relation',
+                            options: ['whereHas' => $relation, 'column' => $col['colsSDValor'] ?? 'id'],
+                        );
+                    } else {
+                        $listField = ($col && ! empty($col['colsSource'])) ? (string) $col['colsSource'] : (string) ($col['colsNomeFisico'] ?? $field);
+                        if (empty($col['colsSource']) && ! $this->isRealColumn($listField)) {
+                            continue;
+                        }
+                        $domainFilters[] = new FilterDTO(field: $listField, value: $list, operator: $inOp, type: 'array');
+                    }
+
+                    continue;
+                }
             }
 
             // ── Relationship column (colsRelacao + colsRelacaoExibe) ──────────

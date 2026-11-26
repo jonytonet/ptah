@@ -80,6 +80,9 @@
                             "colsEditableForm": {
                                 "description": "Read by the runtime — see docs/Configuration.md"
                             },
+                            "colsFilterMultiple": {
+                                "description": "Read by the runtime — see docs/Configuration.md"
+                            },
                             "colsFilterType": {
                                 "description": "Read by the runtime — see docs/Configuration.md"
                             },
@@ -420,6 +423,7 @@
                                         "colsCss",
                                         "colsDefaultValue",
                                         "colsEditableForm",
+                                        "colsFilterMultiple",
                                         "colsFilterType",
                                         "colsFormBlock",
                                         "colsGravar",

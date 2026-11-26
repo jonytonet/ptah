@@ -11,7 +11,7 @@
         {{-- Tamanho e espaco em style, nao em utilitarios novos: um host que
              atualizou o ptah e nao recompilou o CSS via o modal sem limite de
              largura e colado no topo (visto no PetPlace, 1.62.1). --}}
-        <div class="fixed inset-0 z-50 flex items-start justify-center p-4" style="padding-top: min(4rem, 8vh)"
+        <div class="fixed inset-0 z-50 flex items-start justify-center" style="padding: min(4rem, 8vh) 1rem 1rem"
              x-data="{ open: $wire.entangle('showFilters') }" x-show="open" x-cloak x-trap.noscroll="open"
              @keydown.escape.window="if (open) open = false" data-ptah-filter-modal>
             <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" @click="open = false" aria-hidden="true"></div>
@@ -168,12 +168,32 @@
                                 $fFilterOpts[] = ['value' => \Ptah\Livewire\BaseCrud\BaseCrud::FILTER_EMPTY, 'label' => '('.__('ptah::ui.filters_op_is_null').')'];
                                 $fFilterOpts[] = ['value' => \Ptah\Livewire\BaseCrud\BaseCrud::FILTER_FILLED, 'label' => '('.__('ptah::ui.filters_op_is_not_null').')'];
                             @endphp
-                            <x-forge-select
-                                wire:model.live="filters.{{ $cfField }}"
-                                :label="$cfLabel"
-                                :placeholder="__('ptah::ui.filters_all')"
-                                :options="$fFilterOpts"
-                            />
+                            @if ($this->filterAllowsMultiple($col))
+                                {{-- Mais de um (colsFilterMultiple, 1.63.0): cada opcao e um
+                                     chip que liga e desliga; nenhum ligado = todos. --}}
+                                @php $fSelOn = (array) ($filters[$cfField] ?? []); @endphp
+                                <div>
+                                    <p class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</p>
+                                    <div class="flex flex-wrap gap-1.5" role="group" aria-label="{{ $cfLabel }}" data-ptah-filter-multi="{{ $cfField }}">
+                                        @foreach ($col['colsSelect'] as $fOptLabel => $fOptValue)
+                                            @php $fOn = in_array((string) $fOptValue, array_map('strval', $fSelOn), true); @endphp
+                                            <button type="button"
+                                                wire:click="toggleFilterValue({{ \Illuminate\Support\Js::from($cfField) }}, {{ \Illuminate\Support\Js::from((string) $fOptValue) }})"
+                                                aria-pressed="{{ $fOn ? 'true' : 'false' }}"
+                                                class="px-2.5 py-1 text-xs rounded-md border transition-colors duration-150 {{ $fOn ? 'ptah-c-ql_btn_on' : 'ptah-c-ql_btn' }}">
+                                                {{ $fOptLabel }}
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @else
+                                <x-forge-select
+                                    wire:model.live="filters.{{ $cfField }}"
+                                    :label="$cfLabel"
+                                    :placeholder="__('ptah::ui.filters_all')"
+                                    :options="$fFilterOpts"
+                                />
+                            @endif
 
                         {{-- SearchDropdown no filtro (select2-like) --}}
                         @elseif ($cfTipo === 'searchdropdown')
@@ -194,8 +214,21 @@
                                     <option value="IS NOT NULL">{{ __('ptah::ui.filters_op_is_not_null') }}</option>
                                 </select>
 
-                                {{-- Badge de seleção ativa --}}
-                                @if ($cfFilterSelected)
+                                {{-- Badge de seleção ativa. Mais de um (colsFilterMultiple,
+                                     1.63.0): um chip por item, cada um com o seu ✕; a busca
+                                     abaixo continua para acrescentar outro. --}}
+                                @if (is_array($cfFilterSelected) && $cfFilterSelected !== [])
+                                    <div class="flex flex-wrap items-center gap-1 mb-1.5" data-ptah-filter-multi="{{ $cfField }}">
+                                        @foreach ($cfFilterSelected as $cfVal => $cfValLabel)
+                                            <span class="ptah-c-chip" wire:key="fchip-{{ $cfField }}-{{ $cfVal }}">
+                                                {{ $cfValLabel }}
+                                                <button type="button"
+                                                    wire:click="removeFilterValue({{ \Illuminate\Support\Js::from($cfField) }}, {{ \Illuminate\Support\Js::from((string) $cfVal) }})"
+                                                    class="leading-none" title="{{ __('ptah::ui.filters_remove', ['label' => $cfValLabel]) }}" aria-label="{{ __('ptah::ui.filters_remove', ['label' => $cfValLabel]) }}">&times;</button>
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @elseif ($cfFilterSelected)
                                     <div class="flex items-center gap-1 mb-1.5">
                                         <span class="ptah-c-chip">
                                             {{ $cfFilterSelected }}

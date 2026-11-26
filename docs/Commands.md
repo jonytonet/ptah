@@ -720,6 +720,7 @@ value is DISPLAYED in the listing table. See [KnownLimitations.md §5](KnownLimi
 | `sortable` | `colsOrderBy = <field>` |
 | `filterable` | `colsIsFilterable = true` |
 | `not_filterable` | `colsIsFilterable = false` |
+| `filter_multiple` | `colsFilterMultiple = true` (select / searchdropdown filter takes more than one value, 1.63.0) |
 
 **Column options (`option=value`) — full `$keyMap`:**
 

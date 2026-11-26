@@ -702,6 +702,14 @@ When a `searchdropdown` column is filterable (`colsIsFilterable: true`), its fil
 - **Selection** → `selectFilterDropdownOption($field, $value, $label)` → stores in `$filters[$field]`; the operator defaults to `=` unless one was already chosen (the panel offers `=`, `!=`, `IS NULL`, `IS NOT NULL`)
 - **Clear** → `clearFilterDropdownSelection($field)` → removes from `$filters` and resets pagination
 
+**More than one value (1.63.0).** With `colsFilterMultiple: true` on the column, each selection is
+**added** to a list instead of replacing the previous one: `$filters[$field]` becomes a list of values and
+`$sdFilterLabels[$field]` a `value => label` map. Each value shows as a chip with its own ✕
+(`removeFilterValue($field, $value)`; the last one out clears the filter). The listing filters by `IN`,
+or `NOT IN` when the operator is `!=`. A `select` column with the flag shows its options as toggle
+buttons (`toggleFilterValue($field, $value)`, only values of `colsSelect`). React and Vue behave the same
+(`multiple` in the filter meta). At most 100 values per filter.
+
 ---
 
 ### Internal flow

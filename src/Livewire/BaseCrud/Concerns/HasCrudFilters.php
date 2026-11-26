@@ -234,7 +234,7 @@ trait HasCrudFilters
         }
 
         foreach ($this->filters as $field => $value) {
-            if ($value === null || $value === '') {
+            if ($value === null || $value === '' || $value === []) {
                 continue;
             }
             $label = $labelMap[$field] ?? $field;
@@ -362,6 +362,16 @@ trait HasCrudFilters
      */
     protected function filterChipValue(string $field, mixed $value): mixed
     {
+        // Mais de um valor (1.63.0): "Agro Vida, Mundo Animal".
+        if (is_array($value)) {
+            $labels = is_array($this->sdFilterLabels[$field] ?? null) ? $this->sdFilterLabels[$field] : [];
+
+            return implode(', ', array_map(
+                fn (string $v) => (string) ($labels[$v] ?? $this->filterChipValue($field, $v)),
+                $this->filterValueList($value),
+            ));
+        }
+
         $label = $this->sdFilterLabels[$field] ?? null;
         if (is_scalar($label) && (string) $label !== '') {
             return $label;

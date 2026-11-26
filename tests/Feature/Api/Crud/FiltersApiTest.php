@@ -273,6 +273,63 @@ class FiltersApiTest extends TestCase
             ->assertOk()->assertJsonPath('state.filters.name', 'Alfa');
     }
 
+    // ── more than one value (1.63.0) ────────────────────────────────────────
+
+    private function makeMultiple(string ...$fields): void
+    {
+        $config = CrudConfig::where('model', FltItem::class)->first();
+        $data = $config->config;
+        foreach ($data['cols'] as $i => $col) {
+            if (in_array($col['colsNomeFisico'] ?? '', $fields, true)) {
+                $data['cols'][$i]['colsFilterMultiple'] = true;
+            }
+        }
+        $config->update(['config' => $data]);
+    }
+
+    #[Test]
+    public function the_meta_flags_the_filters_that_take_more_than_one_value(): void
+    {
+        $this->makeMultiple('status', 'category_id', 'amount');
+        $byField = collect($this->getJson(self::BASE.'/items/filters/meta')->assertOk()->json('filters'))->keyBy('field');
+
+        $this->assertTrue($byField['status']['multiple']);
+        $this->assertTrue($byField['category_id']['multiple']);
+        // Only a select or a searchdropdown can be multiple.
+        $this->assertFalse($byField['amount']['multiple']);
+        $this->assertFalse($byField['owner_id']['multiple']);
+        $this->assertFalse($byField['region']['multiple']);
+    }
+
+    #[Test]
+    public function a_multiple_filter_lists_by_in_and_keeps_a_label_per_value(): void
+    {
+        $this->makeMultiple('status', 'category_id');
+
+        $engine = $this->engine();
+        $engine->filters = ['status' => ['archived', 'active']];
+        $this->assertSame(['Alfa', 'Beta', 'Gama'], $engine->namesForTest());
+        $engine->filters = ['category_id' => ['2', '9']];
+        $this->assertSame(['Beta'], $engine->namesForTest());
+        $engine->filterOperators = ['category_id' => '!='];
+        $this->assertSame(['Alfa', 'Gama'], $engine->namesForTest());
+
+        // A filter of one value keeps one text, not a map.
+        $this->putJson(self::BASE.'/items/filters/labels', ['labels' => ['owner_id' => ['10' => 'Dez']]])->assertStatus(422);
+
+        $this->putJson(self::BASE.'/items/filters/labels', ['labels' => ['category_id' => ['1' => 'Um', '2' => 'Dois']]])
+            ->assertOk()
+            ->assertJsonPath('labels.category_id', ['1' => 'Um', '2' => 'Dois']);
+        $this->assertSame(['1' => 'Um', '2' => 'Dois'], $this->getJson(self::BASE.'/items/filters/meta')->json('labels.category_id'));
+
+        // An empty map forgets it; an oversized one is refused.
+        $this->putJson(self::BASE.'/items/filters/labels', ['labels' => ['category_id' => []]])->assertOk();
+        $this->assertNull($this->getJson(self::BASE.'/items/filters/meta')->json('labels.category_id'));
+        $this->putJson(self::BASE.'/items/filters/labels', ['labels' => ['category_id' => array_fill_keys(range(1, BaseCrud::FILTER_LIST_MAX + 1), 'x')]])
+            ->assertStatus(422);
+        $this->putJson(self::BASE.'/items/filters/labels', ['labels' => ['category_id' => ['1' => ['nested']]]])->assertStatus(422);
+    }
+
     // ── labels of searchdropdown filters ────────────────────────────────────
 
     #[Test]

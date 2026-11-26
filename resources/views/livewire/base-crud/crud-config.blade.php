@@ -467,6 +467,15 @@
                                             <span class="text-xs font-medium text-slate-600">{{
                                                 __('ptah::ui.cfg_col_cb_filterable') }}</span>
                                         </label>
+                                        {{-- colsFilterMultiple (1.63.0): o filtro de um select ou
+                                             searchdropdown aceita mais de um valor. --}}
+                                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                                            <input type="checkbox" wire:model="formDataField.colsFilterMultiple"
+                                                title="{{ __('ptah::ui.cfg_tip_cols_filter_multiple') }}"
+                                                class="text-primary rounded" />
+                                            <span class="text-xs font-medium ptah-c-form_lbl">{{
+                                                __('ptah::ui.cfg_col_cb_filter_multiple') }}</span>
+                                        </label>
                                         {{-- colsReadonly (1.48.0): mostrado no formulario, nunca gravado. --}}
                                         <label class="flex items-center gap-2 cursor-pointer select-none">
                                             <input type="checkbox" wire:model="formDataField.colsReadonly"
