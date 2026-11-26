@@ -6,11 +6,14 @@
         $fpModal = $this->filterPanelIsModal();
     @endphp
     @if ($fpModal)
-        <div class="fixed inset-0 z-50 flex items-start justify-center p-4 sm:pt-16" x-data x-trap.noscroll="true"
+        {{-- Tamanho e espaco em style, nao em utilitarios novos: um host que
+             atualizou o ptah e nao recompilou o CSS via o modal sem limite de
+             largura e colado no topo (visto no PetPlace, 1.62.1). --}}
+        <div class="fixed inset-0 z-50 flex items-start justify-center p-4" style="padding-top: min(4rem, 8vh)" x-data x-trap.noscroll="true"
              @keydown.escape.window="$wire.toggleFilters()" data-ptah-filter-modal>
             <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" wire:click="toggleFilters" aria-hidden="true"></div>
             <div role="dialog" aria-modal="true" aria-label="{{ __('ptah::ui.filters_title') }}"
-                 class="relative w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-lg shadow-2xl">
+                 class="relative w-full overflow-y-auto rounded-lg shadow-2xl" style="max-width: 56rem; max-height: calc(100vh - 2rem - min(4rem, 8vh))">
     @endif
     <div class="{{ $fpModal ? '' : 'mb-4' }} overflow-hidden border rounded-lg ptah-c-fp_card">
 

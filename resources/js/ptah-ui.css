@@ -1746,6 +1746,10 @@ button.pl-bell-item:disabled { cursor: default; }
 .pc-fm-panel[data-size='lg'] { max-width: 32rem; }
 .pc-fm-panel[data-size='xl'] { max-width: 36rem; }
 .pc-fm-panel[data-size='2xl'] { max-width: 42rem; }
+/* The filters dialog (1.62.1): the panel's three-column grid needs the width the Livewire one has. */
+.pc-fm-panel[data-size='4xl'] { max-width: 56rem; }
+/* The panel takes the focus when a dialog opens (focus trap): no ring around the whole dialog. */
+.pc-fm-panel:focus { outline: none; }
 .pc-fm-panel > form { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
 .pc-fm-head { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid var(--pc-hairline); }
 .pc-fm-title { margin: 0; color: var(--pc-text-strong); font-size: 1rem; font-weight: 600; line-height: 1.5rem; }
@@ -1951,6 +1955,7 @@ button.pl-bell-item:disabled { cursor: default; }
    title and the ✕, so the panel drops its frame, icon and title. */
 .pc-fm-body > .pc-fp { margin: 0; border: 0; box-shadow: none; background: transparent; }
 .pc-fm-body > .pc-fp .pc-fp-icon, .pc-fm-body > .pc-fp .pc-fp-ttl { display: none; }
+.pc-fm-body > .pc-fp .pc-fp-hd { padding: 0 0 .75rem; border-radius: 0; background: transparent; }
 .pc-fp-hd { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; padding: .875rem 1.25rem; border-bottom: 1px solid var(--pc-hairline, var(--pc-line)); border-radius: .5rem .5rem 0 0; background: var(--ptah-panel, var(--pc-bg-soft)); }
 .ptah-dark .pc-fp-hd, .dark .pc-fp-hd { background: color-mix(in srgb, var(--ptah-panel, var(--pc-bg-soft)) 60%, transparent); }
 .pc-fp-hd-side { display: flex; align-items: center; gap: .5rem; }

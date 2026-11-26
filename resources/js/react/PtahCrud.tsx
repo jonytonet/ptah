@@ -180,7 +180,7 @@ export function PtahCrud({ screen, locale, title, toolbar, controller, ...option
             {/* PTAH_CRUD_FILTER_PANEL=modal (1.62.0): the same panel in a dialog. */}
             {showFilters &&
                 (crud.features.filterModal ? (
-                    <PtahCrudModal title={filtersWords(locale).title} size="2xl" closeLabel={filtersWords(locale).close} onClose={() => setShowFilters(false)}>
+                    <PtahCrudModal title={filtersWords(locale).title} size="4xl" closeLabel={filtersWords(locale).close} onClose={() => setShowFilters(false)}>
                         <PtahCrudFilterPanel crud={crud} locale={locale} />
                     </PtahCrudModal>
                 ) : (

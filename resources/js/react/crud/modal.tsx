@@ -13,7 +13,7 @@ export interface PtahCrudModalProps {
     title: ReactNode;
     subtitle?: ReactNode;
     /** forge-modal's size: sm 24rem, md 28rem, lg 32rem, xl 36rem, 2xl 42rem. */
-    size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+    size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl';
     /** The ✕, Escape and a click on the backdrop. */
     onClose: () => void;
     /** Name of the ✕ (`modal_close`). */

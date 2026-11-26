@@ -24,7 +24,7 @@ export const PtahCrudModal = defineComponent({
         title: { type: String, required: true },
         subtitle: { type: String, default: undefined },
         /** forge-modal's size: sm 24rem, md 28rem, lg 32rem, xl 36rem, 2xl 42rem. */
-        size: { type: String as PropType<'sm' | 'md' | 'lg' | 'xl' | '2xl'>, default: 'md' },
+        size: { type: String as PropType<'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl'>, default: 'md' },
         /** Name of the ✕ (`modal_close`). */
         closeLabel: { type: String, required: true },
         role: { type: String as PropType<'dialog' | 'alertdialog'>, default: 'dialog' },
