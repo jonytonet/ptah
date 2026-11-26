@@ -5,7 +5,7 @@ import type { ControllerOptions, CrudState, Row, RowAction, Words } from '../cor
 import { followRowLink, nextViewMode } from '../core/crud/boards';
 import { fullOrder, moveColumn, saveColumnOrder } from '../core/crud/extras';
 import { cellActionWords, installCellActions } from '../core/crud/cell-actions';
-import { clearAllFilters, filterSession } from '../core/crud/filters';
+import { clearAllFilters, filterSession, filtersWords } from '../core/crud/filters';
 import {
     actionColumns,
     activeFilterCount,
@@ -28,6 +28,7 @@ import { PtahCrudCalendar, PtahCrudCards, PtahCrudKanban, PtahCrudViewSwitch, us
 import { PtahCrudColumnResizer, PtahCrudColumnsMenu, PtahCrudDetailRow, PtahCrudDetailToggle } from './crud/extras';
 import { PtahCrudFilterBadges, PtahCrudFilterPanel, PtahCrudUrlFilters } from './crud/filters';
 import { PtahConfirmDialog, PtahCrudFormModal } from './crud/form';
+import { PtahCrudModal } from './crud/modal';
 import { PtahCrudImport, PtahCrudImportButton } from './crud/import';
 import { PtahCrudAttachments, PtahCrudHistory } from './crud/records';
 import { Icon } from './icons';
@@ -176,7 +177,15 @@ export function PtahCrud({ screen, locale, title, toolbar, controller, ...option
                 showFilters={showFilters}
                 onToggleFilters={() => setShowFilters(!showFilters)}
             />
-            {showFilters && <PtahCrudFilterPanel crud={crud} locale={locale} />}
+            {/* PTAH_CRUD_FILTER_PANEL=modal (1.62.0): the same panel in a dialog. */}
+            {showFilters &&
+                (crud.features.filterModal ? (
+                    <PtahCrudModal title={filtersWords(locale).title} size="2xl" closeLabel={filtersWords(locale).close} onClose={() => setShowFilters(false)}>
+                        <PtahCrudFilterPanel crud={crud} locale={locale} />
+                    </PtahCrudModal>
+                ) : (
+                    <PtahCrudFilterPanel crud={crud} locale={locale} />
+                ))}
             <div className="pc-loadbar" aria-hidden="true">
                 {state.busy && <span />}
             </div>

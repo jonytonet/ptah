@@ -571,7 +571,7 @@ Configured in `colsHelper` of the column (legacy helpers).
 | `badge` | `<span>` with coloured background (padded, soft borders) | `colsRendererBadges` |
 | `pill` | Same as `badge` but with fully rounded borders | `colsRendererBadges` |
 | `boolean` | Badge "Yes" (green) / "No" (grey), labels configurable | `colsRendererBoolTrue`, `colsRendererBoolFalse` |
-| `money` | `R$ 1.234,56` by default (`BRL`); `USD` → `$ 1,234.56`, `EUR` → `€ 1.234,56` | `colsRendererCurrency`, `colsRendererDecimals`, `colsRendererCents` (1.57.0: the column stores cents — `123456` shows as `R$ 1.234,56` in the cell, footer total, group subtotals, print, Excel and PDF; the form still edits the stored integer) |
+| `money` | `R$ 1.234,56` by default (`BRL`); `USD` → `$ 1,234.56`, `EUR` → `€ 1.234,56` | `colsRendererCurrency`, `colsRendererDecimals`, `colsRendererCents` (1.57.0: the column stores cents — `123456` shows as `R$ 1.234,56` in the cell, footer total, group subtotals, print, Excel and PDF; the form still edits the stored integer. Since 1.62.0 the filter, the de/até range and the advanced search take reais — `2.160,00`, `2160`, `R$ 2.160,00` and `2160.00` all find `216000`; a value that is not an amount drops the filter. Link filters `?f[...]` stay raw, in cents) |
 | `link` | `<a href>` from `colsRendererLinkTemplate` (default `#`; `%value%`/`%field%` replaced with the RAW values); new tab only with `colsRendererLinkNewTab: true`. The text is `colsRendererLinkLabel` (which takes `%value%`/`%field%` too), else the value through the column's `colsMask` — `(41) 98888-7777` linking to `https://wa.me/5541988887777` (1.58.6) | `colsRendererLinkTemplate`, `colsRendererLinkLabel`, `colsRendererLinkNewTab` |
 | `image` | `<img src="[value]">` thumbnail | `colsRendererImageWidth`, `colsRendererImageHeight` |
 | `truncate` | Truncated text with full `title` on hover | `colsRendererMaxChars` |
@@ -914,6 +914,8 @@ Returned by `getRowStyle($row)`, applied via `style="{{ $this->getRowStyle($row)
 ---
 
 ## Filters
+
+> **Accordion or modal** (1.62.0): `PTAH_CRUD_FILTER_PANEL=modal` opens the filter panel in a dialog over the screen instead of unfolding it above the listing — the same filters, clear-all and saved filters. Escape, the backdrop and the ✕ close it. The default, `accordion`, is how every release before behaved. It applies to the Livewire, React and Vue screens.
 
 ### Form filters (`$filters`)
 

@@ -436,6 +436,13 @@ return [
          */
         'form_draft' => env('PTAH_CRUD_FORM_DRAFT', false),
 
+        /*
+         | Where the filters open (1.62.0): 'accordion' (default) unfolds the
+         | panel above the listing, as every release before; 'modal' opens the
+         | same panel in a dialog over the screen. Livewire, React and Vue.
+         */
+        'filter_panel' => env('PTAH_CRUD_FILTER_PANEL', 'accordion'),
+
         'cache_enabled' => true,
         'cache_ttl' => 3600,
         'per_page' => 25,

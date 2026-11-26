@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import PtahCrud from '../../vue/PtahCrud.vue';
 import PtahLayout from '../../vue/PtahLayout.vue';
-import { fakeApi } from '../fake-api';
+import { fakeApi, schema } from '../fake-api';
 
 /** The form's dialog once its fields arrived (it opens at once, loading). */
 async function readyDialog() {
@@ -77,6 +77,23 @@ describe('<PtahCrud> (Vue)', () => {
         await fireEvent.update(await screen.findByLabelText('Situação'), 'archived');
 
         await waitFor(() => expect(rowNames()).toEqual(['Beta']));
+    });
+
+    it('opens the filters in a dialog when the screen says modal (1.62.0)', async () => {
+        const before = schema.features;
+        schema.features = { ...before, filterModal: true };
+        try {
+            await mount();
+            await fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
+            const dialog = await screen.findByRole('dialog', { name: 'Filtros' });
+            await fireEvent.update(await within(dialog).findByLabelText('Situação'), 'archived');
+            await waitFor(() => expect(rowNames()).toEqual(['Beta']));
+
+            await fireEvent.keyDown(document, { key: 'Escape' });
+            await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Filtros' })).toBeNull());
+        } finally {
+            schema.features = before;
+        }
     });
 
     it('creates a record, showing the server errors on the field', async () => {

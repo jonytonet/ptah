@@ -64,6 +64,16 @@ trait HasCrudFormDraft
      */
     private bool $formDraftSuppressed = false;
 
+    /**
+     * The filters open in a dialog instead of the accordion over the listing
+     * (`ptah.crud.filter_panel` = 'modal', 1.62.0).
+     */
+    #[ServerOnly]
+    public function filterPanelIsModal(): bool
+    {
+        return config('ptah.crud.filter_panel', 'accordion') === 'modal';
+    }
+
     #[ServerOnly]
     public function formDraftEnabled(): bool
     {

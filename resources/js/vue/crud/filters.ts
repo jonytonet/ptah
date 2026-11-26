@@ -256,6 +256,7 @@ const ValueFilter = defineComponent({
             const { item, list, t, crud } = props;
             const op = list.operators[item.field] ?? '';
             const numeric = item.kind === 'number';
+            const cents = item.money_cents === true;
             const nullOp = isNullOperator(op);
 
             return h('div', [
@@ -272,10 +273,11 @@ const ValueFilter = defineComponent({
                         ? h('input', { id, type: 'date', class: 'pc-fp-in pc-fp-grow', value: text(list.filters[item.field]), onInput: (event: Event) => void setFilterValue(crud, item.field, valueOf(event)) })
                         : h('input', {
                               id,
-                              type: numeric ? 'number' : 'text',
-                              step: numeric ? 'any' : undefined,
+                              type: numeric && !cents ? 'number' : 'text',
+                              step: numeric && !cents ? 'any' : undefined,
+                              inputmode: cents ? 'decimal' : undefined,
                               class: 'pc-fp-in pc-fp-grow',
-                              placeholder: nullOp ? '—' : `${item.label}...`,
+                              placeholder: nullOp ? '—' : cents ? '0,00' : `${item.label}...`,
                               disabled: nullOp,
                               value: typed.value,
                               onInput: (event: Event) => {

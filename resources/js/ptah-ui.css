@@ -1947,6 +1947,10 @@ button.pl-bell-item:disabled { cursor: default; }
 
 /* ── Filter panel (_filter-panel.blade.php: .ptah-c-fp_*, .ptah-c-ql_btn*, .ptah-c-saved_filter_*) ── */
 .pc-fp { margin-bottom: 1rem; overflow: visible; border: 1px solid var(--pc-line); border-radius: .5rem; background: var(--pc-canvas, var(--pc-bg)); box-shadow: var(--pc-card-shadow, none); }
+/* Filters in a dialog (PTAH_CRUD_FILTER_PANEL=modal, 1.62.0): the modal has the
+   title and the ✕, so the panel drops its frame, icon and title. */
+.pc-fm-body > .pc-fp { margin: 0; border: 0; box-shadow: none; background: transparent; }
+.pc-fm-body > .pc-fp .pc-fp-icon, .pc-fm-body > .pc-fp .pc-fp-ttl { display: none; }
 .pc-fp-hd { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; padding: .875rem 1.25rem; border-bottom: 1px solid var(--pc-hairline, var(--pc-line)); border-radius: .5rem .5rem 0 0; background: var(--ptah-panel, var(--pc-bg-soft)); }
 .ptah-dark .pc-fp-hd, .dark .pc-fp-hd { background: color-mix(in srgb, var(--ptah-panel, var(--pc-bg-soft)) 60%, transparent); }
 .pc-fp-hd-side { display: flex; align-items: center; gap: .5rem; }

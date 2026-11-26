@@ -1,6 +1,18 @@
 {{-- ── Painel de Filtros ────────────────────────────────────────────── --}}
 @if ($showFilters)
-    <div class="mb-4 overflow-hidden border rounded-lg ptah-c-fp_card">
+    @php
+        // PTAH_CRUD_FILTER_PANEL=modal (1.62.0): o MESMO painel, num dialogo
+        // sobre a tela; o acordeao continua o padrao. Esc, fundo e o ✕ fecham.
+        $fpModal = $this->filterPanelIsModal();
+    @endphp
+    @if ($fpModal)
+        <div class="fixed inset-0 z-50 flex items-start justify-center p-4 sm:pt-16" x-data x-trap.noscroll="true"
+             @keydown.escape.window="$wire.toggleFilters()" data-ptah-filter-modal>
+            <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" wire:click="toggleFilters" aria-hidden="true"></div>
+            <div role="dialog" aria-modal="true" aria-label="{{ __('ptah::ui.filters_title') }}"
+                 class="relative w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-lg shadow-2xl">
+    @endif
+    <div class="{{ $fpModal ? '' : 'mb-4' }} overflow-hidden border rounded-lg ptah-c-fp_card">
 
         {{-- Clicar no cabecalho fecha o painel (1.60.3), como o botao Filtros da barra. --}}
         <div class="flex items-center justify-between px-5 py-3.5 border-b ptah-c-fp_hd cursor-pointer select-none"
@@ -17,6 +29,7 @@
                     </span>
                 @endif
             </div>
+            <div class="flex items-center">
             <x-forge-button wire:click.stop="clearFilters" flat color="danger" size="sm">
                 <x-slot name="icon">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -25,6 +38,15 @@
                 </x-slot>
                 {{ __('ptah::ui.filters_clear_all') }}
             </x-forge-button>
+            @if ($fpModal)
+                <button type="button" wire:click.stop="toggleFilters" class="ml-2 p-1 rounded-md ptah-c-fp_text hover:opacity-70"
+                    title="{{ __('ptah::ui.filters_close') }}" aria-label="{{ __('ptah::ui.filters_close') }}" data-ptah-filter-modal-close>
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            @endif
+            </div>
         </div>
 
         <div class="p-4 space-y-4">
@@ -241,6 +263,9 @@
                         @else
                             @php
                                 $isNum = $cfTipo === 'number';
+                                // Dinheiro em centavos (1.62.0): digita-se em reais, com virgula
+                                // ou ponto ("2.160,00") — um input number nem aceitaria isso.
+                                $isCents = $this->isCentsColumn($col);
                                 // Value input is disabled for the value-less NULL operators.
                                 $cfOp = $filterOperators[$cfField] ?? null;
                                 $isNullOp = in_array(strtoupper((string) $cfOp), ['IS NULL', 'IS NOT NULL'], true);
@@ -268,10 +293,10 @@
                                         <option value="IS NULL">{{ __('ptah::ui.filters_op_is_null') }}</option>
                                         <option value="IS NOT NULL">{{ __('ptah::ui.filters_op_is_not_null') }}</option>
                                     </select>
-                                    <input type="{{ $isNum ? 'number' : 'text' }}"
+                                    <input type="{{ $isNum && ! $isCents ? 'number' : 'text' }}"
                                         wire:model.live.debounce.400ms="filters.{{ $cfField }}"
-                                        placeholder="{{ $isNullOp ? '—' : $cfLabel.'...' }}"
-                                        @if($isNum) step="any" @endif
+                                        placeholder="{{ $isNullOp ? '—' : ($isCents ? '0,00' : $cfLabel.'...') }}"
+                                        @if($isCents) inputmode="decimal" @elseif($isNum) step="any" @endif
                                         @disabled($isNullOp)
                                         class="flex-1 min-w-0 text-sm rounded-md px-2.5 py-2 ptah-c-fp_input ptah-c-control disabled:opacity-50 disabled:cursor-not-allowed" />
                                 </div>
@@ -390,6 +415,8 @@
         </div>
 
     </div>
+    @if ($fpModal)
+            </div>
+        </div>
+    @endif
 @endif
-
-

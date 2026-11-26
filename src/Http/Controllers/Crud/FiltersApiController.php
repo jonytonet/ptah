@@ -274,6 +274,9 @@ class FiltersApiController extends Controller
                 'depends_on' => $dropdown && is_string($col['colsSDDependsOn'] ?? null) && $col['colsSDDependsOn'] !== '' ? $col['colsSDDependsOn'] : null,
                 'placeholder' => $dropdown && is_string($col['colsSDPlaceholder'] ?? null) && $col['colsSDPlaceholder'] !== '' ? $col['colsSDPlaceholder'] : null,
                 'start_list' => $dropdown ? (($col['colsSDStartList'] ?? 'bottom') === 'top' ? 'top' : 'bottom') : null,
+                // Money kept in cents (1.62.0): typed in reais, so a text input
+                // that takes "2.160,00" — the server converts.
+                'money_cents' => ($col['colsRenderer'] ?? '') === 'money' && filter_var($col['colsRendererCents'] ?? false, FILTER_VALIDATE_BOOLEAN),
             ];
         }
 
@@ -306,6 +309,7 @@ class FiltersApiController extends Controller
                 'depends_on' => null,
                 'placeholder' => null,
                 'start_list' => null,
+                'money_cents' => false,
             ];
         }
 

@@ -5,7 +5,7 @@ import type { ControllerOptions, GroupBreak, PtahApi, Row, RowAction } from '../
 import { followRowLink, nextViewMode } from '../core/crud/boards';
 import { fullOrder, moveColumn, saveColumnOrder } from '../core/crud/extras';
 import { cellActionWords, installCellActions } from '../core/crud/cell-actions';
-import { clearAllFilters, filterSession } from '../core/crud/filters';
+import { clearAllFilters, filterSession, filtersWords } from '../core/crud/filters';
 import {
     actionColumns,
     activeFilterCount,
@@ -26,6 +26,7 @@ import { PtahCrudConfigButton } from './admin/crud-config';
 import { PtahCrudCalendar, PtahCrudCards, PtahCrudKanban, PtahCrudViewSwitch, useResolvedView } from './crud/boards';
 import { PtahCrudColumnResizer, PtahCrudColumnsMenu, PtahCrudDetailRow, PtahCrudDetailToggle } from './crud/extras';
 import { PtahCrudFilterBadges, PtahCrudFilterPanel, PtahCrudUrlFilters } from './crud/filters';
+import { PtahCrudModal } from './crud/modal';
 import { PtahCrudImport, PtahCrudImportButton } from './crud/import';
 import { PtahCrudAttachments, PtahCrudHistory } from './crud/records';
 import { Icon } from './icons';
@@ -397,7 +398,11 @@ const TOAST_ICONS: Record<string, string> = { success: 'checkCircle', warn: 'ale
             <PtahCrudFilterBadges :crud="crud" :locale="locale" />
         </div>
 
-        <PtahCrudFilterPanel v-if="showFilters" :crud="crud" :locale="locale" />
+        <!-- PTAH_CRUD_FILTER_PANEL=modal (1.62.0): the same panel in a dialog. -->
+        <PtahCrudModal v-if="showFilters && crud.features.filterModal" :title="filtersWords(locale).title" size="2xl" :close-label="filtersWords(locale).close" @close="showFilters = false">
+            <PtahCrudFilterPanel :crud="crud" :locale="locale" />
+        </PtahCrudModal>
+        <PtahCrudFilterPanel v-else-if="showFilters" :crud="crud" :locale="locale" />
         <div class="pc-loadbar" aria-hidden="true"><span v-if="state.busy" /></div>
 
         <PtahCrudKanban v-if="view === 'kanban'" :crud="crud" :locale="locale" />

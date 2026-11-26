@@ -124,6 +124,8 @@ export interface Features {
     copyCell: boolean;
     /** Delete goes to the deleted list and the toast offers Undo (1.61.0). */
     undoDelete?: boolean;
+    /** `ptah.crud.filter_panel` = 'modal': the filters open in a dialog (1.62.0). */
+    filterModal?: boolean;
 }
 
 export const NO_FEATURES: Features = {

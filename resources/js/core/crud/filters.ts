@@ -35,6 +35,8 @@ export interface FilterMetaItem {
     options: Option[] | null;
     /** The filter this searchdropdown's options depend on (cascade). */
     depends_on: string | null;
+    /** Money kept in cents (1.62.0): typed in reais ("2.160,00"), so a text input. */
+    money_cents?: boolean;
     placeholder: string | null;
     /** Where the options open: under the input or above it. */
     start_list: 'top' | 'bottom' | null;
