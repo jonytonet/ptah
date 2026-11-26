@@ -7,6 +7,28 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.62.0] - 2026-11-26
+
+### Added
+
+- **Filters as a modal** (`PTAH_CRUD_FILTER_PANEL=modal`, config `ptah.crud.filter_panel`). The filter panel opens in a dialog over the screen instead of unfolding above the listing. It is the same panel: filters, date shortcuts, advanced search, saved filters and clear-all. Escape, the backdrop and the ✕ close it, and the focus stays inside. The default, `accordion`, is unchanged. It works in Livewire (Tailwind and Bootstrap), React and Vue; the API tells React/Vue through `features.filterModal`. A published `config/ptah.php` without the key gets it from the package.
+
+### Fixed
+
+- **A filter on a money column kept in cents now takes reais.** This applies to columns with `colsRenderer: money` and `colsRendererCents: true`. The filter compared what was typed straight with the stored cents: `2160` looked for R$ 21,60, and `2.160,00`, `1,50` and `R$ 1,50` did not even become a number.
+  - The filter, the de/até range and the advanced search now read the amount in reais and compare cents.
+  - `2.160,00`, `2160`, `2160.00` and `R$ 2.160,00` all find 216000; `1,50`, `1.50` and `R$ 1,50` find 150.
+  - Rules: with a comma and a dot, the last one is the decimal mark. A lone comma is decimal. A dot followed by 1–2 digits is decimal, and groups of 3 are thousands. The cents are computed on the string, so 0,29 is 29.
+  - Something that is not an amount drops the filter, instead of a LIKE on the column.
+  - The filter input is text with a decimal keyboard, so it accepts the comma, in Livewire, React and Vue.
+  - "Filter by this value" writes the value in reais, so it keeps finding the record and the chip shows reais.
+  - Link filters `?f[...]` stay raw, in cents, for links built by code.
+  - New helper: `Ptah\Support\MoneyInput::toCents()`.
+
+### Upgrading
+
+Nothing to run. To use the modal, set `PTAH_CRUD_FILTER_PANEL=modal` in `.env`.
+
 ## [1.61.1] - 2026-11-24
 
 ### Fixed
