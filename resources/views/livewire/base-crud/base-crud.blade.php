@@ -333,8 +333,10 @@
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
              role="dialog" aria-modal="true" aria-labelledby="ptah-shortcuts-title"
+             @if (config('ptah.crud.modal_draggable', true)) @include('ptah::partials.drag-panel', ['open' => '_showShortcuts']) @endif
              class="ptah-modal-panel relative w-full max-w-sm rounded-xl border shadow-2xl p-5">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center justify-between mb-4 @if (config('ptah.crud.modal_draggable', true)) cursor-move select-none @endif"
+                 @if (config('ptah.crud.modal_draggable', true)) @include('ptah::partials.drag-handle') @endif>
                 <h3 id="ptah-shortcuts-title" class="text-base font-semibold">
                     {{ __('ptah::ui.shortcuts_title') }}
                 </h3>

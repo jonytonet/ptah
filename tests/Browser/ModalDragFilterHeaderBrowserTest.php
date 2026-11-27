@@ -17,7 +17,9 @@ class ModalDragFilterHeaderBrowserTest extends DuskTestCase
 {
     private const NEW_BUTTON = '[\@click*="prepareCreate"]';
 
-    private const PANEL = "document.querySelector('[data-ptah-draggable]')";
+    // The visible one: since 1.63.2 every forge-modal of the screen drags
+    // (delete, history, attachments are there too, hidden).
+    private const PANEL = "[...document.querySelectorAll('[data-ptah-draggable]')].find(e => e.offsetParent !== null)";
 
     private function openNew(Browser $browser): void
     {
@@ -43,7 +45,8 @@ class ModalDragFilterHeaderBrowserTest extends DuskTestCase
             $this->openNew($browser);
 
             $start = self::panelPos($browser);
-            $header = $browser->driver->findElement(WebDriverBy::cssSelector('[data-ptah-draggable] > div:first-child h3'));
+            $browser->script('('.self::PANEL.").querySelector(':scope > div:first-child h3').setAttribute('data-test-drag-header', '');");
+            $header = $browser->driver->findElement(WebDriverBy::cssSelector('[data-test-drag-header]'));
             (new WebDriverActions($browser->driver))->clickAndHold($header)->moveByOffset(-60, 40)->release()->perform();
             $browser->pause(300);
 
@@ -59,7 +62,7 @@ class ModalDragFilterHeaderBrowserTest extends DuskTestCase
 
             // Fechar e abrir de novo: centralizado.
             $browser->script("for (const el of document.querySelectorAll('[x-data]')) { const d = window.Alpine.\$data(el); if (d && typeof d._forceClose === 'function') { d._forceClose(); break; } }");
-            $browser->waitUntil(self::PANEL.'.offsetParent === null', 10)->pause(400);
+            $browser->waitUntil('!('.self::PANEL.')', 10)->pause(400);
             $this->openNew($browser);
             $again = self::panelPos($browser);
             $this->assertEqualsWithDelta($start['x'], $again['x'], 3, 'Reaberto, o modal nao voltou ao centro.');

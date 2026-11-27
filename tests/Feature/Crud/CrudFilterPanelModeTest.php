@@ -71,9 +71,15 @@ class CrudFilterPanelModeTest extends TestCase
         $html = $this->panel();
 
         $this->assertStringContainsString('data-ptah-filter-modal', $html);
-        $this->assertMatchesRegularExpression('/role="dialog" aria-modal="true" aria-label="'.preg_quote(e(__('ptah::ui.filters_title')), '/').'"/', $html);
-        // The same panel inside: filters and clear all.
-        $this->assertStringContainsString('ptah-c-fp_card', $html);
+        // 1.63.2: forge-modal's shell — the dialog is named by its header title.
+        $this->assertMatchesRegularExpression('/role="dialog" aria-modal="true" aria-labelledby="ptah-filter-modal-title"/', $html);
+        $this->assertMatchesRegularExpression('/id="ptah-filter-modal-title"[^>]*>'.preg_quote(e(__('ptah::ui.filters_title')), '/').'</', $html);
+        // The same panel inside (filters and clear all), without its own card — like React/Vue.
+        $this->assertStringNotContainsString('ptah-c-fp_card', $html);
+        // One filter per row in the dialog (1.63.2); the accordion keeps the grid.
+        $this->assertStringContainsString('data-ptah-filter-stack', $html);
+        $this->assertMatchesRegularExpression('/<div class="grid grid-cols-1\s+gap-x-4 gap-y-3"\s+data-ptah-filter-stack\s*>/', $html);
+        $this->assertStringContainsString(e(__('ptah::ui.filters_clear_all')), $html);
         $this->assertStringContainsString('filters.name', $html);
         $this->assertStringContainsString('data-ptah-filter-modal-close', $html);
         // A footer button that says what happens (1.62.1).
@@ -104,7 +110,7 @@ class CrudFilterPanelModeTest extends TestCase
 
         try {
             $provider = new PtahServiceProvider($this->app);
-            (fn () => $this->fillMissingNestedConfig('crud', ['form_draft', 'filter_panel']))->call($provider);
+            (fn () => $this->fillMissingNestedConfig('crud', ['form_draft', 'filter_panel', 'modal_draggable']))->call($provider);
         } finally {
             putenv('PTAH_CRUD_FILTER_PANEL');
             unset($_ENV['PTAH_CRUD_FILTER_PANEL'], $_SERVER['PTAH_CRUD_FILTER_PANEL']);
@@ -112,7 +118,7 @@ class CrudFilterPanelModeTest extends TestCase
 
         $this->assertSame('modal', config('ptah.crud.filter_panel'));
         $source = (string) file_get_contents(dirname(__DIR__, 3).'/src/PtahServiceProvider.php');
-        $this->assertStringContainsString("fillMissingNestedConfig('crud', ['form_draft', 'filter_panel'])", $source);
+        $this->assertStringContainsString("fillMissingNestedConfig('crud', ['form_draft', 'filter_panel', 'modal_draggable'])", $source);
     }
 
     #[Test]

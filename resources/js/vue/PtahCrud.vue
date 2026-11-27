@@ -27,6 +27,7 @@ import { PtahCrudCalendar, PtahCrudCards, PtahCrudKanban, PtahCrudViewSwitch, us
 import { PtahCrudColumnResizer, PtahCrudColumnsMenu, PtahCrudDetailRow, PtahCrudDetailToggle } from './crud/extras';
 import { PtahCrudFilterBadges, PtahCrudFilterPanel, PtahCrudUrlFilters } from './crud/filters';
 import { PtahCrudModal } from './crud/modal';
+import { useDialogDrag } from './drag';
 import { modalButton } from '../core/crud/form';
 import { PtahCrudImport, PtahCrudImportButton } from './crud/import';
 import { PtahCrudAttachments, PtahCrudHistory } from './crud/records';
@@ -85,6 +86,9 @@ const board = computed(() => view.value === 'kanban' || view.value === 'calendar
 
 const showFilters = ref(false);
 const showKeys = ref(false);
+// The shortcuts dialog drags by its header too (1.63.2, PTAH_MODAL_DRAGGABLE).
+const keysPanel = ref<HTMLElement | null>(null);
+const keysDrag = useDialogDrag(keysPanel, () => showKeys.value);
 const searchInput = ref<HTMLInputElement | null>(null);
 
 // The shortcuts of the Livewire screen (`_hotkeys`): ? f v r / n. A detail grid has none.
@@ -400,7 +404,7 @@ const TOAST_ICONS: Record<string, string> = { success: 'checkCircle', warn: 'ale
         </div>
 
         <!-- PTAH_CRUD_FILTER_PANEL=modal (1.62.0): the same panel in a dialog. -->
-        <PtahCrudModal v-if="showFilters && crud.features.filterModal" :title="filtersWords(locale).title" size="4xl" :close-label="filtersWords(locale).close" @close="showFilters = false">
+        <PtahCrudModal v-if="showFilters && crud.features.filterModal" :title="filtersWords(locale).title" size="2xl" :close-label="filtersWords(locale).close" @close="showFilters = false">
             <PtahCrudFilterPanel :crud="crud" :locale="locale" />
             <template #footer>
                 <button type="button" :class="modalButton('primary')" @click="showFilters = false">{{ filtersWords(locale).showResults }}</button>
@@ -662,8 +666,8 @@ const TOAST_ICONS: Record<string, string> = { success: 'checkCircle', warn: 'ale
 
         <!-- The `?` list of the keyboard shortcuts. -->
         <div v-if="showKeys" class="pc-dialog-back" @mousedown.self="showKeys = false">
-            <div class="pc-dialog pc-dialog--sm" role="dialog" aria-modal="true" aria-labelledby="pc-shortcuts-title">
-                <div class="pc-dialog-head">
+            <div ref="keysPanel" class="pc-dialog pc-dialog--sm" role="dialog" aria-modal="true" aria-labelledby="pc-shortcuts-title">
+                <div :class="['pc-dialog-head', keysDrag.className]" v-on="keysDrag.on">
                     <h3 id="pc-shortcuts-title">{{ w.shortcutsTitle }}</h3>
                     <button type="button" class="pc-x" :aria-label="w.close" :title="w.close" @click="showKeys = false"><Icon name="x" :size="20" /></button>
                 </div>

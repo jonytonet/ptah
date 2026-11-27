@@ -4,8 +4,10 @@
       - title    : string
       - subtitle : string|null  (opcional, renderiza abaixo do título)
       - size     : sm | md | lg | xl | 2xl | full  (default: md)
-      - draggable: bool (default false) — arrastar o painel segurando o
-                   cabecalho (1.60.3). Volta ao centro a cada abertura.
+      - draggable: bool|null (default: config ptah.crud.modal_draggable, true
+                   desde 1.63.2) — arrastar o painel segurando o cabecalho
+                   (1.60.3). Volta ao centro a cada abertura. false desliga
+                   so este modal.
     Slots: default, footer
     Modo dual (aditivo, retrocompatível):
       (a) Escopo do pai — o pai declara o x-data e o modal apenas lê "open":
@@ -40,7 +42,7 @@
     'title'    => '',
     'subtitle' => null,
     'size'     => 'md',
-    'draggable' => false,
+    'draggable' => null,
 ])
 
 @php
@@ -53,6 +55,8 @@
         'full' => 'max-w-full mx-4',
     ];
     $sizeClass = $sizeMap[$size] ?? $sizeMap['md'];
+    // Every modal drags unless the app turned it off (PTAH_MODAL_DRAGGABLE, 1.63.2).
+    $draggable = $draggable ?? (bool) config('ptah.crud.modal_draggable', true);
 
     // Exact "wire:model" or "wire:model.<modifier>" — não "wire:modelable"
     // (Str::startsWith('wire:modelable', 'wire:model') seria falso-positivo).
@@ -103,28 +107,7 @@
         @if ($modalTitleId) aria-labelledby="{{ $modalTitleId }}" @endif
         x-trap.noscroll="open"
         @if ($draggable)
-        {{-- `translate` e nao `transform`: a transicao de abrir usa scale em
-             transform, e as duas propriedades se compoem sem brigar. O
-             ponteiro fica preso a janela, entao o cabecalho nunca sai dela. --}}
-        x-data="{
-            _dx: 0, _dy: 0, _from: null,
-            _dragStart(e) {
-                if (e.button !== 0 || e.target.closest('button, a, input, select, textarea')) return;
-                this._from = { x: e.clientX - this._dx, y: e.clientY - this._dy };
-                e.currentTarget.setPointerCapture(e.pointerId);
-            },
-            _dragMove(e) {
-                if (! this._from) return;
-                const x = Math.min(Math.max(e.clientX, 0), window.innerWidth);
-                const y = Math.min(Math.max(e.clientY, 0), window.innerHeight - 24);
-                this._dx = x - this._from.x;
-                this._dy = y - this._from.y;
-            },
-            _dragEnd() { this._from = null; },
-        }"
-        x-effect="if (! open) { _dx = 0; _dy = 0; }"
-        :style="'translate: ' + _dx + 'px ' + _dy + 'px'"
-        data-ptah-draggable
+        @include('ptah::partials.drag-panel', ['open' => 'open'])
         @endif
         class="ptah-modal-panel relative z-10 w-full {{ $sizeClass }} mx-4 flex flex-col max-h-[90vh] rounded-xl border shadow-2xl"
         x-show="open"
@@ -137,7 +120,7 @@
     >
         {{-- Header --}}
         <div class="shrink-0 flex items-center justify-between px-6 py-4 border-b ptah-c-modal_rule @if ($draggable) cursor-move select-none @endif"
-            @if ($draggable) @pointerdown="_dragStart($event)" @pointermove="_dragMove($event)" @pointerup="_dragEnd()" @pointercancel="_dragEnd()" style="touch-action: none" @endif>
+            @if ($draggable) @include('ptah::partials.drag-handle') @endif>
             <div>
                 <h3 @if ($modalTitleId) id="{{ $modalTitleId }}" @endif class="text-base font-semibold">{{ $title }}</h3>
                 @if ($subtitle)

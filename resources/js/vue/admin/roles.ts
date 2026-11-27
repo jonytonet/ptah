@@ -47,8 +47,6 @@ const screenProps = {
 const failure = (error: unknown, t: RolesWords) => (error instanceof ApiError && error.status === 403 ? t.forbidden : t.loadError);
 
 /** A small pill (the Blade screen's `ptah-c-chip`, which the kit's CSS does not have). */
-const CHIP = { display: 'inline-block', padding: '1px 8px', borderRadius: '999px', background: 'var(--pc-primary-soft)', color: 'var(--pc-text-strong)', fontSize: '12px', fontWeight: 600 };
-
 /** A listing that reloads when its search (debounced, as `wire:model.live.debounce.300ms`), page, version or `sources` change. */
 function useListing<T>(load: (search: string, page: number) => Promise<T>, t: () => RolesWords, sources: WatchSource[] = []) {
     const search = ref('');
@@ -133,7 +131,7 @@ function toggleOf<F extends object, K extends keyof F>(form: { value: F }, key: 
     return h(ForgeSwitch, { label, modelValue: form.value[key] as unknown as boolean, 'onUpdate:modelValue': (value: boolean) => (form.value = { ...form.value, [key]: value }) });
 }
 
-const section = (children: (VNode | null | false | undefined)[]) => h('div', { class: 'pa-section', style: { maxWidth: 'none' } }, children.filter(Boolean) as VNode[]);
+const section = (children: (VNode | null | false | undefined)[]) => h('div', { class: 'pa-section pa-unbound' }, children.filter(Boolean) as VNode[]);
 
 const errorOf = (error: unknown, t: RolesWords) => (error instanceof Error ? error.message : t.loadError);
 
@@ -285,13 +283,13 @@ export const PtahRoles = defineComponent({
                 },
                 {
                     'cell-name': ({ row }: { row: { row: RoleRow } }) =>
-                        h('span', { style: { display: 'inline-flex', alignItems: 'center', gap: '8px' } }, [
-                            row.row.color ? h('span', { 'aria-hidden': 'true', style: { width: '12px', height: '12px', borderRadius: '50%', background: row.row.color, display: 'inline-block' } }) : null,
+                        h('span', { class: 'pa-inline-center-g2' }, [
+                            row.row.color ? h('span', { 'aria-hidden': 'true', class: 'pa-role-dot', style: { background: row.row.color } }) : null,
                             h('strong', row.row.name),
-                            row.row.is_master ? h('span', { style: CHIP }, '👑 MASTER') : null,
+                            row.row.is_master ? h('span', { class: 'pa-role-badge' }, '👑 MASTER') : null,
                         ]),
                     'cell-actions': ({ row }: { row: { row: RoleRow } }) =>
-                        h('span', { style: { display: 'inline-flex', gap: '4px' } }, [
+                        h('span', { class: 'pa-inline-g1' }, [
                             h('button', { type: 'button', class: 'pc-icon-btn', title: t.value.managePermissionsTitle, onClick: () => void openBind(row.row) }, t.value.managePermissions),
                             h('button', { type: 'button', class: 'pc-icon-btn', title: t.value.edit, 'aria-label': `${t.value.edit} ${row.row.name}`, onClick: () => void openEdit(row.row) }, '✎'),
                             row.row.is_master
@@ -309,7 +307,7 @@ export const PtahRoles = defineComponent({
 
             return [
                 rows.value.length > 0 ? h(ForgeInput, { type: 'search', 'aria-label': tt.bindFilterLabel, placeholder: tt.bindFilter, modelValue: filter.value, 'onUpdate:modelValue': (value: string) => (filter.value = value) }) : null,
-                h('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px', maxHeight: '60vh', overflowY: 'auto' } }, [
+                h('div', { class: 'pa-role-perms' }, [
                     ...groups.map((group) => {
                         const open = filtering || expanded.value.includes(group.page);
                         const id = `ptah-bind-${group.page.replace(/\W+/g, '-')}`;
@@ -319,8 +317,7 @@ export const PtahRoles = defineComponent({
                                 'button',
                                 {
                                     type: 'button',
-                                    class: 'pc-btn',
-                                    style: { width: '100%', justifyContent: 'space-between', display: 'flex' },
+                                    class: 'pc-btn pa-role-group-toggle',
                                     'aria-expanded': open,
                                     'aria-controls': id,
                                     onClick: () => {
@@ -334,13 +331,13 @@ export const PtahRoles = defineComponent({
                             open
                                 ? h(
                                       'div',
-                                      { id, style: { display: 'flex', flexDirection: 'column', gap: '4px', paddingTop: '4px' } },
+                                      { id, class: 'pa-role-group-body' },
                                       group.rows.map(({ row, index }) =>
-                                          h('div', { key: row.id, role: 'group', 'aria-label': row.obj_label, class: 'pa-row', style: { border: '1px solid var(--pc-line)', borderRadius: '6px', padding: '6px 10px' } }, [
+                                          h('div', { key: row.id, role: 'group', 'aria-label': row.obj_label, class: 'pa-row pa-role-perm' }, [
                                               h('div', [h('div', row.obj_label), h('small', [h('code', row.obj_key), ` · ${row.obj_type}`])]),
                                               h(
                                                   'div',
-                                                  { style: { display: 'flex', gap: '12px' } },
+                                                  { class: 'pa-flex-g3' },
                                                   PERMISSION_FLAGS.map((flag) => h(ForgeCheckbox, { key: flag, label: flagLabels[flag], modelValue: row[flag], 'onUpdate:modelValue': (value: boolean) => toggle(index, flag, value) })),
                                               ),
                                           ]),
@@ -524,16 +521,15 @@ export const PtahPages = defineComponent({
                         : h('div', { 'aria-busy': pages.loading.value || undefined }, [
                               h(
                                   'ul',
-                                  { class: 'pf pf-list', style: { listStyle: 'none', margin: 0, padding: 0 } },
+                                  { class: 'pf pf-list pa-plain-list' },
                                   data.data.map((row) =>
-                                      h('li', { key: row.id, class: 'pf-list-item pa-row', style: { padding: '8px 12px', background: selected.value?.id === row.id ? 'var(--pc-primary-soft)' : undefined } }, [
+                                      h('li', { key: row.id, class: 'pf-list-item pa-row pa-role-item', 'data-selected': selected.value?.id === row.id ? 'true' : undefined }, [
                                           h(
                                               'button',
                                               {
                                                   type: 'button',
-                                                  class: 'pc-link',
+                                                  class: 'pc-link pa-role-pick',
                                                   'aria-pressed': selected.value?.id === row.id,
-                                                  style: { flex: 1, textAlign: 'left', background: 'none', border: 0, cursor: 'pointer', font: 'inherit' },
                                                   onClick: () => select(row),
                                               },
                                               [
@@ -592,7 +588,7 @@ export const PtahPages = defineComponent({
                                   {
                                       'cell-key': ({ row }: { row: { row: ObjectRow } }) => [h('div', row.row.obj_label), h('small', [h('code', row.row.obj_key)])],
                                       'cell-actions': ({ row }: { row: { row: ObjectRow } }) =>
-                                          h('span', { style: { display: 'inline-flex', gap: '4px' } }, [
+                                          h('span', { class: 'pa-inline-g1' }, [
                                               h('button', { type: 'button', class: 'pc-icon-btn', 'aria-label': `${tt.edit} ${row.row.obj_key}`, title: tt.edit, onClick: () => openObject(row.row) }, '✎'),
                                               h(
                                                   'button',
@@ -615,7 +611,7 @@ export const PtahPages = defineComponent({
 
             return h('div', { class: 'pf pc-root' }, [
                 h(ForgePageHeader, { title: tt.pagesTitle, subtitle: tt.pagesSubtitle }),
-                h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', alignItems: 'start' } }, [pagesColumn(tt), objectsColumn(tt)]),
+                h('div', { class: 'pa-role-cols' }, [pagesColumn(tt), objectsColumn(tt)]),
 
                 modal(
                     pageOpen.value,
@@ -709,7 +705,7 @@ const rich = (text: string, urls?: GuideUrls | null): (VNode | string)[] =>
 
 const step = (number: number, title: string, desc: string, action: VNode | null, children: () => (VNode | null)[]) =>
     h(ForgeCard, null, {
-        header: () => h('div', { class: 'pa-row' }, [h('div', [h('h3', { style: { margin: 0 } }, `${number}. ${title}`), h('small', desc)]), action]),
+        header: () => h('div', { class: 'pa-row' }, [h('div', [h('h3', { class: 'pa-flat' }, `${number}. ${title}`), h('small', desc)]), action]),
         default: children,
     });
 
@@ -754,17 +750,17 @@ export const PtahPermissionGuide = defineComponent({
             const perms = [w.permRead, w.permCreate, w.permEdit, w.permDelete];
 
             const overview = () =>
-                h('div', { style: { display: 'flex', flexDirection: 'column', gap: '24px' } }, [
+                h('div', { class: 'pa-col-g6' }, [
                     h(ForgeAlert, { type: 'primary', title: g.ovTitle }, () => g.ovBody.map((paragraph) => h('p', rich(paragraph)))),
                     h('section', [
                         h('h2', `1. ${g.archTitle}`),
                         h(
                             'ol',
-                            { style: { display: 'flex', flexWrap: 'wrap', gap: '12px', listStyle: 'none', padding: 0 } },
+                            { class: 'pa-role-steps' },
                             g.arch.map((node, index) =>
-                                h('li', { key: node.title, style: { display: 'flex', alignItems: 'center', gap: '12px' } }, [
+                                h('li', { key: node.title, class: 'pa-flex-center-g3' }, [
                                     h(ForgeCard, null, () =>
-                                        h('div', { style: { textAlign: 'center', maxWidth: '160px' } }, [h('div', { 'aria-hidden': 'true' }, node.icon), h('strong', node.title), h('div', [h('small', node.desc)]), h('div', [h('small', node.example)])]),
+                                        h('div', { class: 'pa-role-step' }, [h('div', { 'aria-hidden': 'true' }, node.icon), h('strong', node.title), h('div', [h('small', node.desc)]), h('div', [h('small', node.example)])]),
                                     ),
                                     index < g.arch.length - 1 ? h('span', { 'aria-hidden': 'true' }, '→') : null,
                                 ]),
@@ -775,7 +771,7 @@ export const PtahPermissionGuide = defineComponent({
                         h('h2', `2. ${g.conceptsTitle}`),
                         h(
                             'div',
-                            { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' } },
+                            { class: 'pa-role-cards' },
                             g.concepts.map((concept, index) =>
                                 h(
                                     ForgeCard,
@@ -784,8 +780,8 @@ export const PtahPermissionGuide = defineComponent({
                                         header: () => `${concept.icon} ${concept.title}`,
                                         default: () => [
                                             h('p', rich(concept.body)),
-                                            concept.chips.length > 0 ? h('p', { style: { display: 'flex', gap: '4px', flexWrap: 'wrap' } }, concept.chips.map((chip) => h('code', { key: chip }, chip))) : null,
-                                            index === 2 ? h('p', { style: { display: 'flex', gap: '12px' } }, g.permsPreview.map((perm) => h('span', { key: perm }, `✓ ${perm}`))) : null,
+                                            concept.chips.length > 0 ? h('p', { class: 'pa-flex-wrap-g1' }, concept.chips.map((chip) => h('code', { key: chip }, chip))) : null,
+                                            index === 2 ? h('p', { class: 'pa-flex-g3' }, g.permsPreview.map((perm) => h('span', { key: perm }, `✓ ${perm}`))) : null,
                                             concept.warn ? h(ForgeAlert, { type: 'warn' }, () => concept.warn) : null,
                                         ],
                                     },
@@ -798,7 +794,7 @@ export const PtahPermissionGuide = defineComponent({
                         h(ForgeCard, null, () => [
                             h(
                                 'ol',
-                                { style: { display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: 0, listStyle: 'none' } },
+                                { class: 'pa-role-flow' },
                                 g.flow.map((item) =>
                                     h('li', { key: item.text, class: 'pa-row' }, [
                                         h('span', item.text),
@@ -807,18 +803,18 @@ export const PtahPermissionGuide = defineComponent({
                                     ]),
                                 ),
                             ),
-                            h('p', { class: 'pa-row', style: { justifyContent: 'flex-start' } }, [h('strong', g.flowGranted), h('strong', g.flowDenied)]),
+                            h('p', { class: 'pa-row pa-justify-start' }, [h('strong', g.flowGranted), h('strong', g.flowDenied)]),
                         ]),
                     ]),
                 ]);
 
             const setup = () =>
-                h('div', { style: { display: 'flex', flexDirection: 'column', gap: '16px' } }, [
+                h('div', { class: 'pa-col-g4' }, [
                     h(ForgeAlert, { type: 'primary' }, () => rich(g.prereq)),
                     step(1, g.s1Title, g.s1Desc, go(links.departments, g.s1Btn), () => [h('p', g.s1Body), h('strong', `${g.s1Example}:`), h('ul', g.s1Examples.map((line) => h('li', { key: line }, rich(line))))]),
                     step(2, g.s2Title, g.s2Desc, go(links.pages, g.s2Btn), () => [
                         h('p', rich(g.s2Body)),
-                        h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' } }, [
+                        h('div', { class: 'pa-role-tiles' }, [
                             h(ForgeCard, null, {
                                 header: () => g.s2PageTitle,
                                 default: () =>
@@ -835,7 +831,7 @@ export const PtahPermissionGuide = defineComponent({
                                 default: () =>
                                     h(
                                         'ul',
-                                        { style: { listStyle: 'none', padding: 0 } },
+                                        { class: 'pa-list-bare' },
                                         [
                                             ['vendas.criar-pedido', 'button'],
                                             ['vendas.ver-desconto', 'field'],
@@ -868,23 +864,23 @@ export const PtahPermissionGuide = defineComponent({
             const code = () =>
                 h(
                     'div',
-                    { style: { display: 'flex', flexDirection: 'column', gap: '16px' } },
+                    { class: 'pa-col-g4' },
                     GUIDE_CODE.map((sample) =>
-                        h('figure', { key: sample.caption, style: { margin: 0 } }, [
+                        h('figure', { key: sample.caption, class: 'pa-flat' }, [
                             h('figcaption', [h('code', sample.caption)]),
-                            h('pre', { style: { overflowX: 'auto', padding: '16px', border: '1px solid var(--pc-line)', borderRadius: '6px' } }, [h('code', sample.code)]),
+                            h('pre', { class: 'pa-role-code' }, [h('code', sample.code)]),
                         ]),
                     ),
                 );
 
             const faq = () =>
-                h('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px' } }, [
-                    ...g.faq.map((item) => h('details', { key: item.q, class: 'pf-card', style: { padding: '12px 16px' } }, [h('summary', { style: { cursor: 'pointer', fontWeight: 600 } }, item.q), h('p', rich(item.a, links))])),
+                h('div', { class: 'pa-col-g2' }, [
+                    ...g.faq.map((item) => h('details', { key: item.q, class: 'pf-card pa-role-faq-item' }, [h('summary', { class: 'pa-role-faq-q' }, item.q), h('p', rich(item.a, links))])),
                     h(ForgeAlert, { type: 'primary', title: `🙋 ${g.helpTitle}` }, () => rich(g.helpBody)),
                 ]);
 
             return h('div', { class: 'pf pc-root' }, [
-                h(ForgePageHeader, { title: g.title, subtitle: g.subtitle }, () => h('span', { style: CHIP }, g.badge)),
+                h(ForgePageHeader, { title: g.title, subtitle: g.subtitle }, () => h('span', { class: 'pa-role-badge' }, g.badge)),
                 h(
                     ForgeTabs,
                     {
@@ -900,7 +896,7 @@ export const PtahPermissionGuide = defineComponent({
                     },
                     { overview, setup, code, faq },
                 ),
-                h('p', { style: { textAlign: 'center', fontSize: '11px', marginTop: '24px' }, title: g.versionTitle }, `ptah v${info.value.version}`),
+                h('p', { class: 'pa-role-footnote', title: g.versionTitle }, `ptah v${info.value.version}`),
             ]);
         };
     },

@@ -11,24 +11,47 @@
         {{-- Tamanho e espaco em style, nao em utilitarios novos: um host que
              atualizou o ptah e nao recompilou o CSS via o modal sem limite de
              largura e colado no topo (visto no PetPlace, 1.62.1). --}}
-        <div class="fixed inset-0 z-50 flex items-start justify-center" style="padding: min(4rem, 8vh) 1rem 1rem"
+        {{-- 1.63.2: a mesma casca do forge-modal e do dialogo de filtros do
+             React/Vue — centrado, cabecalho com titulo e ✕, so o corpo rola,
+             rodape com o botao. --}}
+        <div class="fixed inset-0 z-50 flex items-center justify-center" style="padding: 1rem"
              x-data="{ open: $wire.entangle('showFilters') }" x-show="open" x-cloak x-trap.noscroll="open"
              @keydown.escape.window="if (open) open = false" data-ptah-filter-modal>
             <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" @click="open = false" aria-hidden="true"></div>
-            <div role="dialog" aria-modal="true" aria-label="{{ __('ptah::ui.filters_title') }}"
-                 class="relative w-full overflow-y-auto rounded-lg shadow-2xl" style="max-width: 56rem; max-height: calc(100vh - 2rem - min(4rem, 8vh))">
+            <div role="dialog" aria-modal="true" aria-labelledby="ptah-filter-modal-title"
+                 @if (config('ptah.crud.modal_draggable', true)) @include('ptah::partials.drag-panel', ['open' => 'open']) @endif
+                 class="ptah-modal-panel relative flex w-full flex-col rounded-xl border shadow-2xl" style="max-width: 42rem; max-height: 90vh">
+                <div class="shrink-0 flex items-center justify-between px-6 py-4 border-b ptah-c-modal_rule @if (config('ptah.crud.modal_draggable', true)) cursor-move select-none @endif"
+                     @if (config('ptah.crud.modal_draggable', true)) @include('ptah::partials.drag-handle') @endif>
+                    <h3 id="ptah-filter-modal-title" class="text-base font-semibold">{{ __('ptah::ui.filters_title') }}</h3>
+                    <button type="button" @click="open = false"
+                        class="ml-4 shrink-0 rounded ptah-c-fp_text transition-opacity duration-150 hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                        title="{{ __('ptah::ui.filters_close') }}" aria-label="{{ __('ptah::ui.filters_close') }}" data-ptah-filter-modal-close>
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex-1 overflow-y-auto px-6 py-5" style="min-height: 0">
     @endif
-    <div class="{{ $fpModal ? '' : 'mb-4' }} overflow-hidden border rounded-lg ptah-c-fp_card">
+    <div class="{{ $fpModal ? '' : 'mb-4 overflow-hidden border rounded-lg ptah-c-fp_card' }}">
 
         {{-- Clicar no cabecalho fecha o painel (1.60.3), como o botao Filtros da barra. --}}
-        <div class="flex items-center justify-between px-5 py-3.5 border-b ptah-c-fp_hd cursor-pointer select-none"
-             @if ($fpModal) @click="open = false" @else wire:click="toggleFilters" @endif title="{{ __('ptah::ui.filters_close') }}">
+        @if ($fpModal)
+        <div class="flex items-center justify-between gap-2 pb-3">
             <div class="flex items-center gap-2">
+        @else
+        <div class="flex items-center justify-between px-5 py-3.5 border-b ptah-c-fp_hd cursor-pointer select-none"
+             wire:click="toggleFilters" title="{{ __('ptah::ui.filters_close') }}">
+            <div class="flex items-center gap-2">
+        @endif
+                @unless ($fpModal)
                 <svg class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                 </svg>
                 <span class="text-sm font-semibold ptah-c-fp_text">{{ __('ptah::ui.filters_title') }}</span>
+                @endunless
                 @if (count($textFilter ?? []) > 0)
                     <span class="text-xs px-2 py-0.5 rounded-full font-medium border ptah-c-active_badge">
                         {{ trans_choice('ptah::ui.filters_active_count', count($textFilter), ['count' => count($textFilter)]) }}
@@ -44,18 +67,10 @@
                 </x-slot>
                 {{ __('ptah::ui.filters_clear_all') }}
             </x-forge-button>
-            @if ($fpModal)
-                <button type="button" @click.stop="open = false" class="ml-2 p-1 rounded-md ptah-c-fp_text hover:opacity-70"
-                    title="{{ __('ptah::ui.filters_close') }}" aria-label="{{ __('ptah::ui.filters_close') }}" data-ptah-filter-modal-close>
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            @endif
             </div>
         </div>
 
-        <div class="p-4 space-y-4">
+        <div class="{{ $fpModal ? '' : 'p-4' }} space-y-4">
 
             {{-- Atalhos rápidos de data --}}
             @php
@@ -110,7 +125,8 @@
             {{-- Os filtros customizados moram neste mesmo grid: sem o `||`, uma tela
                  so com customFilters (nenhuma coluna filtravel) nao mostrava nenhum. --}}
             @if (!empty($filterableCfCols) || !empty($crudConfig['customFilters']))
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3">
+                {{-- No modal, um filtro por linha (1.63.2): mais facil de ler; o acordeao segue em grade. --}}
+                <div class="grid grid-cols-1 {{ $fpModal ? '' : 'sm:grid-cols-2 lg:grid-cols-3' }} gap-x-4 gap-y-3" @if ($fpModal) data-ptah-filter-stack @endif>
 
                     @foreach ($filterableCfCols as $col)
                         @php
@@ -121,7 +137,7 @@
 
                         {{-- Date: mostra De / Até com operador --}}
                         @if ($cfTipo === 'date')
-                            <div class="sm:col-span-2">
+                            <div class="{{ $fpModal ? '' : 'sm:col-span-2' }}">
                                 <label class="block text-xs font-medium mb-1.5 ptah-c-fp_label">{{ $cfLabel }}</label>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
@@ -454,15 +470,14 @@
             </template>
         </div>
 
-        @if ($fpModal)
-            {{-- Rodape do modal (1.62.1): so o ✕ para fechar era estranho — os
-                 filtros ja valem ao digitar, e o botao diz o que acontece. --}}
-            <div class="sticky bottom-0 flex flex-wrap items-center justify-end gap-2 px-5 py-3 border-t ptah-c-fp_hd" data-ptah-filter-modal-footer>
-                <x-forge-button @click="open = false" color="primary" size="sm" data-ptah-filter-modal-done>{{ __('ptah::ui.filters_show_results') }}</x-forge-button>
-            </div>
-        @endif
     </div>
     @if ($fpModal)
+                </div>
+                {{-- Rodape do modal (1.62.1): so o ✕ para fechar era estranho — os
+                     filtros ja valem ao digitar, e o botao diz o que acontece. --}}
+                <div class="shrink-0 flex flex-wrap items-center justify-end gap-3 px-6 py-4 border-t ptah-c-modal_rule" data-ptah-filter-modal-footer>
+                    <x-forge-button @click="open = false" color="primary" data-ptah-filter-modal-done>{{ __('ptah::ui.filters_show_results') }}</x-forge-button>
+                </div>
             </div>
         </div>
     @endif

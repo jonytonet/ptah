@@ -10,13 +10,12 @@
  * vue/admin/crud-config/index.ts.
  */
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import type { ComponentType, CSSProperties } from 'react';
+import type { ComponentType } from 'react';
 import { PtahApi } from '../../../core';
 import type { CrudController } from '../../../core';
 import { canConfigure, ConfigEditor, crudConfigWords, footerSummary, mainTabs } from '../../../core/admin/crud-config';
 import type { BuildContext, SaveResult } from '../../../core/admin/crud-config';
 import { ForgeAlert, ForgeButton, ForgeModal, ForgeSpinner, ForgeTabs, forgeToast } from '../../forge';
-import { mutedStyle, monoStyle, tagStyle } from './nodes';
 import { ActionsTab, ColumnsTab, FiltersTab, GeneralTab, HooksTab, JoinsTab, NotificationsTab, PermissionsTab, PreviewModal, StylesTab, TabHeader } from './tabs';
 import type { TabProps } from './tabs';
 
@@ -30,8 +29,6 @@ export interface PtahCrudConfigProps {
     onSaved?: (result: SaveResult) => void;
     onClose?: () => void;
 }
-
-const footStyle: CSSProperties = { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, width: '100%' };
 
 const TABS: Record<string, ComponentType<TabProps>> = {
     cols: ColumnsTab,
@@ -88,8 +85,8 @@ export function PtahCrudConfig({ api, screen, locale, onSaved, onClose }: PtahCr
                 subtitle={t.cfg_btn_title}
                 footer={
                     ready ? (
-                        <div style={footStyle}>
-                            <span style={{ ...mutedStyle, marginRight: 'auto' }}>{footerSummary(state.document!, t)}</span>
+                        <div className="pa-cc-modal-foot">
+                            <span className="pa-cc-foot-note">{footerSummary(state.document!, t)}</span>
                             <ForgeButton flat size="sm" loading={state.busy === 'preview'} disabled={state.busy !== null && state.busy !== 'preview'} onClick={() => void editor.openPreview()}>
                                 {t.cfg_preview_btn}
                             </ForgeButton>
@@ -104,12 +101,12 @@ export function PtahCrudConfig({ api, screen, locale, onSaved, onClose }: PtahCr
                 }
             >
                 {state.status === 'loading' && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div className="pa-flex-center-g2">
                         <ForgeSpinner size="sm" label={t.loading} /> {t.loading}
                     </div>
                 )}
                 {(state.status === 'error' || state.status === 'forbidden') && (
-                    <div style={{ display: 'grid', gap: 12 }}>
+                    <div className="pa-grid-g3">
                         <ForgeAlert color="danger">{state.error}</ForgeAlert>
                         {state.status === 'error' && (
                             <div>
@@ -121,10 +118,10 @@ export function PtahCrudConfig({ api, screen, locale, onSaved, onClose }: PtahCr
                     </div>
                 )}
                 {ready && ctx && (
-                    <div style={{ display: 'grid', gap: 16 }}>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-                            <code style={{ ...monoStyle, color: 'var(--pc-text-muted)' }}>{state.payload!.model}</code>
-                            <span style={tagStyle}>{state.payload!.route !== '' ? `/${state.payload!.route}` : t.globalScope}</span>
+                    <div className="pa-grid-g4">
+                        <div className="pa-flex-wrap-center-g2">
+                            <code className="pa-mono pa-text-muted">{state.payload!.model}</code>
+                            <span className="pa-tag">{state.payload!.route !== '' ? `/${state.payload!.route}` : t.globalScope}</span>
                         </div>
                         {state.error && <ForgeAlert color="danger">{state.error}</ForgeAlert>}
                         {state.saveError && <ForgeAlert color="danger">{state.saveError}</ForgeAlert>}
@@ -137,7 +134,7 @@ export function PtahCrudConfig({ api, screen, locale, onSaved, onClose }: PtahCr
                                     id: tab.id,
                                     label: tab.count === null ? tab.label : `${tab.label} (${tab.count})`,
                                     content: (
-                                        <div style={{ display: 'grid', gap: 16 }}>
+                                        <div className="pa-grid-g4">
                                             <TabHeader title={tab.title} description={tab.description} />
                                             <Tab editor={editor} state={state} t={t} ctx={ctx} />
                                         </div>
@@ -166,7 +163,7 @@ export function PtahCrudConfig({ api, screen, locale, onSaved, onClose }: PtahCr
                         </>
                     }
                 >
-                    <p style={{ margin: 0 }}>{state.confirm.message}</p>
+                    <p className="pa-flat">{state.confirm.message}</p>
                 </ForgeModal>
             )}
 

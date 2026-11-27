@@ -7,6 +7,45 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.63.2] - 2026-11-27
+
+The last differences between the stacks, after the 1.63.1 review.
+
+### Added
+
+- **Every dialog drags by its header, in every stack** (`PTAH_MODAL_DRAGGABLE`, config `ptah.crud.modal_draggable`, default `true`). A dragged dialog goes back to the centre on each opening.
+  - **Livewire (Tailwind and Bootstrap):** `forge-modal` drags by default; until now only the form dialog asked for it. One modal can still pass `:draggable="false"`. The filter dialog and the shortcuts list drag too. The Alpine code lives in `ptah::partials.drag-panel` and `ptah::partials.drag-handle`.
+  - **React and Vue:** the CRUD dialogs (history, attachments, import, filters, delete confirmation), the form, ForgeModal of the admin screens and the shortcuts list. The setting reaches them as `<html data-ptah-modal-drag>`, written by the layouts. The hooks are `react/drag.ts` and `vue/drag.ts`.
+  - `false` turns it off everywhere. A published `config/ptah.php` without the key gets it from the package.
+- **The React/Vue form dialog drags by its header**, as the Livewire one (`_modal-form`, forge-modal `draggable`) already did. The logic is framework-free, in `core/drag.ts`.
+  - A press on a button or field of the header is not a drag.
+  - The header never leaves the window.
+  - The panel no longer clips (`overflow: hidden`). Once moved, its `translate` makes it the containing block of the floating lists, and a clip there would hide them again.
+
+### Changed
+
+- **The Livewire filter modal (`PTAH_CRUD_FILTER_PANEL=modal`) has the same shell as the React/Vue one.**
+  - It is centred and uses forge-modal's header: title and ✕.
+  - Only the body scrolls, and the footer holds a normal-size "Show results" button.
+  - Inside the dialog the panel drops its own card (border, icon, title) and keeps the count and "Clear all".
+  - The dialog is named by its title (`aria-labelledby`).
+- **In the filter modal, one filter per row** (Livewire, React and Vue). Easier to read than the three-column grid; the dialog is narrower to match, 42rem instead of 56rem. The accordion keeps the grid.
+- **Admin screens in React and Vue: classes instead of inline styles.** About 100 per stack became `pa-*` classes in `ptah-ui.css`, with the Livewire values in rem and with the tokens. Text of 10–12px is now .75rem.
+  - The roles, users, access, company, menu, AI and crud-config screens are affected.
+  - Only values computed at runtime stay inline: colours from the data, and the CSS that the user types for a preview.
+- **React/Vue forge kit:**
+  - ForgeAlert shows the icon of its colour (info, success, danger, warn), as forge-alert does.
+  - ForgeEmpty shows the 64px circle with the icon.
+  - ForgePageHeader's "back" is the 36px square of forge-page-header.
+- **Admin toolbars:**
+  - The ForgeButton ("+ New role") has the height of the search next to it.
+  - A filter field (the role filter of the users screen) sits on the same row, with its label beside an 11rem control, as in Livewire.
+- **The colour field (ForgeInput `type="color"`)** shows the swatch. It was squashed to a line.
+
+### Fixed
+
+- **React/Vue: Escape on a searchdropdown of the form, while its list was still loading, closed the whole form.** While the search was on its way the field did not handle the key, so it reached the form. Now the first Escape closes only the list and drops the pending search, as in Livewire.
+
 ## [1.63.1] - 2026-11-27
 
 ### Added

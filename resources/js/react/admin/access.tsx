@@ -86,18 +86,6 @@ function Confirm({ question, t, onConfirm, onClose }: { question: { text: string
     );
 }
 
-const chipStyle = (master: boolean) => ({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4,
-    padding: '2px 8px',
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: 500,
-    border: '1px solid var(--pc-line)',
-    color: master ? 'var(--pc-warn, inherit)' : 'var(--pc-primary, inherit)',
-});
-
 // ── Users ───────────────────────────────────────────────────────────────────
 
 const blankForm = (sendLink: boolean): AccessUserForm => ({ name: '', email: '', password: '', send_link: sendLink });
@@ -291,7 +279,7 @@ export function PtahUserPermissions({ api, locale }: AccessScreenProps) {
                             {listing.data.map((user) => (
                                 <tr key={user.id}>
                                     <td>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                        <div className="pa-flex-center-g3">
                                             <ForgeAvatar text={user.name} size="sm" />
                                             <div>
                                                 <div>{user.name}</div>
@@ -300,10 +288,10 @@ export function PtahUserPermissions({ api, locale }: AccessScreenProps) {
                                         </div>
                                     </td>
                                     <td>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                        <div className="pa-flex-wrap-g1">
                                             {user.roles.length === 0 && <small>{t.noRoles}</small>}
                                             {user.roles.map((chip) => (
-                                                <span key={chip.id} style={chipStyle(chip.master)} data-master={chip.master || undefined}>
+                                                <span key={chip.id} className="pa-role-chip" data-master={chip.master || undefined}>
                                                     {chip.name}
                                                     {chip.master && <small>({t.master})</small>}
                                                     {chip.company && <small>· {chip.company}</small>}

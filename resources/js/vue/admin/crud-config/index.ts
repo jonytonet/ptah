@@ -10,16 +10,13 @@
  * react/admin/crud-config/index.tsx.
  */
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
-import type { Component, CSSProperties, PropType } from 'vue';
+import type { Component, PropType } from 'vue';
 import { PtahApi } from '../../../core';
 import type { CrudController } from '../../../core';
 import { canConfigure, ConfigEditor, crudConfigWords, footerSummary, mainTabs } from '../../../core/admin/crud-config';
 import type { BuildContext, EditorState, SaveResult } from '../../../core/admin/crud-config';
 import { ForgeAlert, ForgeButton, ForgeModal, ForgeSpinner, ForgeTabs, forgeToast } from '../../forge';
-import { monoStyle, mutedStyle, tagStyle } from './nodes';
 import { ActionsTab, ColumnsTab, FiltersTab, GeneralTab, HooksTab, JoinsTab, NotificationsTab, PermissionsTab, previewModal, StylesTab, tabHeader } from './tabs';
-
-const footStyle: CSSProperties = { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', width: '100%' };
 
 const TABS: Record<string, Component> = {
     cols: ColumnsTab,
@@ -89,18 +86,18 @@ export const PtahCrudConfig = defineComponent({
                     { modelValue: true, 'onUpdate:modelValue': (value: boolean) => !value && close(), size: 'full', title: w.title, subtitle: w.cfg_btn_title },
                     {
                         default: () => [
-                            s.status === 'loading' ? h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } }, [h(ForgeSpinner, { size: 'sm', label: w.loading }), ` ${w.loading}`]) : null,
+                            s.status === 'loading' ? h('div', { class: 'pa-flex-center-g2' }, [h(ForgeSpinner, { size: 'sm', label: w.loading }), ` ${w.loading}`]) : null,
                             s.status === 'error' || s.status === 'forbidden'
-                                ? h('div', { style: { display: 'grid', gap: '12px' } }, [
+                                ? h('div', { class: 'pa-grid-g3' }, [
                                       h(ForgeAlert, { color: 'danger' }, () => s.error),
                                       s.status === 'error' ? h('div', [h(ForgeButton, { size: 'sm', onClick: () => void editor.load() }, () => w.retry)]) : null,
                                   ])
                                 : null,
                             ready && ctx
-                                ? h('div', { style: { display: 'grid', gap: '16px' } }, [
-                                      h('div', { style: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' } }, [
-                                          h('code', { style: { ...monoStyle, color: 'var(--pc-text-muted)' } }, s.payload!.model),
-                                          h('span', { style: tagStyle }, s.payload!.route !== '' ? `/${s.payload!.route}` : w.globalScope),
+                                ? h('div', { class: 'pa-grid-g4' }, [
+                                      h('div', { class: 'pa-flex-wrap-center-g2' }, [
+                                          h('code', { class: 'pa-mono pa-text-muted' }, s.payload!.model),
+                                          h('span', { class: 'pa-tag' }, s.payload!.route !== '' ? `/${s.payload!.route}` : w.globalScope),
                                       ]),
                                       s.error ? h(ForgeAlert, { color: 'danger' }, () => s.error) : null,
                                       s.saveError ? h(ForgeAlert, { color: 'danger' }, () => s.saveError) : null,
@@ -113,7 +110,7 @@ export const PtahCrudConfig = defineComponent({
                                           Object.fromEntries(
                                               tabs.map((tab) => [
                                                   tab.id,
-                                                  () => h('div', { style: { display: 'grid', gap: '16px' } }, [tabHeader(tab.title, tab.description), h(TABS[tab.id], { editor, state: s, t: w, ctx })]),
+                                                  () => h('div', { class: 'pa-grid-g4' }, [tabHeader(tab.title, tab.description), h(TABS[tab.id], { editor, state: s, t: w, ctx })]),
                                               ]),
                                           ),
                                       ),
@@ -122,8 +119,8 @@ export const PtahCrudConfig = defineComponent({
                         ],
                         footer: ready
                             ? () =>
-                                  h('div', { style: footStyle }, [
-                                      h('span', { style: { ...mutedStyle, marginRight: 'auto' } }, footerSummary(s.document!, w)),
+                                  h('div', { class: 'pa-cc-modal-foot' }, [
+                                      h('span', { class: 'pa-cc-foot-note' }, footerSummary(s.document!, w)),
                                       h(ForgeButton, { flat: true, size: 'sm', loading: s.busy === 'preview', disabled: s.busy !== null && s.busy !== 'preview', onClick: () => void editor.openPreview() }, () => w.cfg_preview_btn),
                                       h(ForgeButton, { flat: true, color: 'light', size: 'sm', onClick: () => props.onClose?.() }, () => w.cfg_footer_cancel),
                                       h(ForgeButton, { size: 'sm', loading: s.busy === 'save', disabled: s.busy !== null && s.busy !== 'save', onClick: () => void save() }, () => w.cfg_footer_save),
@@ -136,7 +133,7 @@ export const PtahCrudConfig = defineComponent({
                           ForgeModal,
                           { modelValue: true, 'onUpdate:modelValue': (value: boolean) => !value && editor.confirmNo(), size: 'sm', title: w.confirmTitle },
                           {
-                              default: () => h('p', { style: { margin: 0 } }, s.confirm!.message),
+                              default: () => h('p', { class: 'pa-flat' }, s.confirm!.message),
                               footer: () => [
                                   h(ForgeButton, { flat: true, color: 'light', size: 'sm', onClick: () => editor.confirmNo() }, () => w.cfg_footer_cancel),
                                   h(ForgeButton, { color: 'danger', size: 'sm', onClick: () => void editor.confirmYes() }, () => w.confirmYes),

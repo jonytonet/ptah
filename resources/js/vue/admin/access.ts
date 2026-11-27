@@ -67,18 +67,6 @@ const confirmModal = (question: { text: string; run: () => void } | null, t: Acc
         },
     );
 
-const chipStyle = (master: boolean) => ({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '4px',
-    padding: '2px 8px',
-    borderRadius: '999px',
-    fontSize: '12px',
-    fontWeight: 500,
-    border: '1px solid var(--pc-line)',
-    color: master ? 'var(--pc-warn, inherit)' : 'var(--pc-primary, inherit)',
-});
-
 const stateBox = (text: string) => h('div', { class: 'pf pc-state', role: 'status' }, text);
 
 /** A ForgeInput bound to a key of a reactive object. */
@@ -257,16 +245,16 @@ export const PtahUserPermissions = defineComponent({
                         ...data.data.map((user) =>
                             h('tr', { key: user.id }, [
                                 h('td', [
-                                    h('div', { style: { display: 'flex', alignItems: 'center', gap: '12px' } }, [
+                                    h('div', { class: 'pa-flex-center-g3' }, [
                                         h(ForgeAvatar, { text: user.name, size: 'sm' }),
                                         h('div', [h('div', user.name), h('small', user.email)]),
                                     ]),
                                 ]),
                                 h('td', [
-                                    h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '4px' } }, [
+                                    h('div', { class: 'pa-flex-wrap-g1' }, [
                                         user.roles.length === 0 ? h('small', w.noRoles) : null,
                                         ...user.roles.map((chip) =>
-                                            h('span', { key: chip.id, style: chipStyle(chip.master), 'data-master': chip.master || undefined }, [
+                                            h('span', { key: chip.id, class: 'pa-role-chip', 'data-master': chip.master || undefined }, [
                                                 chip.name,
                                                 chip.master ? h('small', `(${w.master})`) : null,
                                                 chip.company ? h('small', `· ${chip.company}`) : null,

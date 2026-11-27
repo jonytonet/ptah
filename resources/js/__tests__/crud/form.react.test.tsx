@@ -74,6 +74,20 @@ describe('form parity (React)', () => {
         expect(document.body.style.overflow).toBe('');
     });
 
+    it('Escape on a searchdropdown still loading closes its list, not the form (1.63.2)', async () => {
+        await mount({ holdLookup: true });
+        const dialog = await openNew();
+        const region = within(dialog).getByLabelText('Região') as HTMLInputElement;
+
+        // ArrowDown searches at once; the server never answers, so the list stays "loading".
+        fireEvent.keyDown(region, { key: 'ArrowDown' });
+        await waitFor(() => expect(region.getAttribute('aria-expanded')).toBe('true'));
+        fireEvent.keyDown(region, { key: 'Escape' });
+
+        await waitFor(() => expect(region.getAttribute('aria-expanded')).toBe('false'));
+        expect(screen.getByRole('dialog')).toBeTruthy();
+    });
+
     it('asks before discarding changes — Cancel, Escape, ✕ and a click outside', async () => {
         const { crud } = await mount();
         const dialog = await openNew();

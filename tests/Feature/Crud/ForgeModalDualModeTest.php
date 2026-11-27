@@ -26,7 +26,14 @@ class ForgeModalDualModeTest extends TestCase
         $html = Blade::render('<x-forge-modal title="X">body</x-forge-modal>');
 
         $this->assertStringContainsString('x-show="open"', $html);
-        $this->assertStringNotContainsString('x-data', $html);
+        // No scope of its own declares `open` — the parent's is read. (Since
+        // 1.63.2 the panel has the drag's x-data, which declares no `open`.)
+        $this->assertDoesNotMatchRegularExpression('/x-data="\{[^"]*\bopen\s*:/', $html);
+        $this->assertStringNotContainsString('entangle', $html);
+
+        // With the drag off, nothing of its own at all, as before.
+        $off = Blade::render('<x-forge-modal title="X" :draggable="false">body</x-forge-modal>');
+        $this->assertStringNotContainsString('x-data', $off);
     }
 
     #[Test]
@@ -82,7 +89,7 @@ class ForgeModalDualModeTest extends TestCase
     {
         $html = Blade::render('<x-forge-modal wire:modelable="x" title="X">body</x-forge-modal>');
 
-        $this->assertStringNotContainsString('x-data', $html);
+        $this->assertDoesNotMatchRegularExpression('/x-data="\{[^"]*\bopen\s*:/', $html);
         $this->assertStringNotContainsString('entangle', $html);
     }
 }

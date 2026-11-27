@@ -60,11 +60,9 @@ const icon = (d: string) =>
 const EDIT_ICON = 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z';
 const TRASH_ICON = 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16';
 
-const pill = (shade: string, text: VNodeChild) => h('span', { class: 'pf pf-badge', 'data-color': shade }, [h('span', { class: 'pf-badge-mark', style: { position: 'static' } }, [text])]);
+const pill = (shade: string, text: VNodeChild) => h('span', { class: 'pf pf-badge', 'data-color': shade }, [h('span', { class: 'pf-badge-mark pa-badge-static' }, [text])]);
 
 // ── Provider configurations ─────────────────────────────────────────────────
-
-const guideCard = { border: '1px solid var(--pc-line)', borderRadius: '8px', padding: '12px', background: 'var(--pc-bg)' };
 
 export const PtahAiModels = defineComponent({
     name: 'PtahAiModels',
@@ -209,12 +207,12 @@ export const PtahAiModels = defineComponent({
             for (const row of rows) {
                 body.push(
                     h('tr', { key: row.id }, [
-                        h('td', [h('strong', row.name), row.notes ? h('p', { style: { margin: 0, fontSize: '12px', color: 'var(--pc-text-muted)' } }, shortNotes(row.notes)) : null]),
+                        h('td', [h('strong', row.name), row.notes ? h('p', { class: 'pa-muted' }, shortNotes(row.notes)) : null]),
                         h('td', [pill('light', row.provider_label)]),
-                        h('td', { style: { fontFamily: 'monospace', fontSize: '12px' } }, row.model),
+                        h('td', { class: 'pa-mono' }, row.model),
                         h('td', { class: 'pc-align-center' }, [pill(row.is_active ? 'success' : 'light', row.is_active ? w.active : w.inactive)]),
                         h('td', { class: 'pc-align-center' }, [row.is_default ? pill('primary', `★ ${w.isDefault}`) : h('button', { type: 'button', class: 'pc-link', onClick: () => void makeDefault(row.id) }, w.setDefault)]),
-                        h('td', { class: 'pc-align-right', style: { whiteSpace: 'nowrap' } }, [
+                        h('td', { class: 'pc-align-right pa-nowrap' }, [
                             h('button', { type: 'button', class: 'pc-icon-btn', title: w.edit, 'aria-label': w.edit, onClick: () => void openEdit(row.id) }, [icon(EDIT_ICON)]),
                             h('button', { type: 'button', class: 'pc-icon-btn pc-icon-btn--danger', title: w.delete, 'aria-label': w.delete, onClick: () => (deleteId.value = row.id) }, [icon(TRASH_ICON)]),
                         ]),
@@ -225,26 +223,26 @@ export const PtahAiModels = defineComponent({
             return h('div', { class: 'pf pc-root' }, [
                 h(ForgePageHeader, { title: w.title, subtitle: w.subtitle }),
 
-                h('div', { style: { border: '1px solid var(--pc-line)', borderRadius: '8px', padding: '16px', marginBottom: '16px', background: 'var(--pc-primary-soft, var(--pc-bg-soft))' } }, [
-                    h('button', { type: 'button', class: 'pc-th-btn', 'aria-expanded': guide.value ? 'true' : 'false', 'aria-controls': guideId, style: { width: '100%', justifyContent: 'space-between' }, onClick: () => (guide.value = !guide.value) }, [
+                h('div', { class: 'pa-ai-guide' }, [
+                    h('button', { type: 'button', class: 'pc-th-btn pa-ai-guide-toggle', 'aria-expanded': guide.value ? 'true' : 'false', 'aria-controls': guideId, onClick: () => (guide.value = !guide.value) }, [
                         h('span', w.guideTitle),
                         h('span', { 'aria-hidden': 'true' }, guide.value ? '▲' : '▼'),
                     ]),
                     guide.value
-                        ? h('div', { id: guideId, style: { marginTop: '12px' } }, [
+                        ? h('div', { id: guideId, class: 'pa-ai-guide-body' }, [
                               h('p', w.guideIntro),
                               h(
                                   'div',
-                                  { style: { display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' } },
+                                  { class: 'pa-ai-guide-grid' },
                                   AI_GUIDE.map((card) =>
-                                      h('div', { key: card.name, style: guideCard }, [
-                                          h('p', { style: { fontWeight: 600, margin: 0 } }, card.name),
-                                          h('p', { style: { fontSize: '12px', margin: '4px 0 0' } }, w[card.hint]),
-                                          h('p', { style: { fontSize: '12px', margin: '4px 0 0', fontFamily: 'monospace' } }, card.name.startsWith('Ollama') ? `${card.url} — ${w.apiKeyOptional}` : card.url),
+                                      h('div', { key: card.name, class: 'pa-ai-guide-item' }, [
+                                          h('p', { class: 'pa-ai-guide-name' }, card.name),
+                                          h('p', { class: 'pa-ai-guide-text' }, w[card.hint]),
+                                          h('p', { class: 'pa-ai-guide-url' }, card.name.startsWith('Ollama') ? `${card.url} — ${w.apiKeyOptional}` : card.url),
                                       ]),
                                   ),
                               ),
-                              h('p', { style: { fontSize: '12px' } }, w.guideNote),
+                              h('p', { class: 'pa-text-xs' }, w.guideNote),
                           ])
                         : null,
                 ]),
@@ -361,51 +359,25 @@ export const PtahAiModels = defineComponent({
 
 // ── Chat ────────────────────────────────────────────────────────────────────
 
-type Style = Record<string, string | number>;
-
-/** The look of the widget, on the kit's tokens (no chat classes in ptah-ui.css yet). */
-export const chatStyles: Record<string, Style> = {
-    root: { position: 'fixed', right: '24px', bottom: '24px', zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' },
-    panel: { position: 'relative', width: '384px', maxWidth: 'calc(100vw - 32px)', maxHeight: 'min(560px, calc(100vh - 100px))', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: '16px', border: '1px solid var(--pc-line)', background: 'var(--pc-bg)', color: 'var(--pc-text)', boxShadow: 'var(--pc-shadow)' },
-    panelExpanded: { position: 'fixed', inset: '0', width: '100%', maxWidth: 'none', maxHeight: 'none', borderRadius: '0' },
-    head: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--pc-primary)', color: '#fff', flexShrink: 0 },
-    headBtn: { background: 'transparent', border: '0', color: 'inherit', cursor: 'pointer', padding: '4px', borderRadius: '4px', fontSize: '16px', lineHeight: 1 },
-    bar: { display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderBottom: '1px solid var(--pc-line)', flexShrink: 0 },
-    list: { flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '12px' },
-    user: { alignSelf: 'flex-end', maxWidth: '85%', borderRadius: '16px 4px 16px 16px', background: 'var(--pc-primary)', color: '#fff', padding: '8px 12px', fontSize: '14px', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' },
-    bot: { alignSelf: 'flex-start', maxWidth: '85%', borderRadius: '4px 16px 16px 16px', background: 'var(--pc-bg-soft)', padding: '8px 12px', fontSize: '14px', overflowWrap: 'anywhere' },
-    chip: { display: 'inline-flex', alignItems: 'center', gap: '4px', borderRadius: '6px', border: '1px solid var(--pc-line)', padding: '2px 6px', fontSize: '12px', maxWidth: '100%' },
-    error: { borderRadius: '8px', border: '1px solid var(--pc-danger)', color: 'var(--pc-danger)', padding: '8px 12px', fontSize: '12px' },
-    foot: { borderTop: '1px solid var(--pc-line)', padding: '12px', flexShrink: 0 },
-    input: { flex: 1, resize: 'none', minHeight: '38px', maxHeight: '128px', borderRadius: '12px', border: '1px solid var(--pc-line-field, var(--pc-line))', padding: '8px 12px', fontSize: '14px', background: 'var(--pc-bg)', color: 'var(--pc-text)' },
-    send: { width: '36px', height: '36px', borderRadius: '12px', border: '0', background: 'var(--pc-primary)', color: '#fff', cursor: 'pointer', flexShrink: 0 },
-    hint: { margin: '6px 0 0', textAlign: 'center', fontSize: '10px', color: 'var(--pc-text-muted)' },
-    launcher: { width: '56px', height: '56px', borderRadius: '50%', border: '0', background: 'var(--pc-primary)', color: '#fff', cursor: 'pointer', boxShadow: 'var(--pc-shadow)', fontSize: '22px' },
-    dismiss: { position: 'absolute', top: '-4px', right: '-4px', width: '20px', height: '20px', borderRadius: '50%', border: '1px solid var(--pc-line)', background: 'var(--pc-bg)', color: 'var(--pc-text-muted)', cursor: 'pointer', fontSize: '11px', lineHeight: 1, padding: '0' },
-    handle: { position: 'fixed', right: '0', top: '50%', transform: 'translateY(-50%)', width: '10px', height: '64px', border: '0', borderRadius: '6px 0 0 6px', background: 'var(--pc-primary)', cursor: 'pointer', zIndex: 50 },
-    drop: { position: 'absolute', inset: '8px', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed var(--pc-primary)', borderRadius: '12px', background: 'var(--pc-bg)', pointerEvents: 'none', fontSize: '14px' },
-    card: { marginTop: '8px', border: '1px solid var(--pc-line)', borderRadius: '8px', padding: '10px', fontSize: '12px', background: 'var(--pc-bg)' },
-};
-
 /** A preview card under an assistant answer: Confirm / Cancel while pending, its status after. */
 function previewCard(card: AiCard, t: AiWords, busy: boolean, onResolve: (token: string, confirm: boolean) => void, key: string | number) {
-    return h('div', { key, style: chatStyles.card, 'data-ptah-confirmation': card.token }, [
-        h('p', { style: { margin: 0, fontWeight: 600 } }, card.summary),
+    return h('div', { key, class: 'pa-ai-chat-card', 'data-ptah-confirmation': card.token }, [
+        h('p', { class: 'pa-ai-card-summary' }, card.summary),
         card.rows.length > 0 && card.columns.length > 0
-            ? h('div', { style: { marginTop: '8px', maxHeight: '224px', overflow: 'auto' } }, [
-                  h('table', { class: 'pc-table', style: { fontSize: '11px' } }, [
+            ? h('div', { class: 'pa-ai-card-scroll' }, [
+                  h('table', { class: 'pc-table pa-text-xs' }, [
                       h('thead', [h('tr', card.columns.map((column) => h('th', { key: column.key }, column.label)))]),
                       h('tbody', card.rows.map((row, index) => h('tr', { key: index }, row.map((cell, at) => h('td', { key: at }, cell))))),
                   ]),
               ])
             : null,
-        card.total_rows > card.rows.length ? h('p', { style: { margin: '4px 0 0' } }, fill(t.moreRows, { shown: card.rows.length, total: card.total_rows })) : null,
+        card.total_rows > card.rows.length ? h('p', { class: 'pa-ai-card-more' }, fill(t.moreRows, { shown: card.rows.length, total: card.total_rows })) : null,
         card.status === 'pending' && card.token !== ''
-            ? h('div', { style: { marginTop: '8px', display: 'flex', gap: '8px' } }, [
+            ? h('div', { class: 'pa-ai-card-actions' }, [
                   h(ForgeButton, { size: 'sm', disabled: busy, onClick: () => onResolve(card.token, true) }, () => t.confirm),
                   h(ForgeButton, { size: 'sm', color: 'light', disabled: busy, onClick: () => onResolve(card.token, false) }, () => t.cardCancel),
               ])
-            : h('p', { role: 'status', style: { margin: '8px 0 0', fontWeight: 600 } }, cardStatusText(t, card.status === 'pending' ? 'expired' : card.status)),
+            : h('p', { role: 'status', class: 'pa-ai-card-status' }, cardStatusText(t, card.status === 'pending' ? 'expired' : card.status)),
     ]);
 }
 
@@ -697,28 +669,28 @@ export const PtahAiChat = defineComponent({
             messages.value.length === 0 && !loading.value ? h(ForgeEmpty, { title: w.chatEmpty }) : null,
             ...messages.value.map((message, index) =>
                 message.role === 'user'
-                    ? h('div', { key: index, style: chatStyles.user }, [
+                    ? h('div', { key: index, class: 'pa-ai-chat-user' }, [
                           (message.attachments ?? []).length > 0
                               ? h(
                                     'span',
-                                    { style: { display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '4px' } },
-                                    (message.attachments ?? []).map((name) => h('span', { key: name, style: { ...chatStyles.chip, borderColor: 'rgba(255,255,255,.4)' } }, `📎 ${name}`)),
+                                    { class: 'pa-ai-chat-attachments' },
+                                    (message.attachments ?? []).map((name) => h('span', { key: name, class: 'pa-ai-chat-chip pa-ai-chat-chip--user' }, `📎 ${name}`)),
                                 )
                               : null,
                           message.content,
                       ])
-                    : h('div', { key: index, style: chatStyles.bot }, [
+                    : h('div', { key: index, class: 'pa-ai-chat-bot' }, [
                           // Rendered and sanitised on the server (ChatMarkdown: HTML escaped, unsafe links refused).
                           h('div', { class: 'ptah-chat-md', innerHTML: message.html ?? '' }),
                           ...(message.confirmations ?? []).map((card, at) => previewCard(card, w, busyCard.value, (token, confirm) => void resolve(token, confirm), card.token || at)),
                       ]),
             ),
             loading.value
-                ? h('div', { style: chatStyles.bot, role: 'status', 'aria-label': w.chatThinking }, [
+                ? h('div', { class: 'pa-ai-chat-bot', role: 'status', 'aria-label': w.chatThinking }, [
                       streamHtml.value !== '' ? h('div', { class: 'ptah-chat-md', innerHTML: streamHtml.value }) : h('span', { 'aria-hidden': 'true' }, '• • •'),
                   ])
                 : null,
-            error.value !== '' ? h('div', { role: 'alert', style: chatStyles.error }, error.value) : null,
+            error.value !== '' ? h('div', { role: 'alert', class: 'pa-ai-chat-error' }, error.value) : null,
         ];
 
         const renderFoot = (w: AiWords, current: AiChatState) => {
@@ -726,13 +698,13 @@ export const PtahAiChat = defineComponent({
             const attachable = rules.enabled && rules.extensions.length > 0;
             const matches = commandMatches(current.commands, draft.value);
 
-            return h('div', { style: chatStyles.foot }, [
+            return h('div', { class: 'pa-ai-chat-foot' }, [
                 attachable && files.value.length > 0
                     ? h(
                           'div',
-                          { style: { display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' } },
+                          { class: 'pa-ai-chat-files' },
                           files.value.map((file, index) =>
-                              h('span', { key: `${file.name}-${index}`, style: chatStyles.chip }, [
+                              h('span', { key: `${file.name}-${index}`, class: 'pa-ai-chat-chip' }, [
                                   `${file.type.startsWith('image/') ? '🖼' : '📄'} ${file.name}`,
                                   h(
                                       'button',
@@ -753,7 +725,7 @@ export const PtahAiChat = defineComponent({
                 matches.length > 0
                     ? h(
                           'div',
-                          { role: 'listbox', 'aria-label': w.commands, style: { marginBottom: '8px', border: '1px solid var(--pc-line)', borderRadius: '8px', overflow: 'hidden', fontSize: '12px' } },
+                          { role: 'listbox', 'aria-label': w.commands, class: 'pa-ai-chat-commands' },
                           matches.map((command) =>
                               h(
                                   'button',
@@ -762,19 +734,19 @@ export const PtahAiChat = defineComponent({
                                       type: 'button',
                                       role: 'option',
                                       'aria-selected': 'false',
-                                      style: { display: 'flex', gap: '8px', width: '100%', padding: '6px 12px', border: '0', background: 'transparent', textAlign: 'left', cursor: 'pointer', color: 'inherit' },
+                                      class: 'pa-ai-chat-command',
                                       onClick: () => {
                                           draft.value = `/${command.name}`;
                                           inputRef.value?.focus();
                                       },
                                   },
-                                  [h('strong', { style: { fontFamily: 'monospace' } }, `/${command.name}`), h('span', { style: { color: 'var(--pc-text-muted)' } }, command.description)],
+                                  [h('strong', { class: 'pa-font-mono' }, `/${command.name}`), h('span', { class: 'pa-text-muted' }, command.description)],
                               ),
                           ),
                       )
                     : null,
 
-                h('div', { style: { display: 'flex', alignItems: 'flex-end', gap: '8px' } }, [
+                h('div', { class: 'pa-ai-chat-compose' }, [
                     ...(attachable
                         ? [
                               h('input', {
@@ -792,7 +764,7 @@ export const PtahAiChat = defineComponent({
                                       target.value = '';
                                   },
                               }),
-                              h('button', { type: 'button', style: { ...chatStyles.send, background: 'var(--pc-bg-soft)', color: 'var(--pc-text)' }, title: w.attach, 'aria-label': w.attach, disabled: files.value.length >= rules.max_files, onClick: () => fileRef.value?.click() }, '📎'),
+                              h('button', { type: 'button', class: 'pa-ai-chat-send pa-ai-chat-send--ghost', title: w.attach, 'aria-label': w.attach, disabled: files.value.length >= rules.max_files, onClick: () => fileRef.value?.click() }, '📎'),
                           ]
                         : []),
                     // Not disabled while the answer comes: typing the next question meanwhile is what people do.
@@ -802,20 +774,20 @@ export const PtahAiChat = defineComponent({
                         value: draft.value,
                         placeholder: w.chatPlaceholder,
                         'aria-label': w.chatPlaceholder,
-                        style: chatStyles.input,
+                        class: 'pa-ai-chat-input',
                         onInput: (event: Event) => (draft.value = (event.target as HTMLTextAreaElement).value),
                         onKeydown: onKeyDown,
                     }),
-                    h('button', { type: 'button', style: chatStyles.send, title: w.chatSend, 'aria-label': w.chatSend, disabled: (draft.value.trim() === '' && files.value.length === 0) || loading.value, onClick: () => void submit() }, '➤'),
+                    h('button', { type: 'button', class: 'pa-ai-chat-send', title: w.chatSend, 'aria-label': w.chatSend, disabled: (draft.value.trim() === '' && files.value.length === 0) || loading.value, onClick: () => void submit() }, '➤'),
                 ]),
-                h('p', { style: chatStyles.hint }, `${w.chatKeyboard}${attachable ? ` · ${w.attachHint}` : ''}`),
-                rules.enabled && rules.blocked.length > 0 ? h('p', { style: chatStyles.hint }, fill(w.attachBlocked, { formats: rules.blocked.join(', ') })) : null,
+                h('p', { class: 'pa-ai-chat-hint' }, `${w.chatKeyboard}${attachable ? ` · ${w.attachHint}` : ''}`),
+                rules.enabled && rules.blocked.length > 0 ? h('p', { class: 'pa-ai-chat-hint' }, fill(w.attachBlocked, { formats: rules.blocked.join(', ') })) : null,
             ]);
         };
 
         const renderHistory = (w: AiWords) =>
-            h('div', { style: { ...chatStyles.list, gap: '2px' } }, [
-                h('p', { style: { margin: 0, fontSize: '12px', textTransform: 'uppercase', color: 'var(--pc-text-muted)' } }, w.chatHistory),
+            h('div', { class: 'pa-ai-chat-list pa-ai-chat-list--history' }, [
+                h('p', { class: 'pa-ai-chat-history-label' }, w.chatHistory),
                 ...(conversations.value.length === 0
                     ? [h(ForgeEmpty, { title: w.chatNoHistory })]
                     : [
@@ -825,14 +797,13 @@ export const PtahAiChat = defineComponent({
                                   {
                                       key: item.id,
                                       type: 'button',
-                                      class: 'pc-menu-item',
+                                      class: 'pc-menu-item pa-ai-chat-history-item',
                                       'aria-current': item.id === conversationId.value ? 'true' : undefined,
-                                      style: { textAlign: 'left', width: '100%', padding: '8px 12px', border: '0', borderRadius: '8px', background: item.id === conversationId.value ? 'var(--pc-primary-soft, var(--pc-bg-soft))' : 'transparent', cursor: 'pointer', color: 'inherit' },
                                       onClick: () => void pickConversation(item.id),
                                   },
                                   [
-                                      h('span', { style: { display: 'block', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, item.title),
-                                      h('span', { style: { display: 'block', fontSize: '12px', color: 'var(--pc-text-muted)' } }, item.date),
+                                      h('span', { class: 'pa-ai-chat-history-title' }, item.title),
+                                      h('span', { class: 'pa-ai-chat-history-date' }, item.date),
                                   ],
                               ),
                           ),
@@ -856,8 +827,7 @@ export const PtahAiChat = defineComponent({
                           role: 'dialog',
                           'aria-modal': 'false',
                           'aria-label': w.chatTitle,
-                          class: 'pl-ai-panel ptah-c-chat_panel',
-                          style: expanded.value ? { ...chatStyles.panel, ...chatStyles.panelExpanded } : chatStyles.panel,
+                          class: ['pl-ai-panel ptah-c-chat_panel pa-ai-chat-panel', expanded.value ? 'pa-ai-chat-panel--expanded' : null],
                           onPaste: (event: ClipboardEvent) => {
                               // A pasted screenshot arrives as a file; text pastes go on as usual.
                               if (attachable && event.clipboardData && event.clipboardData.files.length > 0) {
@@ -881,34 +851,34 @@ export const PtahAiChat = defineComponent({
                           },
                       },
                       [
-                          dragging.value ? h('div', { style: chatStyles.drop }, w.attachDrop) : null,
+                          dragging.value ? h('div', { class: 'pa-ai-chat-drop' }, w.attachDrop) : null,
 
-                          h('div', { style: chatStyles.head, onDblclick: () => (expanded.value = !expanded.value) }, [
-                              h('strong', { style: { fontSize: '14px' } }, w.chatTitle),
-                              h('div', { style: { display: 'flex', gap: '4px' } }, [
-                                  current.history ? h('button', { type: 'button', style: chatStyles.headBtn, title: w.chatHistory, 'aria-label': w.chatHistory, 'aria-pressed': showHistory.value ? 'true' : 'false', onClick: () => void toggleHistory() }, '⟲') : null,
-                                  h('button', { type: 'button', style: chatStyles.headBtn, title: w.chatNew, 'aria-label': w.chatNew, onClick: () => void startNew() }, '✎'),
-                                  h('button', { type: 'button', style: chatStyles.headBtn, title: expanded.value ? w.chatCollapse : w.chatExpand, 'aria-label': expanded.value ? w.chatCollapse : w.chatExpand, onClick: () => (expanded.value = !expanded.value) }, expanded.value ? '⤡' : '⤢'),
-                                  h('button', { type: 'button', style: chatStyles.headBtn, title: w.chatClose, 'aria-label': w.chatClose, onClick: () => (open.value = false) }, '✕'),
+                          h('div', { class: 'pa-ai-chat-head', onDblclick: () => (expanded.value = !expanded.value) }, [
+                              h('strong', { class: 'pa-ai-chat-title' }, w.chatTitle),
+                              h('div', { class: 'pa-flex-g1' }, [
+                                  current.history ? h('button', { type: 'button', class: 'pa-ai-chat-head-btn', title: w.chatHistory, 'aria-label': w.chatHistory, 'aria-pressed': showHistory.value ? 'true' : 'false', onClick: () => void toggleHistory() }, '⟲') : null,
+                                  h('button', { type: 'button', class: 'pa-ai-chat-head-btn', title: w.chatNew, 'aria-label': w.chatNew, onClick: () => void startNew() }, '✎'),
+                                  h('button', { type: 'button', class: 'pa-ai-chat-head-btn', title: expanded.value ? w.chatCollapse : w.chatExpand, 'aria-label': expanded.value ? w.chatCollapse : w.chatExpand, onClick: () => (expanded.value = !expanded.value) }, expanded.value ? '⤡' : '⤢'),
+                                  h('button', { type: 'button', class: 'pa-ai-chat-head-btn', title: w.chatClose, 'aria-label': w.chatClose, onClick: () => (open.value = false) }, '✕'),
                               ]),
                           ]),
 
                           !showHistory.value && options.length > 1
-                              ? h('div', { style: chatStyles.bar }, [
+                              ? h('div', { class: 'pa-ai-chat-bar' }, [
                                     h(
                                         'select',
-                                        { class: 'pc-input', 'aria-label': w.chatProvider, value: configId.value ?? '', style: { flex: 1, minWidth: 0, fontSize: '12px' }, onChange: (event: Event) => void pickProvider(Number((event.target as HTMLSelectElement).value)) },
+                                        { class: 'pc-input pa-ai-chat-provider', 'aria-label': w.chatProvider, value: configId.value ?? '', onChange: (event: Event) => void pickProvider(Number((event.target as HTMLSelectElement).value)) },
                                         options.map((option) => h('option', { key: option.id, value: option.id }, `${option.name} — ${option.model}${option.is_default ? ` (${w.chatProviderDefault})` : ''}`)),
                                     ),
                                 ])
                               : null,
 
-                          ...(showHistory.value ? [renderHistory(w)] : [h('div', { ref: listRef, style: chatStyles.list, onScroll: (event: Event) => noteChatScroll(event.currentTarget as HTMLElement, conversationId.value) }, renderMessages(w)), renderFoot(w, current)]),
+                          ...(showHistory.value ? [renderHistory(w)] : [h('div', { ref: listRef, class: 'pa-ai-chat-list', onScroll: (event: Event) => noteChatScroll(event.currentTarget as HTMLElement, conversationId.value) }, renderMessages(w)), renderFoot(w, current)]),
                       ],
                   )
                 : null;
 
-            return h('div', { class: 'pf', style: chatStyles.root }, [
+            return h('div', { class: 'pf pa-ai-chat-root' }, [
                 panel,
                 !launcherHidden.value && !(expanded.value && open.value)
                     ? // The round button of ai-chat-widget.blade.php (w-14, bg-primary, bx-bot / bx-x), and the

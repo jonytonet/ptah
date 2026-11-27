@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 import { modalButton } from '../../core/crud/form';
 import { trapFocus } from '../../core/focus';
 import { Icon } from '../icons';
+import { useDialogDrag } from '../drag';
 
 export interface PtahCrudModalProps {
     title: ReactNode;
@@ -34,6 +35,8 @@ export interface PtahCrudModalProps {
 export function PtahCrudModal({ title, subtitle, size = 'md', onClose, closeLabel, footer, children, role = 'dialog', escape = true }: PtahCrudModalProps) {
     const titleId = useId();
     const panel = useRef<HTMLDivElement>(null);
+    // Every dialog drags by its header (1.63.2, PTAH_MODAL_DRAGGABLE).
+    const { className: dragClass, ...dragHandlers } = useDialogDrag(panel);
 
     // Tab stays in the dialog; closing gives the focus back (1.61.0).
     useEffect(() => (panel.current ? trapFocus(panel.current) : undefined), []);
@@ -55,7 +58,7 @@ export function PtahCrudModal({ title, subtitle, size = 'md', onClose, closeLabe
     return (
         <div className="pc-root pc-fm-back" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
             <div ref={panel} className="pc-fm-panel" data-size={size} role={role} aria-modal="true" aria-labelledby={titleId}>
-                <div className="pc-fm-head">
+                <div className={dragClass ? `pc-fm-head ${dragClass}` : 'pc-fm-head'} {...dragHandlers}>
                     <div>
                         <h3 className="pc-fm-title" id={titleId}>
                             {title}

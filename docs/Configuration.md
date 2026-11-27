@@ -283,6 +283,7 @@ device/browser; it never leaks credentials or any other account data.
 | `crud.max_per_page` | — | `200` | Ceiling for the client-writable `perPage` (1.41.11) |
 | `crud.soft_deletes` | — | `true` | Default of `ptah:forge` for new entities (`--no-soft-deletes` overrides it). Does not touch a screen that already exists — that follows the model's `SoftDeletes` trait. Since 1.50.0 |
 | `crud.form_draft` | `PTAH_CRUD_FORM_DRAFT` | `false` | Form draft for screens without `formDraft.enabled` (BaseCrud.md § Form draft); the screen's key always wins |
+| `crud.modal_draggable` | `PTAH_MODAL_DRAGGABLE` | `true` | Every dialog drags by its header and goes back to the centre on each opening: forge-modal, the filter and shortcut dialogs, and the dialogs of React and Vue (written on `<html data-ptah-modal-drag>`). `false` turns it off everywhere; one forge-modal can still pass `:draggable="false"`. Livewire (Tailwind and Bootstrap), React and Vue (1.63.2) |
 | `crud.filter_panel` | `PTAH_CRUD_FILTER_PANEL` | `accordion` | Where the filters open: `accordion` unfolds the panel above the listing; `modal` opens the same panel in a dialog (Escape, the backdrop and the ✕ close it). Livewire, React and Vue (1.62.0) |
 | `crud.responsive_cards` | `PTAH_CRUD_RESPONSIVE_CARDS` | `true` | `true`: a screen whose `viewMode` is `auto` shows the table on wide screens and cards on phones; `false`: `auto` behaves like `table` |
 | `crud.config_editor` | `PTAH_CONFIG_EDITOR` | `false` | [Permissions.md](Permissions.md) (ignored while the permissions module is active) |

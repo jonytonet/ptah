@@ -7,6 +7,7 @@ import { Comment, defineComponent, h, onBeforeUnmount, onMounted, ref } from 'vu
 import type { PropType, VNode } from 'vue';
 import { icon } from '../icons';
 import { trapFocus } from '../../core/focus';
+import { useDialogDrag } from '../drag';
 
 let next = 0;
 
@@ -41,6 +42,8 @@ export const PtahCrudModal = defineComponent({
         };
         // Tab stays in the dialog; closing gives the focus back (1.61.0).
         const panel = ref<HTMLElement | null>(null);
+        // Every dialog drags by its header (1.63.2, PTAH_MODAL_DRAGGABLE).
+        const drag = useDialogDrag(panel);
         let release: (() => void) | null = null;
         onMounted(() => {
             document.addEventListener('keydown', onKey);
@@ -69,7 +72,7 @@ export const PtahCrudModal = defineComponent({
                 },
                 [
                     h('div', { ref: panel, class: 'pc-fm-panel', 'data-size': props.size, role: props.role, 'aria-modal': 'true', 'aria-labelledby': titleId }, [
-                        h('div', { class: 'pc-fm-head' }, [
+                        h('div', { class: ['pc-fm-head', drag.className], ...drag.props }, [
                             h('div', [h('h3', { class: 'pc-fm-title', id: titleId }, props.title), props.subtitle ? h('p', { class: 'pc-fm-sub' }, props.subtitle) : null]),
                             h('button', { type: 'button', class: 'pc-fm-close', 'aria-label': props.closeLabel, title: props.closeLabel, onClick: () => emit('close') }, [icon('x', 20)]),
                         ]),

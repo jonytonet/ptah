@@ -12,6 +12,7 @@ import type { HTMLAttributes, ReactNode } from 'react';
 import { controlOf, debounce, fromInput, inputType, isWide, toInput } from '../../core/form';
 import { isFailedLookup } from '../../core/controller';
 import { trapFocus } from '../../core/focus';
+import { useDialogDrag } from '../drag';
 import type { CrudController, CrudState, FormState } from '../../core/controller';
 import type { Words } from '../../core/i18n';
 import type { Field, LookupItem } from '../../core/types';
@@ -520,6 +521,17 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
 
                             return;
                         }
+                        // Escape closes the open list only — also while it is loading
+                        // (1.63.2): it went up to the form, which closed whole.
+                        if (event.key === 'Escape' && items !== null) {
+                            event.stopPropagation();
+                            run.cancel();
+                            seq.current++;
+                            setLoading(false);
+                            setItems(null);
+
+                            return;
+                        }
                         if (!shown) {
                             return;
                         }
@@ -532,9 +544,6 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
                         } else if (event.key === 'Enter' && active >= 0 && shown[active]) {
                             event.preventDefault();
                             pick(shown[active]);
-                        } else if (event.key === 'Escape') {
-                            event.stopPropagation();
-                            setItems(null);
                         }
                     }}
                 />
@@ -623,6 +632,8 @@ export function PtahCrudFormModal({ crud, state, t, locale }: PtahCrudFormModalP
     const [confirming, setConfirming] = useState(false);
     const body = useRef<HTMLDivElement>(null);
     const panel = useRef<HTMLDivElement>(null);
+    // The header drags the dialog, like _modal-form's forge-modal draggable (1.63.2).
+    const { className: dragClass, ...dragHandlers } = useDialogDrag(panel);
     const mini = useRef<HTMLDivElement>(null);
     const instance = form?.instance ?? 0;
 
@@ -702,7 +713,7 @@ export function PtahCrudFormModal({ crud, state, t, locale }: PtahCrudFormModalP
                             void crud.save();
                         }}
                     >
-                        <div className="pc-fm-head">
+                        <div className={dragClass ? `pc-fm-head ${dragClass}` : 'pc-fm-head'} {...dragHandlers}>
                             <div>
                                 <h3 className="pc-fm-title" id={titleId}>
                                     {title}

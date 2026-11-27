@@ -9,6 +9,7 @@ import { trapFocus } from '../core/focus';
 import { forgeWords } from '../core/forge-words';
 import { Icon } from './icons';
 import { useFloating } from './float';
+import { useDialogDrag } from './drag';
 
 export type ForgeColor = 'primary' | 'success' | 'danger' | 'warn' | 'dark' | 'light';
 export type ForgeSize = 'sm' | 'md' | 'lg';
@@ -100,6 +101,8 @@ export interface ForgeAlertProps {
     children?: ReactNode;
 }
 
+const alertIcon = (shade: string) => (shade === 'success' ? 'checkCircle' : shade === 'danger' ? 'alertDanger' : shade === 'warn' ? 'alertWarn' : 'alertInfo');
+
 export function ForgeAlert({ color = 'primary', type, title, closable, dismissible, onClose, children }: ForgeAlertProps) {
     const [open, setOpen] = useState(true);
     const shade = (type === 'info' ? 'primary' : type) ?? color;
@@ -110,6 +113,9 @@ export function ForgeAlert({ color = 'primary', type, title, closable, dismissib
 
     return (
         <div className="pf pf-alert" data-color={shade} role={shade === 'danger' ? 'alert' : 'status'}>
+            <span className="pf-alert-icon" aria-hidden="true">
+                <Icon name={alertIcon(shade)} size={20} />
+            </span>
             <div className="pf-alert-body">
                 {title && <strong className="pf-alert-title">{title}</strong>}
                 {children}
@@ -208,8 +214,11 @@ export function ForgeChartCard({ title, subtitle, color = 'primary', children }:
 export function ForgeEmpty({ title = '', description = '', children }: { title?: ReactNode; description?: ReactNode; children?: ReactNode }) {
     return (
         <div className="pf pf-empty">
+            <span className="pf-empty-box" aria-hidden="true">
+                <Icon name="inbox" size={32} />
+            </span>
             {title && <strong className="pf-empty-title">{title}</strong>}
-            {description && <div>{description}</div>}
+            {description && <div className="pf-empty-sub">{description}</div>}
             {children}
         </div>
     );
@@ -219,8 +228,8 @@ export function ForgePageHeader({ title = '', subtitle, back, children }: { titl
     return (
         <header className="pf pf-page-header">
             {back && (
-                <a className="pf pf-button pf-button--flat" href={back} aria-label={forgeWords().back} title={forgeWords().back}>
-                    <Icon name="chevronLeft" />
+                <a className="pf-page-back" href={back} aria-label={forgeWords().back} title={forgeWords().back}>
+                    <Icon name="chevronLeft" size={20} />
                 </a>
             )}
             <div>
@@ -602,6 +611,8 @@ export function ForgeModal({ open, onClose, title = '', subtitle, size = 'md', f
 
     // The Tab key stays inside, and the focus goes back on close (forge-modal's x-trap).
     useEffect(() => (open && panel.current ? trapFocus(panel.current) : undefined), [open]);
+    // Drags by its header (1.63.2, PTAH_MODAL_DRAGGABLE).
+    const { className: dragClass, ...dragHandlers } = useDialogDrag(panel, open);
 
     useEffect(() => {
         if (!open) {
@@ -624,7 +635,7 @@ export function ForgeModal({ open, onClose, title = '', subtitle, size = 'md', f
     return (
         <div className="pf pf-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
             <div className="pf-modal" ref={panel} data-size={size} role="dialog" aria-modal="true" aria-labelledby={titleId}>
-                <div className="pf-modal-head">
+                <div className={dragClass ? `pf-modal-head ${dragClass}` : 'pf-modal-head'} {...dragHandlers}>
                     <div>
                         <h2 className="pf-modal-title" id={titleId}>
                             {title}

@@ -5,7 +5,7 @@
  * (MenuList, SettingsPage); these screens only ask and show.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties, FormEvent, ReactNode } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { ApiError, PtahApi } from '../../core';
 import {
     blankMenuForm,
@@ -30,11 +30,6 @@ export interface MenuAdminProps {
     locale?: string;
 }
 
-const pillStyle: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 999, fontSize: 12, fontWeight: 500, background: 'var(--pc-bg-soft)', color: 'var(--pc-text-strong)', border: '1px solid var(--pc-line)' };
-const chipStyle: CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 6, fontSize: 20, background: 'var(--pc-bg-soft)', flexShrink: 0 };
-const mutedStyle: CSSProperties = { fontSize: 12, color: 'var(--pc-text-muted)' };
-const errorStyle: CSSProperties = { margin: '4px 0 0', fontSize: 12, color: 'var(--pc-danger)' };
-const sectionStyle: CSSProperties = { padding: 16, border: '1px solid var(--pc-line)', borderRadius: 'var(--pc-radius)', background: 'var(--pc-bg)' };
 
 /** 403 says so; anything else is a generic failure. */
 const failureText = (error: unknown, t: MenuWords) => (error instanceof ApiError && error.status === 403 ? t.forbidden : error instanceof ApiError && error.message ? error.message : t.error);
@@ -43,7 +38,7 @@ const showMessages = (messages: AdminMessage[] | undefined) => (messages ?? []).
 
 function FieldError({ text }: { text?: string | null }) {
     return text ? (
-        <p className="pf-field-error" role="alert" style={errorStyle}>
+        <p className="pf-field-error pa-menu-error" role="alert">
             {text}
         </p>
     ) : null;
@@ -212,7 +207,7 @@ export function PtahMenuAdmin({ api, locale }: MenuAdminProps) {
                 <div className="pc-search">
                     <ForgeInput type="search" aria-label={t.searchLabel} placeholder={t.searchPlaceholder} value={search} onChange={setSearch} />
                 </div>
-                <div style={{ minWidth: 180 }}>
+                <div className="pa-menu-field">
                     <ForgeSelect
                         label={t.filterByType}
                         placeholder={t.allTypes}
@@ -270,28 +265,28 @@ export function PtahMenuAdmin({ api, locale }: MenuAdminProps) {
                                 </tr>
                             )}
                             {rows.map((row) => (
-                                <tr key={row.id} style={row.is_active ? undefined : { opacity: 0.5 }}>
+                                <tr key={row.id} className="pa-menu-row" data-inactive={row.is_active ? undefined : 'true'}>
                                     <td className="pc-align-center" title={row.icon}>
                                         <i className={row.icon || 'bx bx-circle'} aria-hidden="true" />
                                     </td>
-                                    <td style={{ fontWeight: 500 }}>{row.text}</td>
+                                    <td className="pa-fw-medium">{row.text}</td>
                                     <td>
-                                        <span style={pillStyle}>
+                                        <span className="pa-menu-pill">
                                             <i className={row.type === 'menuGroup' ? 'bx bx-folder' : 'bx bx-link'} aria-hidden="true" /> {row.type === 'menuGroup' ? t.typeGroup : t.typeLink}
                                         </span>
                                     </td>
-                                    <td style={{ fontFamily: 'monospace', fontSize: 12, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.url ?? undefined}>
+                                    <td className="pa-menu-url" title={row.url ?? undefined}>
                                         {row.url ?? '—'}
                                     </td>
                                     <td>{row.parent ?? '—'}</td>
                                     <td className="pc-align-center">
-                                        <span style={pillStyle}>{row.link_order}</span>
+                                        <span className="pa-menu-pill">{row.link_order}</span>
                                     </td>
                                     <td className="pc-align-center">
                                         <button
                                             type="button"
-                                            className="pc-btn"
-                                            style={{ padding: '2px 10px', fontSize: 12, color: row.is_active ? 'var(--pc-success)' : 'var(--pc-danger)' }}
+                                            className="pc-btn pa-menu-toggle"
+                                            data-active={row.is_active ? 'true' : undefined}
                                             title={row.is_active ? t.toggleDisable : t.toggleEnable}
                                             aria-label={`${row.is_active ? t.toggleDisable : t.toggleEnable}: ${row.text}`}
                                             onClick={() => void toggle(row.id)}
@@ -337,11 +332,11 @@ export function PtahMenuAdmin({ api, locale }: MenuAdminProps) {
                 }
             >
                 <form className="pa-form" onSubmit={(event) => void submit(event)} noValidate>
-                    <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+                    <fieldset className="pa-fieldset">
                         <legend className="pf-field-label">
                             {t.formType} <span aria-hidden="true">*</span>
                         </legend>
-                        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                        <div className="pa-flex-wrap-g3">
                             <ForgeRadio name="menu-type" value="menuLink" label={t.directLink} checked={form.type === 'menuLink'} onChange={() => set('type', 'menuLink')} />
                             <ForgeRadio name="menu-type" value="menuGroup" label={t.groupType} checked={form.type === 'menuGroup'} onChange={() => set('type', 'menuGroup')} />
                         </div>
@@ -350,25 +345,25 @@ export function PtahMenuAdmin({ api, locale }: MenuAdminProps) {
 
                     <ForgeInput label={t.textLabel} placeholder={t.textPlaceholder} required value={form.text} error={errors.text} onChange={(value) => set('text', value)} />
 
-                    {form.type === 'menuLink' && <ForgeInput label={t.urlLabel} placeholder={t.urlPlaceholder} style={{ fontFamily: 'monospace' }} value={form.url} error={errors.url} onChange={(value) => set('url', value)} />}
+                    {form.type === 'menuLink' && <ForgeInput label={t.urlLabel} placeholder={t.urlPlaceholder} className="pa-font-mono" value={form.url} error={errors.url} onChange={(value) => set('url', value)} />}
 
                     <div>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-                            <div style={{ flex: 1 }}>
+                        <div className="pa-flex-end-g2">
+                            <div className="pa-flex-1">
                                 <ForgeInput
                                     label={
                                         <>
-                                            {t.iconLabel} <span style={{ fontWeight: 400 }}>{t.iconHint}</span>
+                                            {t.iconLabel} <span className="pa-fw-normal">{t.iconHint}</span>
                                         </>
                                     }
                                     placeholder={t.iconPlaceholder}
-                                    style={{ fontFamily: 'monospace' }}
+                                    className="pa-font-mono"
                                     value={form.icon}
                                     error={errors.icon}
                                     onChange={(value) => set('icon', value)}
                                 />
                             </div>
-                            <span style={chipStyle} title={t.iconPreview} data-testid="menu-icon-preview">
+                            <span className="pa-menu-icon" title={t.iconPreview} data-testid="menu-icon-preview">
                                 <i className={form.icon || 'bx bx-circle'} aria-hidden="true" />
                             </span>
                         </div>
@@ -559,7 +554,7 @@ export function PtahSettings({ api, locale }: MenuAdminProps) {
             <>
                 {failure && <ForgeAlert type="danger">{failure}</ForgeAlert>}
                 {payload.per_company && payload.can_edit_global && (
-                    <div role="group" aria-label={t.scope} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+                    <div role="group" aria-label={t.scope} className="pa-menu-scope">
                         <ForgeButton size="sm" color={global ? 'dark' : 'primary'} flat={global} aria-pressed={!global} onClick={() => void load('company')}>
                             {t.scopeCompany}
                         </ForgeButton>
@@ -568,21 +563,21 @@ export function PtahSettings({ api, locale }: MenuAdminProps) {
                         </ForgeButton>
                     </div>
                 )}
-                <form onSubmit={(event) => void submit(event)} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <form onSubmit={(event) => void submit(event)} noValidate className="pa-col-g6">
                     {payload.groups.map((group) => (
-                        <section key={group.name} style={sectionStyle} aria-labelledby={`ptah-settings-${group.name}`}>
-                            <h2 id={`ptah-settings-${group.name}`} style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 600, color: 'var(--pc-text-strong)' }}>
+                        <section key={group.name} className="pa-menu-section" aria-labelledby={`ptah-settings-${group.name}`}>
+                            <h2 id={`ptah-settings-${group.name}`} className="pa-menu-group-title">
                                 {group.name}
                             </h2>
                             <div className="pc-form">
                                 {group.fields.map((field) => (
                                     <div key={field.key} className={field.type === 'textarea' ? 'pc-form-field--wide' : undefined}>
                                         {control(field)}
-                                        <div style={{ ...mutedStyle, display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                                        <div className="pa-menu-overrides">
                                             {field.help && <span>{field.help}</span>}
                                             {!global && payload.per_company && <span>{sourceText(field)}</span>}
                                             {!global && payload.per_company && field.source === 'company' && (
-                                                <button type="button" className="pc-link" style={{ background: 'none', border: 0, padding: 0, font: 'inherit', cursor: 'pointer', textDecoration: 'underline' }} aria-label={`${t.useGlobal}: ${field.label}`} onClick={() => void toGlobal(field.key)}>
+                                                <button type="button" className="pc-link pa-link-button" aria-label={`${t.useGlobal}: ${field.label}`} onClick={() => void toGlobal(field.key)}>
                                                     {t.useGlobal}
                                                 </button>
                                             )}
@@ -592,7 +587,7 @@ export function PtahSettings({ api, locale }: MenuAdminProps) {
                             </div>
                         </section>
                     ))}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <div className="pa-flex-end">
                         <ForgeButton type="submit" loading={saving}>
                             {saving ? t.saving : t.save}
                         </ForgeButton>

@@ -14,6 +14,7 @@ import { PtahCrudFormChanges, PtahCrudFormDraft, PtahCrudSaveAndNew } from './cr
 import { PtahCrudRecordButtons } from './crud/records';
 import { Icon } from './icons';
 import { trapFocus } from '../core/focus';
+import { useDialogDrag } from './drag';
 
 const props = defineProps<{ crud: CrudController; state: CrudState; t: Words; locale?: string }>();
 
@@ -116,6 +117,8 @@ const onKey = (event: KeyboardEvent) => {
 
 // Tab stays in the modal and the focus goes back on close (1.61.0).
 const panel = ref<HTMLElement | null>(null);
+// The header drags the dialog, like _modal-form's forge-modal draggable (1.63.2).
+const drag = useDialogDrag(panel);
 let release: (() => void) | null = null;
 let releaseTrap: (() => void) | null = null;
 onMounted(() => {
@@ -137,7 +140,7 @@ onBeforeUnmount(() => {
     <div v-if="state.schema && (form || crud.formOpening)" class="pc-root pc-fm-back" @mousedown.self="tryClose()">
         <div ref="panel" class="pc-fm-panel pc-fm" data-size="2xl" role="dialog" aria-modal="true" :aria-labelledby="titleId" :aria-busy="form ? undefined : true">
             <form novalidate @submit.prevent="crud.save()">
-                <div class="pc-fm-head">
+                <div :class="['pc-fm-head', drag.className]" v-on="drag.on">
                     <div>
                         <h3 :id="titleId" class="pc-fm-title">{{ title }}</h3>
                         <p class="pc-fm-sub">{{ subtitle }}</p>

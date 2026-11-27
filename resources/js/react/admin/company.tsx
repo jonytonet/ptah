@@ -36,7 +36,7 @@ const TrashIcon = () => (
 function Pill({ color, children }: { color: string; children: ReactNode }) {
     return (
         <span className="pf pf-badge" data-color={color}>
-            <span className="pf-badge-mark" style={{ position: 'static' }}>
+            <span className="pf-badge-mark pa-badge-static">
                 {children}
             </span>
         </span>
@@ -243,7 +243,7 @@ function AdminScreen<Row extends { id: number }, Form>(props: AdminScreenProps<R
                                         {column.render(row)}
                                     </td>
                                 ))}
-                                <td className="pc-align-center" style={{ whiteSpace: 'nowrap' }}>
+                                <td className="pc-align-center pa-nowrap">
                                     <button type="button" className="pc-icon-btn" title={t.edit} aria-label={t.edit} onClick={() => void openEdit(row.id)}>
                                         <EditIcon />
                                     </button>
@@ -332,7 +332,7 @@ export function PtahCompanies({ api, locale }: CompanyScreenProps) {
             label: t.companyAbbr,
             align: 'center',
             render: (row) => (
-                <span className="pf pf-avatar" data-size="sm" data-color={badgeColor(row.id)} style={{ borderRadius: 6, fontSize: 10 }} aria-hidden="true">
+                <span className="pf pf-avatar pa-avatar-square" data-size="sm" data-color={badgeColor(row.id)} aria-hidden="true">
                     {row.label_display}
                 </span>
             ),

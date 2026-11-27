@@ -6,7 +6,7 @@
  * the Livewire components run behind it.
  */
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import type { CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
+import type { FormEvent, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
 import { PtahApi } from '../../core';
 import {
     acceptFiles,
@@ -67,7 +67,7 @@ const TrashIcon = () => (
 function Pill({ color, children }: { color: string; children: ReactNode }) {
     return (
         <span className="pf pf-badge" data-color={color}>
-            <span className="pf-badge-mark" style={{ position: 'static' }}>
+            <span className="pf-badge-mark pa-badge-static">
                 {children}
             </span>
         </span>
@@ -75,8 +75,6 @@ function Pill({ color, children }: { color: string; children: ReactNode }) {
 }
 
 // ── Provider configurations ─────────────────────────────────────────────────
-
-const guideCard: CSSProperties = { border: '1px solid var(--pc-line)', borderRadius: 8, padding: 12, background: 'var(--pc-bg)' };
 
 export function PtahAiModels({ api, locale }: AiScreenProps) {
     const client = useMemo(() => api ?? new PtahApi(), [api]);
@@ -210,24 +208,24 @@ export function PtahAiModels({ api, locale }: AiScreenProps) {
         <div className="pf pc-root">
             <ForgePageHeader title={t.title} subtitle={t.subtitle} />
 
-            <div style={{ border: '1px solid var(--pc-line)', borderRadius: 8, padding: 16, marginBottom: 16, background: 'var(--pc-primary-soft, var(--pc-bg-soft))' }}>
-                <button type="button" className="pc-th-btn" aria-expanded={guide} aria-controls={guideId} onClick={() => setGuide(!guide)} style={{ width: '100%', justifyContent: 'space-between' }}>
+            <div className="pa-ai-guide">
+                <button type="button" className="pc-th-btn pa-ai-guide-toggle" aria-expanded={guide} aria-controls={guideId} onClick={() => setGuide(!guide)}>
                     <span>{t.guideTitle}</span>
                     <span aria-hidden="true">{guide ? '▲' : '▼'}</span>
                 </button>
                 {guide && (
-                    <div id={guideId} style={{ marginTop: 12 }}>
+                    <div id={guideId} className="pa-ai-guide-body">
                         <p>{t.guideIntro}</p>
-                        <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+                        <div className="pa-ai-guide-grid">
                             {AI_GUIDE.map((card) => (
-                                <div key={card.name} style={guideCard}>
-                                    <p style={{ fontWeight: 600, margin: 0 }}>{card.name}</p>
-                                    <p style={{ fontSize: 12, margin: '4px 0 0' }}>{t[card.hint]}</p>
-                                    <p style={{ fontSize: 12, margin: '4px 0 0', fontFamily: 'monospace' }}>{card.name.startsWith('Ollama') ? `${card.url} — ${t.apiKeyOptional}` : card.url}</p>
+                                <div key={card.name} className="pa-ai-guide-item">
+                                    <p className="pa-ai-guide-name">{card.name}</p>
+                                    <p className="pa-ai-guide-text">{t[card.hint]}</p>
+                                    <p className="pa-ai-guide-url">{card.name.startsWith('Ollama') ? `${card.url} — ${t.apiKeyOptional}` : card.url}</p>
                                 </div>
                             ))}
                         </div>
-                        <p style={{ fontSize: 12 }}>{t.guideNote}</p>
+                        <p className="pa-text-xs">{t.guideNote}</p>
                     </div>
                 )}
             </div>
@@ -287,12 +285,12 @@ export function PtahAiModels({ api, locale }: AiScreenProps) {
                             <tr key={row.id}>
                                 <td>
                                     <strong>{row.name}</strong>
-                                    {row.notes && <p style={{ margin: 0, fontSize: 12, color: 'var(--pc-text-muted)' }}>{shortNotes(row.notes)}</p>}
+                                    {row.notes && <p className="pa-muted">{shortNotes(row.notes)}</p>}
                                 </td>
                                 <td>
                                     <Pill color="light">{row.provider_label}</Pill>
                                 </td>
-                                <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{row.model}</td>
+                                <td className="pa-mono">{row.model}</td>
                                 <td className="pc-align-center">
                                     <Pill color={row.is_active ? 'success' : 'light'}>{row.is_active ? t.active : t.inactive}</Pill>
                                 </td>
@@ -305,7 +303,7 @@ export function PtahAiModels({ api, locale }: AiScreenProps) {
                                         </button>
                                     )}
                                 </td>
-                                <td className="pc-align-right" style={{ whiteSpace: 'nowrap' }}>
+                                <td className="pc-align-right pa-nowrap">
                                     <button type="button" className="pc-icon-btn" title={t.edit} aria-label={t.edit} onClick={() => void openEdit(row.id)}>
                                         <EditIcon />
                                     </button>
@@ -417,38 +415,14 @@ export interface AiChatProps extends AiScreenProps {
     stream?: boolean;
 }
 
-/** The look of the widget, on the kit's tokens (no chat classes in ptah-ui.css yet). */
-export const chatStyles: Record<string, CSSProperties> = {
-    root: { position: 'fixed', right: 24, bottom: 24, zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12 },
-    panel: { position: 'relative', width: 384, maxWidth: 'calc(100vw - 32px)', maxHeight: 'min(560px, calc(100vh - 100px))', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 16, border: '1px solid var(--pc-line)', background: 'var(--pc-bg)', color: 'var(--pc-text)', boxShadow: 'var(--pc-shadow)' },
-    panelExpanded: { position: 'fixed', inset: 0, width: '100%', maxWidth: 'none', maxHeight: 'none', borderRadius: 0 },
-    head: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--pc-primary)', color: '#fff', flexShrink: 0 },
-    headBtn: { background: 'transparent', border: 0, color: 'inherit', cursor: 'pointer', padding: 4, borderRadius: 4, fontSize: 16, lineHeight: 1 },
-    bar: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderBottom: '1px solid var(--pc-line)', flexShrink: 0 },
-    list: { flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12 },
-    user: { alignSelf: 'flex-end', maxWidth: '85%', borderRadius: '16px 4px 16px 16px', background: 'var(--pc-primary)', color: '#fff', padding: '8px 12px', fontSize: 14, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' },
-    bot: { alignSelf: 'flex-start', maxWidth: '85%', borderRadius: '4px 16px 16px 16px', background: 'var(--pc-bg-soft)', padding: '8px 12px', fontSize: 14, overflowWrap: 'anywhere' },
-    chip: { display: 'inline-flex', alignItems: 'center', gap: 4, borderRadius: 6, border: '1px solid var(--pc-line)', padding: '2px 6px', fontSize: 12, maxWidth: '100%' },
-    error: { borderRadius: 8, border: '1px solid var(--pc-danger)', color: 'var(--pc-danger)', padding: '8px 12px', fontSize: 12 },
-    foot: { borderTop: '1px solid var(--pc-line)', padding: 12, flexShrink: 0 },
-    input: { flex: 1, resize: 'none', minHeight: 38, maxHeight: 128, borderRadius: 12, border: '1px solid var(--pc-line-field, var(--pc-line))', padding: '8px 12px', fontSize: 14, background: 'var(--pc-bg)', color: 'var(--pc-text)' },
-    send: { width: 36, height: 36, borderRadius: 12, border: 0, background: 'var(--pc-primary)', color: '#fff', cursor: 'pointer', flexShrink: 0 },
-    hint: { margin: '6px 0 0', textAlign: 'center', fontSize: 10, color: 'var(--pc-text-muted)' },
-    launcher: { width: 56, height: 56, borderRadius: '50%', border: 0, background: 'var(--pc-primary)', color: '#fff', cursor: 'pointer', boxShadow: 'var(--pc-shadow)', fontSize: 22 },
-    dismiss: { position: 'absolute', top: -4, right: -4, width: 20, height: 20, borderRadius: '50%', border: '1px solid var(--pc-line)', background: 'var(--pc-bg)', color: 'var(--pc-text-muted)', cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0 },
-    handle: { position: 'fixed', right: 0, top: '50%', transform: 'translateY(-50%)', width: 10, height: 64, border: 0, borderRadius: '6px 0 0 6px', background: 'var(--pc-primary)', cursor: 'pointer', zIndex: 50 },
-    drop: { position: 'absolute', inset: 8, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed var(--pc-primary)', borderRadius: 12, background: 'var(--pc-bg)', pointerEvents: 'none', fontSize: 14 },
-    card: { marginTop: 8, border: '1px solid var(--pc-line)', borderRadius: 8, padding: 10, fontSize: 12, background: 'var(--pc-bg)' },
-};
-
 /** A preview card under an assistant answer: Confirm / Cancel while pending, its status after. */
 function PreviewCard({ card, t, busy, onResolve }: { card: AiCard; t: AiWords; busy: boolean; onResolve: (token: string, confirm: boolean) => void }) {
     return (
-        <div style={chatStyles.card} data-ptah-confirmation={card.token}>
-            <p style={{ margin: 0, fontWeight: 600 }}>{card.summary}</p>
+        <div className="pa-ai-chat-card" data-ptah-confirmation={card.token}>
+            <p className="pa-ai-card-summary">{card.summary}</p>
             {card.rows.length > 0 && card.columns.length > 0 && (
-                <div style={{ marginTop: 8, maxHeight: 224, overflow: 'auto' }}>
-                    <table className="pc-table" style={{ fontSize: 11 }}>
+                <div className="pa-ai-card-scroll">
+                    <table className="pc-table pa-text-xs">
                         <thead>
                             <tr>
                                 {card.columns.map((column) => (
@@ -468,9 +442,9 @@ function PreviewCard({ card, t, busy, onResolve }: { card: AiCard; t: AiWords; b
                     </table>
                 </div>
             )}
-            {card.total_rows > card.rows.length && <p style={{ margin: '4px 0 0' }}>{fill(t.moreRows, { shown: card.rows.length, total: card.total_rows })}</p>}
+            {card.total_rows > card.rows.length && <p className="pa-ai-card-more">{fill(t.moreRows, { shown: card.rows.length, total: card.total_rows })}</p>}
             {card.status === 'pending' && card.token !== '' ? (
-                <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                <div className="pa-ai-card-actions">
                     <ForgeButton size="sm" disabled={busy} onClick={() => onResolve(card.token, true)}>
                         {t.confirm}
                     </ForgeButton>
@@ -479,7 +453,7 @@ function PreviewCard({ card, t, busy, onResolve }: { card: AiCard; t: AiWords; b
                     </ForgeButton>
                 </div>
             ) : (
-                <p role="status" style={{ margin: '8px 0 0', fontWeight: 600 }}>
+                <p role="status" className="pa-ai-card-status">
                     {cardStatusText(t, card.status === 'pending' ? 'expired' : card.status)}
                 </p>
             )}
@@ -773,18 +747,16 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
         }
     };
 
-    const panelStyle = expanded ? { ...chatStyles.panel, ...chatStyles.panelExpanded } : chatStyles.panel;
     const options = state.providers;
 
     return (
-        <div className="pf" style={chatStyles.root}>
+        <div className="pf pa-ai-chat-root">
             {open && (
                 <div
                     role="dialog"
                     aria-modal="false"
                     aria-label={t.chatTitle}
-                    className="pl-ai-panel ptah-c-chat_panel"
-                    style={panelStyle}
+                    className={`pl-ai-panel ptah-c-chat_panel pa-ai-chat-panel${expanded ? ' pa-ai-chat-panel--expanded' : ''}`}
                     onPaste={(event) => {
                         // A pasted screenshot arrives as a file; text pastes go on as usual.
                         if (attachable && event.clipboardData.files.length > 0) {
@@ -807,31 +779,31 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
                         }
                     }}
                 >
-                    {dragging && <div style={chatStyles.drop}>{t.attachDrop}</div>}
+                    {dragging && <div className="pa-ai-chat-drop">{t.attachDrop}</div>}
 
-                    <div style={chatStyles.head} onDoubleClick={() => setExpanded(!expanded)}>
-                        <strong style={{ fontSize: 14 }}>{t.chatTitle}</strong>
-                        <div style={{ display: 'flex', gap: 4 }}>
+                    <div className="pa-ai-chat-head" onDoubleClick={() => setExpanded(!expanded)}>
+                        <strong className="pa-ai-chat-title">{t.chatTitle}</strong>
+                        <div className="pa-flex-g1">
                             {state.history && (
-                                <button type="button" style={chatStyles.headBtn} title={t.chatHistory} aria-label={t.chatHistory} aria-pressed={showHistory} onClick={() => void toggleHistory()}>
+                                <button type="button" className="pa-ai-chat-head-btn" title={t.chatHistory} aria-label={t.chatHistory} aria-pressed={showHistory} onClick={() => void toggleHistory()}>
                                     ⟲
                                 </button>
                             )}
-                            <button type="button" style={chatStyles.headBtn} title={t.chatNew} aria-label={t.chatNew} onClick={() => void startNew()}>
+                            <button type="button" className="pa-ai-chat-head-btn" title={t.chatNew} aria-label={t.chatNew} onClick={() => void startNew()}>
                                 ✎
                             </button>
-                            <button type="button" style={chatStyles.headBtn} title={expanded ? t.chatCollapse : t.chatExpand} aria-label={expanded ? t.chatCollapse : t.chatExpand} onClick={() => setExpanded(!expanded)}>
+                            <button type="button" className="pa-ai-chat-head-btn" title={expanded ? t.chatCollapse : t.chatExpand} aria-label={expanded ? t.chatCollapse : t.chatExpand} onClick={() => setExpanded(!expanded)}>
                                 {expanded ? '⤡' : '⤢'}
                             </button>
-                            <button type="button" style={chatStyles.headBtn} aria-label={t.chatClose} title={t.chatClose} onClick={() => setOpen(false)}>
+                            <button type="button" className="pa-ai-chat-head-btn" aria-label={t.chatClose} title={t.chatClose} onClick={() => setOpen(false)}>
                                 ✕
                             </button>
                         </div>
                     </div>
 
                     {!showHistory && options.length > 1 && (
-                        <div style={chatStyles.bar}>
-                            <select className="pc-input" aria-label={t.chatProvider} value={configId ?? ''} onChange={(event) => void pickProvider(Number(event.target.value))} style={{ flex: 1, minWidth: 0, fontSize: 12 }}>
+                        <div className="pa-ai-chat-bar">
+                            <select className="pc-input pa-ai-chat-provider" aria-label={t.chatProvider} value={configId ?? ''} onChange={(event) => void pickProvider(Number(event.target.value))}>
                                 {options.map((option) => (
                                     <option key={option.id} value={option.id}>
                                         {option.name} — {option.model}
@@ -843,8 +815,8 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
                     )}
 
                     {showHistory ? (
-                        <div style={{ ...chatStyles.list, gap: 2 }}>
-                            <p style={{ margin: 0, fontSize: 12, textTransform: 'uppercase', color: 'var(--pc-text-muted)' }}>{t.chatHistory}</p>
+                        <div className="pa-ai-chat-list pa-ai-chat-list--history">
+                            <p className="pa-ai-chat-history-label">{t.chatHistory}</p>
                             {conversations.length === 0 ? (
                                 <ForgeEmpty title={t.chatNoHistory} />
                             ) : (
@@ -853,13 +825,12 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
                                         <button
                                             key={item.id}
                                             type="button"
-                                            className="pc-menu-item"
+                                            className="pc-menu-item pa-ai-chat-history-item"
                                             aria-current={item.id === conversationId ? 'true' : undefined}
                                             onClick={() => void pickConversation(item.id)}
-                                            style={{ textAlign: 'left', width: '100%', padding: '8px 12px', border: 0, borderRadius: 8, background: item.id === conversationId ? 'var(--pc-primary-soft, var(--pc-bg-soft))' : 'transparent', cursor: 'pointer', color: 'inherit' }}
                                         >
-                                            <span style={{ display: 'block', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
-                                            <span style={{ display: 'block', fontSize: 12, color: 'var(--pc-text-muted)' }}>{item.date}</span>
+                                            <span className="pa-ai-chat-history-title">{item.title}</span>
+                                            <span className="pa-ai-chat-history-date">{item.date}</span>
                                         </button>
                                     ))}
                                     {conversations.length >= historyLimit && (
@@ -872,15 +843,15 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
                         </div>
                     ) : (
                         <>
-                            <div ref={listRef} style={chatStyles.list} onScroll={(event) => noteChatScroll(event.currentTarget, conversationId)}>
+                            <div ref={listRef} className="pa-ai-chat-list" onScroll={(event) => noteChatScroll(event.currentTarget, conversationId)}>
                                 {messages.length === 0 && !loading && <ForgeEmpty title={t.chatEmpty} />}
                                 {messages.map((message, index) =>
                                     message.role === 'user' ? (
-                                        <div key={index} style={chatStyles.user}>
+                                        <div key={index} className="pa-ai-chat-user">
                                             {(message.attachments ?? []).length > 0 && (
-                                                <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 4 }}>
+                                                <span className="pa-ai-chat-attachments">
                                                     {(message.attachments ?? []).map((name) => (
-                                                        <span key={name} style={{ ...chatStyles.chip, borderColor: 'rgba(255,255,255,.4)' }}>
+                                                        <span key={name} className="pa-ai-chat-chip pa-ai-chat-chip--user">
                                                             📎 {name}
                                                         </span>
                                                     ))}
@@ -889,7 +860,7 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
                                             {message.content}
                                         </div>
                                     ) : (
-                                        <div key={index} style={chatStyles.bot}>
+                                        <div key={index} className="pa-ai-chat-bot">
                                             {/* Rendered and sanitised on the server (ChatMarkdown: HTML escaped, unsafe links refused). */}
                                             <div className="ptah-chat-md" dangerouslySetInnerHTML={{ __html: message.html ?? '' }} />
                                             {(message.confirmations ?? []).map((card, at) => (
@@ -899,22 +870,22 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
                                     ),
                                 )}
                                 {loading && (
-                                    <div style={chatStyles.bot} role="status" aria-label={t.chatThinking}>
+                                    <div className="pa-ai-chat-bot" role="status" aria-label={t.chatThinking}>
                                         {streamHtml !== '' ? <div className="ptah-chat-md" dangerouslySetInnerHTML={{ __html: streamHtml }} /> : <span aria-hidden="true">• • •</span>}
                                     </div>
                                 )}
                                 {error !== '' && (
-                                    <div role="alert" style={chatStyles.error}>
+                                    <div role="alert" className="pa-ai-chat-error">
                                         {error}
                                     </div>
                                 )}
                             </div>
 
-                            <div style={chatStyles.foot}>
+                            <div className="pa-ai-chat-foot">
                                 {attachable && files.length > 0 && (
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                                    <div className="pa-ai-chat-files">
                                         {files.map((file, index) => (
-                                            <span key={`${file.name}-${index}`} style={chatStyles.chip}>
+                                            <span key={`${file.name}-${index}`} className="pa-ai-chat-chip">
                                                 {file.type.startsWith('image/') ? '🖼' : '📄'} {file.name}
                                                 <button
                                                     type="button"
@@ -931,7 +902,7 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
                                 )}
 
                                 {matches.length > 0 && (
-                                    <div role="listbox" aria-label={t.commands} style={{ marginBottom: 8, border: '1px solid var(--pc-line)', borderRadius: 8, overflow: 'hidden', fontSize: 12 }}>
+                                    <div role="listbox" aria-label={t.commands} className="pa-ai-chat-commands">
                                         {matches.map((command) => (
                                             <button
                                                 key={command.name}
@@ -942,16 +913,16 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
                                                     setDraft(`/${command.name}`);
                                                     inputRef.current?.focus();
                                                 }}
-                                                style={{ display: 'flex', gap: 8, width: '100%', padding: '6px 12px', border: 0, background: 'transparent', textAlign: 'left', cursor: 'pointer', color: 'inherit' }}
+                                                className="pa-ai-chat-command"
                                             >
-                                                <strong style={{ fontFamily: 'monospace' }}>/{command.name}</strong>
-                                                <span style={{ color: 'var(--pc-text-muted)' }}>{command.description}</span>
+                                                <strong className="pa-font-mono">/{command.name}</strong>
+                                                <span className="pa-text-muted">{command.description}</span>
                                             </button>
                                         ))}
                                     </div>
                                 )}
 
-                                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+                                <div className="pa-ai-chat-compose">
                                     {attachable && (
                                         <>
                                             <input
@@ -968,22 +939,22 @@ export function PtahAiChat({ api, locale, stream = true }: AiChatProps) {
                                                     event.target.value = '';
                                                 }}
                                             />
-                                            <button type="button" style={{ ...chatStyles.send, background: 'var(--pc-bg-soft)', color: 'var(--pc-text)' }} title={t.attach} aria-label={t.attach} disabled={files.length >= rules.max_files} onClick={() => fileRef.current?.click()}>
+                                            <button type="button" className="pa-ai-chat-send pa-ai-chat-send--ghost" title={t.attach} aria-label={t.attach} disabled={files.length >= rules.max_files} onClick={() => fileRef.current?.click()}>
                                                 📎
                                             </button>
                                         </>
                                     )}
                                     {/* Not disabled while the answer comes: typing the next question meanwhile is what people do. */}
-                                    <textarea ref={inputRef} rows={1} value={draft} placeholder={t.chatPlaceholder} aria-label={t.chatPlaceholder} style={chatStyles.input} onChange={(event) => setDraft(event.target.value)} onKeyDown={onKeyDown} />
-                                    <button type="button" style={chatStyles.send} title={t.chatSend} aria-label={t.chatSend} disabled={(draft.trim() === '' && files.length === 0) || loading} onClick={() => void submit()}>
+                                    <textarea ref={inputRef} rows={1} value={draft} placeholder={t.chatPlaceholder} aria-label={t.chatPlaceholder} className="pa-ai-chat-input" onChange={(event) => setDraft(event.target.value)} onKeyDown={onKeyDown} />
+                                    <button type="button" className="pa-ai-chat-send" title={t.chatSend} aria-label={t.chatSend} disabled={(draft.trim() === '' && files.length === 0) || loading} onClick={() => void submit()}>
                                         ➤
                                     </button>
                                 </div>
-                                <p style={chatStyles.hint}>
+                                <p className="pa-ai-chat-hint">
                                     {t.chatKeyboard}
                                     {attachable ? ` · ${t.attachHint}` : ''}
                                 </p>
-                                {rules.enabled && rules.blocked.length > 0 && <p style={chatStyles.hint}>{fill(t.attachBlocked, { formats: rules.blocked.join(', ') })}</p>}
+                                {rules.enabled && rules.blocked.length > 0 && <p className="pa-ai-chat-hint">{fill(t.attachBlocked, { formats: rules.blocked.join(', ') })}</p>}
                             </div>
                         </>
                     )}

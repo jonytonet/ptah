@@ -5,7 +5,7 @@
  * components only ask and show.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import { navigateTo, PtahApi } from '../../core';
 import {
     badgeText,
@@ -35,8 +35,6 @@ export interface PtahNotificationBellProps extends ShellProps {
     /** Go to a URL without a full page load. Defaults to the mounted app's navigator, else a normal load. */
     onNavigate?: (url: string) => void;
 }
-
-const statusStyle: CSSProperties = { display: 'inline-block', padding: '2px 8px', borderRadius: 999, background: 'var(--pf-c)', color: 'var(--pf-on)', fontSize: 12, fontWeight: 500 };
 
 /** Keeps `fn` current for a timer that was started with an older one. */
 function useLatest<T>(value: T) {
@@ -337,7 +335,7 @@ export function PtahExportsPanel({ api, locale, pollInterval }: ShellProps) {
                         <thead>
                             <tr>
                                 {headers.map(([header, align]) => (
-                                    <th key={header} scope="col" style={{ textAlign: align }}>
+                                    <th key={header} scope="col" className="pa-exp-th" data-align={align}>
                                         {header}
                                     </th>
                                 ))}
@@ -348,20 +346,20 @@ export function PtahExportsPanel({ api, locale, pollInterval }: ShellProps) {
                             {listing.data.map((row) => (
                                 <tr key={row.id}>
                                     <td>{row.model}</td>
-                                    <td style={{ textTransform: 'uppercase', fontSize: 12 }}>{row.format}</td>
-                                    <td style={{ textAlign: 'center' }}>
-                                        <span className="pf" data-color={exportStatusColor(row.status)} style={statusStyle} title={row.error ?? undefined}>
+                                    <td className="pa-exp-format">{row.format}</td>
+                                    <td className="pc-align-center">
+                                        <span className="pf pa-exp-status" data-color={exportStatusColor(row.status)} title={row.error ?? undefined}>
                                             {t.status[row.status] ?? row.status}
                                         </span>
                                         {row.error && (
-                                            <div className="pf-field-error" style={{ fontSize: 11 }} title={row.error}>
+                                            <div className="pf-field-error pa-text-xs" title={row.error}>
                                                 {row.error}
                                             </div>
                                         )}
                                     </td>
-                                    <td style={{ textAlign: 'right' }}>{row.rows ?? '—'}</td>
-                                    <td style={{ whiteSpace: 'nowrap', fontSize: 12 }}>{row.created_at_display}</td>
-                                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                    <td className="pc-align-right">{row.rows ?? '—'}</td>
+                                    <td className="pa-exp-date">{row.created_at_display}</td>
+                                    <td className="pc-align-right pa-nowrap">
                                         {row.download_url && (
                                             <ForgeButton size="sm" flat href={row.download_url}>
                                                 {t.download}

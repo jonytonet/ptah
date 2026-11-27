@@ -29,6 +29,7 @@ import { PtahCrudColumnResizer, PtahCrudColumnsMenu, PtahCrudDetailRow, PtahCrud
 import { PtahCrudFilterBadges, PtahCrudFilterPanel, PtahCrudUrlFilters } from './crud/filters';
 import { PtahConfirmDialog, PtahCrudFormModal } from './crud/form';
 import { PtahCrudModal } from './crud/modal';
+import { useDialogDrag } from './drag';
 import { modalButton } from '../core/crud/form';
 import { PtahCrudImport, PtahCrudImportButton } from './crud/import';
 import { PtahCrudAttachments, PtahCrudHistory } from './crud/records';
@@ -183,7 +184,7 @@ export function PtahCrud({ screen, locale, title, toolbar, controller, ...option
                 (crud.features.filterModal ? (
                     <PtahCrudModal
                         title={filtersWords(locale).title}
-                        size="4xl"
+                        size="2xl"
                         closeLabel={filtersWords(locale).close}
                         onClose={() => setShowFilters(false)}
                         footer={
@@ -1003,6 +1004,8 @@ function BulkConfirm({ w, text, note, onConfirm, onCancel }: { w: ScreenWords; t
 
 /** The `?` list of the keyboard shortcuts. */
 function Shortcuts({ w, canCreate, onClose }: { w: ScreenWords; canCreate: boolean; onClose: () => void }) {
+    const panel = useRef<HTMLDivElement>(null);
+    const { className: dragClass, ...dragHandlers } = useDialogDrag(panel);
     useEscape(onClose);
     const keys: [string, string][] = [
         [w.shortcutsSearch, '/'],
@@ -1016,8 +1019,8 @@ function Shortcuts({ w, canCreate, onClose }: { w: ScreenWords; canCreate: boole
 
     return (
         <div className="pc-dialog-back" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-            <div className="pc-dialog pc-dialog--sm" role="dialog" aria-modal="true" aria-labelledby="pc-shortcuts-title">
-                <div className="pc-dialog-head">
+            <div ref={panel} className="pc-dialog pc-dialog--sm" role="dialog" aria-modal="true" aria-labelledby="pc-shortcuts-title">
+                <div className={dragClass ? `pc-dialog-head ${dragClass}` : 'pc-dialog-head'} {...dragHandlers}>
                     <h3 id="pc-shortcuts-title">{w.shortcutsTitle}</h3>
                     <button type="button" className="pc-x" aria-label={w.close} title={w.close} autoFocus onClick={onClose}>
                         <Icon name="x" size={20} />

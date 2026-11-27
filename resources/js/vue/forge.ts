@@ -12,6 +12,7 @@ import { trapFocus } from '../core/focus';
 import { forgeWords } from '../core/forge-words';
 import { icon } from './icons';
 import { useFloating } from './float';
+import { useDialogDrag } from './drag';
 
 export type ForgeColor = 'primary' | 'success' | 'danger' | 'warn' | 'dark' | 'light';
 
@@ -86,6 +87,8 @@ export const ForgeProgress = defineComponent({
 
 // ── Alert, badge, avatar ────────────────────────────────────────────────────
 
+const alertIcon = (shade: string) => (shade === 'success' ? 'checkCircle' : shade === 'danger' ? 'alertDanger' : shade === 'warn' ? 'alertWarn' : 'alertInfo');
+
 export const ForgeAlert = defineComponent({
     name: 'ForgeAlert',
     props: { color, type: { type: String, default: undefined }, title: { type: String, default: '' }, closable: Boolean, dismissible: Boolean },
@@ -100,6 +103,7 @@ export const ForgeAlert = defineComponent({
             const shade = (props.type === 'info' ? 'primary' : props.type) ?? props.color;
 
             return h('div', { class: 'pf pf-alert', 'data-color': shade, role: shade === 'danger' ? 'alert' : 'status' }, [
+                h('span', { class: 'pf-alert-icon', 'aria-hidden': 'true' }, [icon(alertIcon(shade), 20)]),
                 h('div', { class: 'pf-alert-body' }, [props.title ? h('strong', { class: 'pf-alert-title' }, props.title) : null, slots.default?.()]),
                 props.closable || props.dismissible
                     ? h(
@@ -210,7 +214,12 @@ export const ForgeEmpty = defineComponent({
     props: { title: { type: String, default: '' }, description: { type: String, default: '' } },
     setup(props, { slots }) {
         return () =>
-            h('div', { class: 'pf pf-empty' }, [props.title ? h('strong', { class: 'pf-empty-title' }, props.title) : null, props.description ? h('div', props.description) : null, slots.default?.()]);
+            h('div', { class: 'pf pf-empty' }, [
+                h('span', { class: 'pf-empty-box', 'aria-hidden': 'true' }, [icon('inbox', 32)]),
+                props.title ? h('strong', { class: 'pf-empty-title' }, props.title) : null,
+                props.description ? h('div', { class: 'pf-empty-sub' }, props.description) : null,
+                slots.default?.(),
+            ]);
     },
 });
 
@@ -220,7 +229,7 @@ export const ForgePageHeader = defineComponent({
     setup(props, { slots }) {
         return () =>
             h('header', { class: 'pf pf-page-header' }, [
-                props.back ? h('a', { class: 'pf pf-button pf-button--flat', href: props.back, 'aria-label': forgeWords().back, title: forgeWords().back }, icon('chevronLeft')) : null,
+                props.back ? h('a', { class: 'pf-page-back', href: props.back, 'aria-label': forgeWords().back, title: forgeWords().back }, icon('chevronLeft', 20)) : null,
                 h('div', [h('h1', { class: 'pf-page-title' }, props.title), props.subtitle ? h('p', { class: 'pf-page-subtitle' }, props.subtitle) : null]),
                 slots.default ? h('div', { class: 'pf-page-actions' }, slots.default()) : null,
             ]);
@@ -619,6 +628,8 @@ export const ForgeModal = defineComponent({
             { flush: 'post' },
         );
         onBeforeUnmount(() => release?.());
+        // Drags by its header (1.63.2, PTAH_MODAL_DRAGGABLE).
+        const drag = useDialogDrag(panel, () => props.modelValue);
         const onKey = (event: KeyboardEvent) => {
             if (props.modelValue && event.key === 'Escape') {
                 close();
@@ -631,7 +642,7 @@ export const ForgeModal = defineComponent({
             props.modelValue
                 ? h('div', { class: 'pf pf-overlay', onMousedown: (event: MouseEvent) => event.target === event.currentTarget && close() }, [
                       h('div', { class: 'pf-modal', ref: panel, 'data-size': props.size, role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': titleId }, [
-                          h('div', { class: 'pf-modal-head' }, [
+                          h('div', { class: ['pf-modal-head', drag.className], ...drag.props }, [
                               h('div', [h('h2', { class: 'pf-modal-title', id: titleId }, props.title), props.subtitle ? h('p', { class: 'pf-modal-subtitle' }, props.subtitle) : null]),
                               h('button', { type: 'button', class: 'pf-modal-close', 'aria-label': forgeWords().close, title: forgeWords().close, onClick: close }, icon('x', 20)),
                           ]),

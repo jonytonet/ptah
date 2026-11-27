@@ -46,7 +46,7 @@ export const PREVIEW = 'http://localhost/storage/fotos/alfa.png';
  * a redirect (name "Redirect") or a 422 (no name). `slowOpen` holds the
  * "create" answer until `release()`.
  */
-export function fakeForm(options: { formDraft?: boolean; slowOpen?: boolean } = {}) {
+export function fakeForm(options: { formDraft?: boolean; slowOpen?: boolean; holdLookup?: boolean } = {}) {
     const calls: FormCall[] = [];
     let release: () => void = () => undefined;
     const held = new Promise<void>((resolve) => {
@@ -110,6 +110,10 @@ export function fakeForm(options: { formDraft?: boolean; slowOpen?: boolean } = 
             });
         }
         if (path === '/lookup/region') {
+            // `holdLookup`: the search never answers (a slow server).
+            if (options.holdLookup) {
+                return new Promise<Response>(() => undefined);
+            }
             return json(200, { data: [{ value: 'sul', label: 'Sul' }] });
         }
         if (path === '/lookup/city') {

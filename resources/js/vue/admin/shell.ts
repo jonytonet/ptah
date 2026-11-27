@@ -5,7 +5,7 @@
  * components only ask and show.
  */
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import type { CSSProperties, PropType } from 'vue';
+import type { PropType } from 'vue';
 import { navigateTo, PtahApi } from '../../core';
 import {
     badgeText,
@@ -30,8 +30,6 @@ const shellProps = {
     /** Milliseconds between refreshes; null turns polling off. Defaults to what the server reports. */
     pollInterval: { type: [Number, null] as PropType<number | null>, default: undefined },
 };
-
-const statusStyle: CSSProperties = { display: 'inline-block', padding: '2px 8px', borderRadius: '999px', background: 'var(--pf-c)', color: 'var(--pf-on)', fontSize: '12px', fontWeight: 500 };
 
 /** Polls with the given interval while it is set; the timer is cleared on unmount. */
 function usePolling(task: () => void, interval: () => number | null | undefined) {
@@ -302,7 +300,7 @@ export const PtahExportsPanel = defineComponent({
             } else {
                 body = h('div', { class: 'pf-table-wrap', 'aria-busy': loading.value ? 'true' : undefined }, [
                     h('table', { class: 'pf-table' }, [
-                        h('thead', [h('tr', headers.map(([header, align]) => h('th', { key: header, scope: 'col', style: { textAlign: align } }, header)))]),
+                        h('thead', [h('tr', headers.map(([header, align]) => h('th', { key: header, scope: 'col', class: 'pa-exp-th', 'data-align': align }, header)))]),
                         // Announces queued → processing → done/failed as the panel refreshes.
                         h(
                             'tbody',
@@ -310,14 +308,14 @@ export const PtahExportsPanel = defineComponent({
                             current.data.map((row) =>
                                 h('tr', { key: row.id }, [
                                     h('td', row.model),
-                                    h('td', { style: { textTransform: 'uppercase', fontSize: '12px' } }, row.format),
-                                    h('td', { style: { textAlign: 'center' } }, [
-                                        h('span', { class: 'pf', 'data-color': exportStatusColor(row.status), style: statusStyle, title: row.error ?? undefined }, words.status[row.status] ?? row.status),
-                                        row.error ? h('div', { class: 'pf-field-error', style: { fontSize: '11px' }, title: row.error }, row.error) : null,
+                                    h('td', { class: 'pa-exp-format' }, row.format),
+                                    h('td', { class: 'pc-align-center' }, [
+                                        h('span', { class: 'pf pa-exp-status', 'data-color': exportStatusColor(row.status), title: row.error ?? undefined }, words.status[row.status] ?? row.status),
+                                        row.error ? h('div', { class: 'pf-field-error pa-text-xs', title: row.error }, row.error) : null,
                                     ]),
-                                    h('td', { style: { textAlign: 'right' } }, row.rows ?? '—'),
-                                    h('td', { style: { whiteSpace: 'nowrap', fontSize: '12px' } }, row.created_at_display ?? ''),
-                                    h('td', { style: { textAlign: 'right', whiteSpace: 'nowrap' } }, [
+                                    h('td', { class: 'pc-align-right' }, row.rows ?? '—'),
+                                    h('td', { class: 'pa-exp-date' }, row.created_at_display ?? ''),
+                                    h('td', { class: 'pc-align-right pa-nowrap' }, [
                                         row.download_url ? h(ForgeButton, { size: 'sm', flat: true, href: row.download_url }, () => words.download) : null,
                                         ' ',
                                         h(ForgeButton, { size: 'sm', flat: true, color: 'danger', loading: removing.value === row.id, onClick: () => (confirming.value = row) }, () => words.delete),

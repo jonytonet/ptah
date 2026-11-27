@@ -443,6 +443,15 @@ return [
          */
         'filter_panel' => env('PTAH_CRUD_FILTER_PANEL', 'accordion'),
 
+        /*
+         | Every dialog drags by its header (1.63.2): forge-modal, the filter
+         | and shortcut dialogs on Livewire, and the dialogs of React/Vue
+         | (through <html data-ptah-modal-drag>). It goes back to the centre on
+         | each opening. false turns it off everywhere; a single forge-modal
+         | can still pass :draggable="false".
+         */
+        'modal_draggable' => env('PTAH_MODAL_DRAGGABLE', true),
+
         'cache_enabled' => true,
         'cache_ttl' => 3600,
         'per_page' => 25,

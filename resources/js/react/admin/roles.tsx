@@ -52,8 +52,6 @@ export interface PermissionGuideProps extends RolesScreenProps {
 const failure = (error: unknown, t: RolesWords) => (error instanceof ApiError && error.status === 403 ? t.forbidden : t.loadError);
 
 /** A small pill (the Blade screen's `ptah-c-chip`, which the kit's CSS does not have). */
-const CHIP = { display: 'inline-block', padding: '1px 8px', borderRadius: 999, background: 'var(--pc-primary-soft)', color: 'var(--pc-text-strong)', fontSize: 12, fontWeight: 600 } as const;
-
 /** A listing that reloads when its search (debounced, as `wire:model.live.debounce.300ms`), page or version change. */
 function useListing<T>(load: (search: string, page: number) => Promise<T>, t: RolesWords, deps: unknown[] = []) {
     const [search, setSearch] = useState('');
@@ -283,17 +281,17 @@ export function PtahRoles({ api, locale }: RolesScreenProps) {
             ]}
             rows={data.map((row) => ({
                 name: (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                        {row.color && <span aria-hidden="true" style={{ width: 12, height: 12, borderRadius: '50%', background: row.color, display: 'inline-block' }} />}
+                    <span className="pa-inline-center-g2">
+                        {row.color && <span aria-hidden="true" className="pa-role-dot" style={{ background: row.color }} />}
                         <strong>{row.name}</strong>
-                        {row.is_master && <span style={CHIP}>👑 MASTER</span>}
+                        {row.is_master && <span className="pa-role-badge">👑 MASTER</span>}
                     </span>
                 ),
                 department: row.department ?? '—',
                 permissions: t.objectsCount.replace(':count', String(row.permissions_count)),
                 status: row.is_active ? t.active : t.inactive,
                 actions: (
-                    <span style={{ display: 'inline-flex', gap: 4 }}>
+                    <span className="pa-inline-g1">
                         <button type="button" className="pc-icon-btn" title={t.managePermissionsTitle} onClick={() => void openBind(row)}>
                             {t.managePermissions}
                         </button>
@@ -349,7 +347,7 @@ export function PtahRoles({ api, locale }: RolesScreenProps) {
                     </>
                 }
             >
-                <div className="pa-section" style={{ maxWidth: 'none' }}>
+                <div className="pa-section pa-unbound">
                     {result?.error && <ForgeAlert type="danger">{result.error}</ForgeAlert>}
                     <ForgeInput label={t.roleName} required value={form.name} error={result?.errors.name} onChange={(value) => set('name', value)} />
                     <ForgeTextarea label={t.roleDescription} rows={2} value={form.description} onChange={(value) => set('description', value)} />
@@ -387,7 +385,7 @@ export function PtahRoles({ api, locale }: RolesScreenProps) {
                 }
             >
                 {rows.length > 0 && <ForgeInput type="search" aria-label={t.bindFilterLabel} placeholder={t.bindFilter} value={filter} onChange={setFilter} />}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12, maxHeight: '60vh', overflowY: 'auto' }}>
+                <div className="pa-role-perms">
                     {groups.map((group) => {
                         const open = filtering || expanded.includes(group.page);
                         const id = `ptah-bind-${group.page.replace(/\W+/g, '-')}`;
@@ -396,8 +394,8 @@ export function PtahRoles({ api, locale }: RolesScreenProps) {
                             <div key={group.page}>
                                 <button
                                     type="button"
-                                    className="pc-btn"
-                                    style={{ width: '100%', justifyContent: 'space-between', display: 'flex' }}
+                                    className="pc-btn pa-role-group-toggle"
+                                   
                                     aria-expanded={open}
                                     aria-controls={id}
                                     onClick={() => !filtering && setExpanded((current) => (current.includes(group.page) ? current.filter((page) => page !== group.page) : [...current, group.page]))}
@@ -410,16 +408,16 @@ export function PtahRoles({ api, locale }: RolesScreenProps) {
                                     </span>
                                 </button>
                                 {open && (
-                                    <div id={id} style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingTop: 4 }}>
+                                    <div id={id} className="pa-role-group-body">
                                         {group.rows.map(({ row, index }) => (
-                                            <div key={row.id} role="group" aria-label={row.obj_label} className="pa-row" style={{ border: '1px solid var(--pc-line)', borderRadius: 6, padding: '6px 10px' }}>
+                                            <div key={row.id} role="group" aria-label={row.obj_label} className="pa-row pa-role-perm">
                                                 <div>
                                                     <div>{row.obj_label}</div>
                                                     <small>
                                                         <code>{row.obj_key}</code> · {row.obj_type}
                                                     </small>
                                                 </div>
-                                                <div style={{ display: 'flex', gap: 12 }}>
+                                                <div className="pa-flex-g3">
                                                     {PERMISSION_FLAGS.map((flag) => (
                                                         <ForgeCheckbox key={flag} label={flagLabels[flag]} checked={row[flag]} onChange={(value) => toggle(index, flag, value)} />
                                                     ))}
@@ -532,7 +530,7 @@ export function PtahPages({ api, locale }: RolesScreenProps) {
     return (
         <div className="pf pc-root">
             <ForgePageHeader title={t.pagesTitle} subtitle={t.pagesSubtitle} />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, alignItems: 'start' }}>
+            <div className="pa-role-cols">
                 <section aria-label={t.pagesColumn}>
                     <div className="pc-toolbar">
                         <h2 className="pc-title">{t.pagesColumn}</h2>
@@ -549,10 +547,10 @@ export function PtahPages({ api, locale }: RolesScreenProps) {
                         <ForgeEmpty title={t.pagesEmpty} description={t.pagesEmptyHint} />
                     ) : (
                         <div aria-busy={pages.loading || undefined}>
-                            <ul className="pf pf-list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                            <ul className="pf pf-list pa-plain-list">
                                 {pages.data.data.map((row) => (
-                                    <li key={row.id} className="pf-list-item pa-row" style={{ padding: '8px 12px', background: selected?.id === row.id ? 'var(--pc-primary-soft)' : undefined }}>
-                                        <button type="button" className="pc-link" aria-pressed={selected?.id === row.id} style={{ flex: 1, textAlign: 'left', background: 'none', border: 0, cursor: 'pointer', font: 'inherit' }} onClick={() => select(row)}>
+                                    <li key={row.id} className="pf-list-item pa-row pa-role-item" data-selected={selected?.id === row.id ? 'true' : undefined}>
+                                        <button type="button" className="pc-link pa-role-pick" aria-pressed={selected?.id === row.id} onClick={() => select(row)}>
                                             {row.icon && <span aria-hidden="true">{row.icon} </span>}
                                             <strong>{row.name}</strong> <small>{t.objCount.replace(':count', String(row.objects_count))}</small>
                                             <br />
@@ -615,7 +613,7 @@ export function PtahPages({ api, locale }: RolesScreenProps) {
                                             type: row.obj_type,
                                             section: row.section,
                                             actions: (
-                                                <span style={{ display: 'inline-flex', gap: 4 }}>
+                                                <span className="pa-inline-g1">
                                                     <button type="button" className="pc-icon-btn" aria-label={`${t.edit} ${row.obj_key}`} title={t.edit} onClick={() => openObject(row)}>
                                                         ✎
                                                     </button>
@@ -649,7 +647,7 @@ export function PtahPages({ api, locale }: RolesScreenProps) {
                     </>
                 }
             >
-                <div className="pa-section" style={{ maxWidth: 'none' }}>
+                <div className="pa-section pa-unbound">
                     {result?.error && <ForgeAlert type="danger">{result.error}</ForgeAlert>}
                     <ForgeInput label={t.pageSlug} required placeholder="admin.users" value={pageForm.slug} error={result?.errors.slug} onChange={(value) => setPage('slug', value)} />
                     <ForgeInput label={t.pageName} required value={pageForm.name} error={result?.errors.name} onChange={(value) => setPage('name', value)} />
@@ -681,7 +679,7 @@ export function PtahPages({ api, locale }: RolesScreenProps) {
                     </>
                 }
             >
-                <div className="pa-section" style={{ maxWidth: 'none' }}>
+                <div className="pa-section pa-unbound">
                     {result?.error && <ForgeAlert type="danger">{result.error}</ForgeAlert>}
                     <ForgeInput label={t.objectSection} required placeholder="main / toolbar / form" value={objectForm.section} error={result?.errors.section} onChange={(value) => setObject('section', value)} />
                     <ForgeSelect label={t.objectType} required options={types.map((type) => ({ value: type, label: type }))} selected={objectForm.obj_type} error={result?.errors.obj_type} onChange={(value) => setObject('obj_type', String(value ?? ''))} />
@@ -736,7 +734,7 @@ function Step({ number, title, desc, action, children }: { number: number; title
             header={
                 <div className="pa-row">
                     <div>
-                        <h3 style={{ margin: 0 }}>
+                        <h3 className="pa-flat">
                             {number}. {title}
                         </h3>
                         <small>{desc}</small>
@@ -796,7 +794,7 @@ export function PtahPermissionGuide({ api, locale, urls }: PermissionGuideProps)
     const perms = [words.permRead, words.permCreate, words.permEdit, words.permDelete];
 
     const overview = (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div className="pa-col-g6">
             <ForgeAlert type="primary" title={g.ovTitle}>
                 {g.ovBody.map((paragraph, index) => (
                     <p key={index}>
@@ -806,11 +804,11 @@ export function PtahPermissionGuide({ api, locale, urls }: PermissionGuideProps)
             </ForgeAlert>
             <section>
                 <h2>1. {g.archTitle}</h2>
-                <ol style={{ display: 'flex', flexWrap: 'wrap', gap: 12, listStyle: 'none', padding: 0 }}>
+                <ol className="pa-role-steps">
                     {g.arch.map((node, index) => (
-                        <li key={node.title} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <li key={node.title} className="pa-flex-center-g3">
                             <ForgeCard>
-                                <div style={{ textAlign: 'center', maxWidth: 160 }}>
+                                <div className="pa-role-step">
                                     <div aria-hidden="true">{node.icon}</div>
                                     <strong>{node.title}</strong>
                                     <div>
@@ -828,21 +826,21 @@ export function PtahPermissionGuide({ api, locale, urls }: PermissionGuideProps)
             </section>
             <section>
                 <h2>2. {g.conceptsTitle}</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+                <div className="pa-role-cards">
                     {g.concepts.map((concept, index) => (
                         <ForgeCard key={concept.title} header={`${concept.icon} ${concept.title}`}>
                             <p>
                                 <Rich text={concept.body} />
                             </p>
                             {concept.chips.length > 0 && (
-                                <p style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                                <p className="pa-flex-wrap-g1">
                                     {concept.chips.map((chip) => (
                                         <code key={chip}>{chip}</code>
                                     ))}
                                 </p>
                             )}
                             {index === 2 && (
-                                <p style={{ display: 'flex', gap: 12 }}>
+                                <p className="pa-flex-g3">
                                     {g.permsPreview.map((perm) => (
                                         <span key={perm}>✓ {perm}</span>
                                     ))}
@@ -856,7 +854,7 @@ export function PtahPermissionGuide({ api, locale, urls }: PermissionGuideProps)
             <section>
                 <h2>3. {g.flowTitle}</h2>
                 <ForgeCard>
-                    <ol style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 0, listStyle: 'none' }}>
+                    <ol className="pa-role-flow">
                         {g.flow.map((step) => (
                             <li key={step.text} className="pa-row">
                                 <span>{step.text}</span>
@@ -865,7 +863,7 @@ export function PtahPermissionGuide({ api, locale, urls }: PermissionGuideProps)
                             </li>
                         ))}
                     </ol>
-                    <p className="pa-row" style={{ justifyContent: 'flex-start' }}>
+                    <p className="pa-row pa-justify-start">
                         <strong>{g.flowGranted}</strong>
                         <strong>{g.flowDenied}</strong>
                     </p>
@@ -875,7 +873,7 @@ export function PtahPermissionGuide({ api, locale, urls }: PermissionGuideProps)
     );
 
     const setup = (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="pa-col-g4">
             <ForgeAlert type="primary">
                 <Rich text={g.prereq} />
             </ForgeAlert>
@@ -894,7 +892,7 @@ export function PtahPermissionGuide({ api, locale, urls }: PermissionGuideProps)
                 <p>
                     <Rich text={g.s2Body} />
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+                <div className="pa-role-tiles">
                     <ForgeCard header={g.s2PageTitle}>
                         <table className="pf-table">
                             <tbody>
@@ -916,7 +914,7 @@ export function PtahPermissionGuide({ api, locale, urls }: PermissionGuideProps)
                         </table>
                     </ForgeCard>
                     <ForgeCard header={g.s2ObjTitle}>
-                        <ul style={{ listStyle: 'none', padding: 0 }}>
+                        <ul className="pa-list-bare">
                             {[
                                 ['vendas.criar-pedido', 'button'],
                                 ['vendas.ver-desconto', 'field'],
@@ -1009,13 +1007,13 @@ export function PtahPermissionGuide({ api, locale, urls }: PermissionGuideProps)
     );
 
     const code = (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="pa-col-g4">
             {GUIDE_CODE.map((sample) => (
-                <figure key={sample.caption} style={{ margin: 0 }}>
+                <figure key={sample.caption} className="pa-flat">
                     <figcaption>
                         <code>{sample.caption}</code>
                     </figcaption>
-                    <pre style={{ overflowX: 'auto', padding: 16, border: '1px solid var(--pc-line)', borderRadius: 6 }}>
+                    <pre className="pa-role-code">
                         <code>{sample.code}</code>
                     </pre>
                 </figure>
@@ -1024,10 +1022,10 @@ export function PtahPermissionGuide({ api, locale, urls }: PermissionGuideProps)
     );
 
     const faq = (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="pa-col-g2">
             {g.faq.map((item) => (
-                <details key={item.q} className="pf-card" style={{ padding: '12px 16px' }}>
-                    <summary style={{ cursor: 'pointer', fontWeight: 600 }}>{item.q}</summary>
+                <details key={item.q} className="pf-card pa-role-faq-item">
+                    <summary className="pa-role-faq-q">{item.q}</summary>
                     <p>
                         <Rich text={item.a} urls={links} />
                     </p>
@@ -1049,10 +1047,10 @@ export function PtahPermissionGuide({ api, locale, urls }: PermissionGuideProps)
     return (
         <div className="pf pc-root">
             <ForgePageHeader title={g.title} subtitle={g.subtitle}>
-                <span style={CHIP}>{g.badge}</span>
+                <span className="pa-role-badge">{g.badge}</span>
             </ForgePageHeader>
             <ForgeTabs key={jumps} tabs={tabs} defaultTab={tab} onChange={setTab} />
-            <p style={{ textAlign: 'center', fontSize: 11, marginTop: 24 }} title={g.versionTitle}>
+            <p className="pa-role-footnote" title={g.versionTitle}>
                 ptah v{info.version}
             </p>
         </div>

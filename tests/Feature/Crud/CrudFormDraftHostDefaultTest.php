@@ -131,6 +131,6 @@ class CrudFormDraftHostDefaultTest extends TestCase
         $this->assertFalse(config('ptah.crud.responsive_cards'));
 
         $source = (string) file_get_contents(dirname(__DIR__, 3).'/src/PtahServiceProvider.php');
-        $this->assertStringContainsString("fillMissingNestedConfig('crud', ['form_draft', 'filter_panel'])", $source);
+        $this->assertStringContainsString("fillMissingNestedConfig('crud', ['form_draft', 'filter_panel', 'modal_draggable'])", $source);
     }
 }

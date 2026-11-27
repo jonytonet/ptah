@@ -5,7 +5,7 @@
  * (MenuList, SettingsPage); these screens only ask and show.
  */
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import type { CSSProperties, PropType, VNode } from 'vue';
+import type { PropType, VNode } from 'vue';
 import { ApiError, PtahApi } from '../../core';
 import {
     blankMenuForm,
@@ -30,18 +30,13 @@ const screenProps = {
     locale: { type: String, default: undefined },
 };
 
-const pillStyle: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '999px', fontSize: '12px', fontWeight: 500, background: 'var(--pc-bg-soft)', color: 'var(--pc-text-strong)', border: '1px solid var(--pc-line)' };
-const chipStyle: CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '6px', fontSize: '20px', background: 'var(--pc-bg-soft)', flexShrink: 0 };
-const mutedStyle: CSSProperties = { fontSize: '12px', color: 'var(--pc-text-muted)' };
-const errorStyle: CSSProperties = { margin: '4px 0 0', fontSize: '12px', color: 'var(--pc-danger)' };
-const sectionStyle: CSSProperties = { padding: '16px', border: '1px solid var(--pc-line)', borderRadius: 'var(--pc-radius)', background: 'var(--pc-bg)' };
 
 /** 403 says so; anything else is a generic failure. */
 const failureText = (error: unknown, t: MenuWords) => (error instanceof ApiError && error.status === 403 ? t.forbidden : error instanceof ApiError && error.message ? error.message : t.error);
 
 const showMessages = (messages: AdminMessage[] | undefined) => (messages ?? []).forEach((message) => forgeToast(message.text, message.level));
 
-const fieldError = (text?: string | null) => (text ? h('p', { class: 'pf-field-error', role: 'alert', style: errorStyle }, text) : null);
+const fieldError = (text?: string | null) => (text ? h('p', { class: 'pf-field-error pa-menu-error', role: 'alert' }, text) : null);
 
 const svgIcon = (d: string) =>
     h('svg', { width: 16, height: 16, fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', 'aria-hidden': 'true' }, [h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': 2, d })]);
@@ -199,20 +194,20 @@ export const PtahMenuAdmin = defineComponent({
                 h('tbody', [
                     rows.length === 0 ? h('tr', [h('td', { colspan: 8 }, [h(ForgeEmpty, { title: w.emptyFound, description: w.emptyHint })])]) : null,
                     ...rows.map((row) =>
-                        h('tr', { key: row.id, style: row.is_active ? undefined : { opacity: 0.5 } }, [
+                        h('tr', { key: row.id, class: 'pa-menu-row', 'data-inactive': row.is_active ? undefined : 'true' }, [
                             h('td', { class: 'pc-align-center', title: row.icon }, [h('i', { class: row.icon || 'bx bx-circle', 'aria-hidden': 'true' })]),
-                            h('td', { style: { fontWeight: 500 } }, row.text),
-                            h('td', [h('span', { style: pillStyle }, [h('i', { class: row.type === 'menuGroup' ? 'bx bx-folder' : 'bx bx-link', 'aria-hidden': 'true' }), ` ${row.type === 'menuGroup' ? w.typeGroup : w.typeLink}`])]),
-                            h('td', { style: { fontFamily: 'monospace', fontSize: '12px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }, title: row.url ?? undefined }, row.url ?? '—'),
+                            h('td', { class: 'pa-fw-medium' }, row.text),
+                            h('td', [h('span', { class: 'pa-menu-pill' }, [h('i', { class: row.type === 'menuGroup' ? 'bx bx-folder' : 'bx bx-link', 'aria-hidden': 'true' }), ` ${row.type === 'menuGroup' ? w.typeGroup : w.typeLink}`])]),
+                            h('td', { class: 'pa-menu-url', title: row.url ?? undefined }, row.url ?? '—'),
                             h('td', row.parent ?? '—'),
-                            h('td', { class: 'pc-align-center' }, [h('span', { style: pillStyle }, String(row.link_order))]),
+                            h('td', { class: 'pc-align-center' }, [h('span', { class: 'pa-menu-pill' }, String(row.link_order))]),
                             h('td', { class: 'pc-align-center' }, [
                                 h(
                                     'button',
                                     {
                                         type: 'button',
-                                        class: 'pc-btn',
-                                        style: { padding: '2px 10px', fontSize: '12px', color: row.is_active ? 'var(--pc-success)' : 'var(--pc-danger)' },
+                                        class: 'pc-btn pa-menu-toggle',
+                                        'data-active': row.is_active ? 'true' : undefined,
                                         title: row.is_active ? w.toggleDisable : w.toggleEnable,
                                         'aria-label': `${row.is_active ? w.toggleDisable : w.toggleEnable}: ${row.text}`,
                                         onClick: () => void toggle(row.id),
@@ -244,9 +239,9 @@ export const PtahMenuAdmin = defineComponent({
                     },
                 },
                 [
-                    h('fieldset', { style: { border: 0, padding: 0, margin: 0 } }, [
+                    h('fieldset', { class: 'pa-fieldset' }, [
                         h('legend', { class: 'pf-field-label' }, [`${w.formType} `, h('span', { 'aria-hidden': 'true' }, '*')]),
-                        h('div', { style: { display: 'flex', gap: '12px', flexWrap: 'wrap' } }, [
+                        h('div', { class: 'pa-flex-wrap-g3' }, [
                             h(ForgeRadio, { name: 'menu-type', value: 'menuLink', label: w.directLink, modelValue: form.value.type, 'onUpdate:modelValue': () => set('type', 'menuLink') }),
                             h(ForgeRadio, { name: 'menu-type', value: 'menuGroup', label: w.groupType, modelValue: form.value.type, 'onUpdate:modelValue': () => set('type', 'menuGroup') }),
                         ]),
@@ -254,21 +249,21 @@ export const PtahMenuAdmin = defineComponent({
                     ]),
                     h(ForgeInput, { label: w.textLabel, placeholder: w.textPlaceholder, required: true, modelValue: form.value.text, error: errors.value.text ?? null, 'onUpdate:modelValue': (value: string) => set('text', value) }),
                     form.value.type === 'menuLink'
-                        ? h(ForgeInput, { label: w.urlLabel, placeholder: w.urlPlaceholder, style: { fontFamily: 'monospace' }, modelValue: form.value.url, error: errors.value.url ?? null, 'onUpdate:modelValue': (value: string) => set('url', value) })
+                        ? h(ForgeInput, { label: w.urlLabel, placeholder: w.urlPlaceholder, class: 'pa-font-mono', modelValue: form.value.url, error: errors.value.url ?? null, 'onUpdate:modelValue': (value: string) => set('url', value) })
                         : null,
                     h('div', [
-                        h('div', { style: { display: 'flex', gap: '8px', alignItems: 'flex-end' } }, [
-                            h('div', { style: { flex: 1 } }, [
+                        h('div', { class: 'pa-flex-end-g2' }, [
+                            h('div', { class: 'pa-flex-1' }, [
                                 h(ForgeInput, {
                                     label: `${w.iconLabel} ${w.iconHint}`,
                                     placeholder: w.iconPlaceholder,
-                                    style: { fontFamily: 'monospace' },
+                                    class: 'pa-font-mono',
                                     modelValue: form.value.icon,
                                     error: errors.value.icon ?? null,
                                     'onUpdate:modelValue': (value: string) => set('icon', value),
                                 }),
                             ]),
-                            h('span', { style: chipStyle, title: w.iconPreview, 'data-testid': 'menu-icon-preview' }, [h('i', { class: form.value.icon || 'bx bx-circle', 'aria-hidden': 'true' })]),
+                            h('span', { class: 'pa-menu-icon', title: w.iconPreview, 'data-testid': 'menu-icon-preview' }, [h('i', { class: form.value.icon || 'bx bx-circle', 'aria-hidden': 'true' })]),
                         ]),
                         h('p', { class: 'pc-help' }, [`${w.iconExamples} `, h('code', 'bx bx-home'), ' ', h('code', 'fas fa-cog'), ' ', h('code', 'bx bxs-shopping-bag')]),
                     ]),
@@ -313,7 +308,7 @@ export const PtahMenuAdmin = defineComponent({
                 h('div', { class: 'pc-toolbar' }, [
                     h(ForgeButton, { size: 'sm', onClick: openCreate }, () => `+ ${w.newItem}`),
                     h('div', { class: 'pc-search' }, [h(ForgeInput, { type: 'search', 'aria-label': w.searchLabel, placeholder: w.searchPlaceholder, modelValue: search.value, 'onUpdate:modelValue': (value: string) => (search.value = value) })]),
-                    h('div', { style: { minWidth: '180px' } }, [
+                    h('div', { class: 'pa-menu-field' }, [
                         h(ForgeSelect, {
                             label: w.filterByType,
                             placeholder: w.allTypes,
@@ -502,7 +497,7 @@ export const PtahSettings = defineComponent({
             return [
                 failure.value ? h(ForgeAlert, { type: 'danger' }, () => failure.value) : null,
                 current.per_company && current.can_edit_global
-                    ? h('div', { role: 'group', 'aria-label': w.scope, style: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' } }, [
+                    ? h('div', { role: 'group', 'aria-label': w.scope, class: 'pa-menu-scope' }, [
                           h(ForgeButton, { size: 'sm', color: global ? 'dark' : 'primary', flat: global, 'aria-pressed': !global, onClick: () => void load('company') }, () => w.scopeCompany),
                           h(ForgeButton, { size: 'sm', color: global ? 'primary' : 'dark', flat: !global, 'aria-pressed': global, onClick: () => void load('global') }, () => w.scopeGlobal),
                       ])
@@ -511,7 +506,7 @@ export const PtahSettings = defineComponent({
                     'form',
                     {
                         novalidate: true,
-                        style: { display: 'flex', flexDirection: 'column', gap: '24px' },
+                        class: 'pa-col-g6',
                         onSubmit: (event: Event) => {
                             event.preventDefault();
                             void submit();
@@ -519,15 +514,15 @@ export const PtahSettings = defineComponent({
                     },
                     [
                         ...current.groups.map((group) =>
-                            h('section', { key: group.name, style: sectionStyle, 'aria-labelledby': `ptah-settings-${group.name}` }, [
-                                h('h2', { id: `ptah-settings-${group.name}`, style: { margin: '0 0 16px', fontSize: '14px', fontWeight: 600, color: 'var(--pc-text-strong)' } }, group.name),
+                            h('section', { key: group.name, class: 'pa-menu-section', 'aria-labelledby': `ptah-settings-${group.name}` }, [
+                                h('h2', { id: `ptah-settings-${group.name}`, class: 'pa-menu-group-title' }, group.name),
                                 h(
                                     'div',
                                     { class: 'pc-form' },
                                     group.fields.map((field) =>
                                         h('div', { key: field.key, class: field.type === 'textarea' ? 'pc-form-field--wide' : undefined }, [
                                             ...control(w, field),
-                                            h('div', { style: { ...mutedStyle, display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px' } }, [
+                                            h('div', { class: 'pa-menu-overrides' }, [
                                                 field.help ? h('span', field.help) : null,
                                                 !global && current.per_company ? h('span', sourceText(w, field)) : null,
                                                 !global && current.per_company && field.source === 'company'
@@ -535,8 +530,7 @@ export const PtahSettings = defineComponent({
                                                           'button',
                                                           {
                                                               type: 'button',
-                                                              class: 'pc-link',
-                                                              style: { background: 'none', border: 0, padding: 0, font: 'inherit', cursor: 'pointer', textDecoration: 'underline' },
+                                                              class: 'pc-link pa-link-button',
                                                               'aria-label': `${w.useGlobal}: ${field.label}`,
                                                               onClick: () => void toGlobal(field.key),
                                                           },
@@ -549,7 +543,7 @@ export const PtahSettings = defineComponent({
                                 ),
                             ]),
                         ),
-                        h('div', { style: { display: 'flex', justifyContent: 'flex-end' } }, [h(ForgeButton, { type: 'submit', loading: saving.value }, () => (saving.value ? w.saving : w.save))]),
+                        h('div', { class: 'pa-flex-end' }, [h(ForgeButton, { type: 'submit', loading: saving.value }, () => (saving.value ? w.saving : w.save))]),
                     ],
                 ),
             ];

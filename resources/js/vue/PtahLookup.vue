@@ -108,6 +108,17 @@ const onKey = (event: KeyboardEvent) => {
 
         return;
     }
+    // Escape closes the open list only — also while it is loading (1.63.2):
+    // it went up to the form, which closed whole.
+    if (event.key === 'Escape' && items.value !== null) {
+        event.stopPropagation();
+        run.cancel();
+        seq++;
+        loading.value = false;
+        items.value = null;
+
+        return;
+    }
     const list = shown.value;
     if (!list) {
         return;
@@ -121,9 +132,6 @@ const onKey = (event: KeyboardEvent) => {
     } else if (event.key === 'Enter' && active.value >= 0 && list[active.value]) {
         event.preventDefault();
         pick(list[active.value]);
-    } else if (event.key === 'Escape') {
-        event.stopPropagation();
-        items.value = null;
     }
 };
 

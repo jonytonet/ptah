@@ -29,7 +29,7 @@ const EDIT_ICON = 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-
 const TRASH_ICON = 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16';
 
 /** A small coloured tag (status, "default"). */
-const pill = (shade: string, text: VNodeChild) => h('span', { class: 'pf pf-badge', 'data-color': shade }, [h('span', { class: 'pf-badge-mark', style: { position: 'static' } }, [text])]);
+const pill = (shade: string, text: VNodeChild) => h('span', { class: 'pf pf-badge', 'data-color': shade }, [h('span', { class: 'pf-badge-mark pa-badge-static' }, [text])]);
 
 const statusPill = (t: CompanyWords, active: boolean) => pill(active ? 'success' : 'danger', active ? t.active : t.inactive);
 
@@ -197,7 +197,7 @@ function renderScreen<Row extends { id: number }, Form>(s: ReturnType<typeof use
         body.push(
             h('tr', { key: row.id }, [
                 ...config.columns.map((column) => h('td', { key: column.key, class: center(column) }, [column.render(row)])),
-                h('td', { class: 'pc-align-center', style: { whiteSpace: 'nowrap' } }, [
+                h('td', { class: 'pc-align-center pa-nowrap' }, [
                     h('button', { type: 'button', class: 'pc-icon-btn', title: t.edit, 'aria-label': t.edit, onClick: () => void s.openEdit(row.id) }, [icon(EDIT_ICON)]),
                     (config.canDelete?.(row) ?? true)
                         ? h('button', { type: 'button', class: 'pc-icon-btn pc-icon-btn--danger', title: t.delete, 'aria-label': t.delete, onClick: () => (s.deleteId.value = row.id) }, [icon(TRASH_ICON)])
@@ -295,7 +295,7 @@ export const PtahCompanies = defineComponent({
                     key: 'abbr',
                     label: w.companyAbbr,
                     align: 'center',
-                    render: (row) => h('span', { class: 'pf pf-avatar', 'data-size': 'sm', 'data-color': badgeColor(row.id), style: { borderRadius: '6px', fontSize: '10px' }, 'aria-hidden': 'true' }, row.label_display),
+                    render: (row) => h('span', { class: 'pf pf-avatar pa-avatar-square', 'data-size': 'sm', 'data-color': badgeColor(row.id), 'aria-hidden': 'true' }, row.label_display),
                 },
                 { key: 'name', label: w.name, sort: 'name', render: (row) => [h('strong', row.name), ' ', row.is_default ? pill('warn', w.defaultTag) : null] },
                 { key: 'email', label: w.companyEmail, render: (row) => row.email ?? '—' },

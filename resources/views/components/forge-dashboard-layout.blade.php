@@ -66,6 +66,7 @@
     data-ptah-accent="{{ $ptahAppearance['accent'] }}"
     data-ptah-text="{{ $ptahAppearance['text'] }}"
     data-ptah-density="{{ $ptahAppearance['density'] }}"
+    data-ptah-modal-drag="{{ config('ptah.crud.modal_draggable', true) ? '1' : '0' }}"
     data-ptah-fontsize="{{ $ptahAppearance['fontsize'] }}"@if($ptahSpa) data-ptah-spa @endif>
 <head>
     <meta charset="UTF-8">
