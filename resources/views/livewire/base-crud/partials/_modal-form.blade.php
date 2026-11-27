@@ -540,9 +540,10 @@
                                             x-show="open"
                                             x-cloak
                                             x-transition:enter="transition ease-out duration-150"
-                                            x-transition:enter-start="opacity-0 -translate-y-1"
-                                            x-transition:enter-end="opacity-100 translate-y-0"
-                                            class="absolute z-20 w-full mt-1 overflow-auto border rounded-md max-h-48 ptah-c-dd">
+                                            x-transition:enter-start="opacity-0"
+                                            x-transition:enter-end="opacity-100"
+                                            x-init="@include('ptah::partials.float', ['open' => 'open'])"
+                                            class="absolute z-50 w-full mt-1 overflow-auto border rounded-md max-h-48 ptah-c-dd">
                                             <ul class="py-1" role="listbox" id="ptah-list-{{ $fField }}" aria-labelledby="ptah-lbl-{{ $fField }}">
                                                 @unless ($fRequired)
                                                     {{-- Opcional: volta ao vazio (1.47.0). Grava '' e o save()
@@ -740,7 +741,8 @@
                                         </div>
                                         <input type="hidden" wire:model="formData.{{ $fField }}" />
                                         <div x-show="open" x-cloak x-ref="list" id="ptah-list-{{ $fField }}" role="listbox"
-                                            class="absolute z-30 w-full {{ $sdSettings['startList'] === 'top' ? 'bottom-full mb-1' : 'mt-1' }} overflow-y-auto rounded-md max-h-48 ptah-c-dd">
+                                            x-init="@include('ptah::partials.float', ['open' => 'open', 'up' => $sdSettings['startList'] === 'top'])"
+                                            class="absolute z-50 w-full {{ $sdSettings['startList'] === 'top' ? 'bottom-full mb-1' : 'mt-1' }} overflow-y-auto rounded-md max-h-48 ptah-c-dd">
                                             {{-- Enquanto a busca vai e volta, "Buscando..." no lugar da
                                                  lista anterior: escolher um item que nao corresponde ao
                                                  texto digitado era facil (1.61.0). --}}

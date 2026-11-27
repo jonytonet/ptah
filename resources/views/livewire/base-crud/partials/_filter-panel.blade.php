@@ -277,7 +277,8 @@
                                         </button>
                                     </div>
                                     <div x-show="open" x-cloak
-                                        class="absolute z-30 w-full {{ $cfSdSettings['startList'] === 'top' ? 'bottom-full mb-1' : 'mt-1' }} overflow-y-auto rounded-md shadow-lg max-h-48 ptah-c-dd">
+                                        x-init="@include('ptah::partials.float', ['open' => 'open', 'up' => $cfSdSettings['startList'] === 'top'])"
+                                        class="absolute z-50 w-full {{ $cfSdSettings['startList'] === 'top' ? 'bottom-full mb-1' : 'mt-1' }} overflow-y-auto rounded-md shadow-lg max-h-48 ptah-c-dd">
                                         @forelse ($sdResults[$cfFilterKey] ?? [] as $opt)
                                             <button type="button"
                                                 wire:click="selectFilterDropdownOption({{ \Illuminate\Support\Js::from($cfField) }}, {{ \Illuminate\Support\Js::from($opt['value']) }}, {{ \Illuminate\Support\Js::from((string) $opt['label']) }})"

@@ -307,12 +307,14 @@
             x-show="open"
             x-cloak
             x-transition:enter="transition ease-out duration-150"
-            x-transition:enter-start="opacity-0 -translate-y-1"
-            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
             x-transition:leave="transition ease-in duration-100"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="ptah-select-dropdown absolute z-20 mt-1 w-full border rounded-md overflow-hidden"
+            class="ptah-select-dropdown absolute z-50 mt-1 w-full border rounded-md overflow-hidden"
+            {{-- Fixed under the field (1.63.1): a modal body that scrolls hid it. --}}
+            x-init="@include('ptah::partials.float', ['open' => 'open'])"
         >
             <div class="p-1.5 border-b ptah-c-dd_sep">
                 <input
@@ -358,12 +360,14 @@
             x-show="open"
             x-cloak
             x-transition:enter="transition ease-out duration-150"
-            x-transition:enter-start="opacity-0 -translate-y-1"
-            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
             x-transition:leave="transition ease-in duration-100"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="ptah-select-dropdown absolute z-20 mt-1 w-full border rounded-md overflow-auto max-h-48"
+            class="ptah-select-dropdown absolute z-50 mt-1 w-full border rounded-md overflow-auto max-h-48"
+            {{-- Fixed under the field (1.63.1): a modal body that scrolls hid it. --}}
+            x-init="@include('ptah::partials.float', ['open' => 'open'])"
         >
             <ul class="py-1" role="listbox" id="{{ $uniqueId }}-list" :aria-multiselectable="multiple">
                 <template x-for="(option, idx) in options" :key="option.value">

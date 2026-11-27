@@ -7,6 +7,7 @@
  * Mirrors vue/crud/form.ts.
  */
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { useFloating } from '../float';
 import type { HTMLAttributes, ReactNode } from 'react';
 import { controlOf, debounce, fromInput, inputType, isWide, toInput } from '../../core/form';
 import { isFailedLookup } from '../../core/controller';
@@ -409,6 +410,8 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
     const seq = useRef(0);
     const ref = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    // Fixed under the field (1.63.1): the form dialog's body scrolls and hid the list.
+    const list = useFloating<HTMLUListElement>(ref, items !== null, opensUp === true);
     const chosen = label || value;
 
     useEffect(() => setText(label || value), [label, value]);
@@ -557,7 +560,7 @@ export function PtahFormLookup({ id, value, label, disabled, invalid, describedB
                 </button>
             </div>
             {items !== null && (
-                <ul className={`pc-combo-list${opensUp ? ' pc-combo-list--up' : ''}`} id={`${id}-list`} role="listbox" aria-busy={loading || undefined}>
+                <ul ref={list} className={`pc-combo-list${opensUp ? ' pc-combo-list--up' : ''}`} id={`${id}-list`} role="listbox" aria-busy={loading || undefined}>
                     {loading && (
                         <li className="pc-combo-note" role="status">
                             {t.lookupLoading}

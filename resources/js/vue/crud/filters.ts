@@ -10,6 +10,7 @@
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 import type { PropType, ShallowRef, VNodeChild } from 'vue';
 import { debounce } from '../../core';
+import { useFloating } from '../float';
 import type { CrudController, CrudState } from '../../core';
 import {
     advancedKind,
@@ -371,6 +372,9 @@ const DropdownFilter = defineComponent({
         const lookup = new FilterLookup(props.crud, props.session, props.item.field);
         const box = shallowRef<FilterLookupState>(lookup.getState());
         const root = shallowRef<HTMLElement | null>(null);
+        // Fixed under the field (1.63.1): the filter dialog's body scrolls and hid the list.
+        const listEl = shallowRef<HTMLElement | null>(null);
+        useFloating(root, listEl, () => box.value.open, () => props.item.start_list === 'top');
         const stop = lookup.subscribe(() => {
             box.value = lookup.getState();
         });
@@ -467,7 +471,7 @@ const DropdownFilter = defineComponent({
                         [icon('chevronDown')],
                     ),
                     state.open
-                        ? h('ul', { class: `pc-fp-list${item.start_list === 'top' ? ' pc-fp-list--top' : ''}`, id: listId, role: 'listbox', 'aria-label': item.label, 'aria-busy': state.loading ? 'true' : 'false' }, [
+                        ? h('ul', { ref: listEl, class: `pc-fp-list${item.start_list === 'top' ? ' pc-fp-list--top' : ''}`, id: listId, role: 'listbox', 'aria-label': item.label, 'aria-busy': state.loading ? 'true' : 'false' }, [
                               state.items.length === 0 ? h('li', { class: 'pc-fp-note', role: state.loading ? 'status' : undefined }, state.loading ? t.loading : t.noResults) : null,
                               ...state.items.map((item2, index) =>
                                   h(

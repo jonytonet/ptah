@@ -94,6 +94,7 @@
                 x-cloak
                 id="sd-result-{{ $key }}"
                 role="listbox"
+                x-init="@include('ptah::partials.float', ['open' => 'show && results.length > 0', 'up' => $startList === 'bottom'])"
                 class="absolute z-[999] mt-1 w-full min-w-[200px] max-w-[600px] max-h-[400px] overflow-y-auto border rounded-md ptah-c-dd"
                 style="{{ $startList }}: 100%;"
             >

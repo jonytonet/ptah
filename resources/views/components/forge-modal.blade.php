@@ -126,7 +126,7 @@
         :style="'translate: ' + _dx + 'px ' + _dy + 'px'"
         data-ptah-draggable
         @endif
-        class="ptah-modal-panel relative z-10 w-full {{ $sizeClass }} mx-4 flex flex-col max-h-[90vh] rounded-xl border shadow-2xl overflow-hidden"
+        class="ptah-modal-panel relative z-10 w-full {{ $sizeClass }} mx-4 flex flex-col max-h-[90vh] rounded-xl border shadow-2xl"
         x-show="open"
         x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0 scale-95"

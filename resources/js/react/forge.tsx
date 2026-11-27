@@ -5,6 +5,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react';
 import { pagesAround } from '../core';
+import { useFloating } from './float';
 
 export type ForgeColor = 'primary' | 'success' | 'danger' | 'warn' | 'dark' | 'light';
 export type ForgeSize = 'sm' | 'md' | 'lg';
@@ -461,6 +462,8 @@ export function ForgeSelect({ label = '', options = [], placeholder = 'Select...
     const [filter, setFilter] = useState('');
     const [active, setActive] = useState(-1);
     const root = useRef<HTMLDivElement>(null);
+    // Fixed under the field (1.63.1): a dialog body that scrolls hid the list.
+    const panel = useFloating<HTMLDivElement>(root, open);
     const chosen = useMemo(() => (Array.isArray(selected) ? selected : selected === null || selected === '' ? [] : [selected]).map(String), [selected]);
     // Diacritics-insensitive: "permissao" finds "Permissão".
     const shown = useMemo(() => (filter === '' ? options : options.filter((option) => String(option.value) === '' || fold(option.label).includes(fold(filter)))), [options, filter]);
@@ -546,7 +549,7 @@ export function ForgeSelect({ label = '', options = [], placeholder = 'Select...
                     <span aria-hidden="true">▾</span>
                 </button>
                 {open && (
-                    <div className="pf-select-panel">
+                    <div className="pf-select-panel" ref={panel}>
                         {searchable && <input autoFocus type="text" className="pf-control pf-select-filter" aria-label="Filter" value={filter} onChange={(event) => { setFilter(event.target.value); setActive(-1); }} onKeyDown={onKey} />}
                         <ul className="pf-select-list" role="listbox" aria-multiselectable={multiple || undefined}>
                             {shown.length === 0 && <li className="pf-select-empty">—</li>}

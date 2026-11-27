@@ -8,6 +8,7 @@
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { PropType, VNode } from 'vue';
 import { pagesAround } from '../core';
+import { useFloating } from './float';
 
 export type ForgeColor = 'primary' | 'success' | 'danger' | 'warn' | 'dark' | 'light';
 
@@ -466,6 +467,9 @@ export const ForgeSelect = defineComponent({
         const filter = ref('');
         const active = ref(-1);
         const root = ref<HTMLElement | null>(null);
+        // Fixed under the field (1.63.1): a dialog body that scrolls hid the list.
+        const panel = ref<HTMLElement | null>(null);
+        useFloating(root, panel, () => open.value);
         const chosen = computed(() => {
             const value = props.modelValue === undefined ? props.selected : props.modelValue;
 
@@ -550,7 +554,7 @@ export const ForgeSelect = defineComponent({
                         [h('span', { class: text.value ? undefined : 'pf-select-placeholder' }, text.value || props.placeholder), h('span', { 'aria-hidden': 'true' }, '▾')],
                     ),
                     open.value
-                        ? h('div', { class: 'pf-select-panel' }, [
+                        ? h('div', { class: 'pf-select-panel', ref: panel }, [
                               props.searchable
                                   ? h('input', {
                                         type: 'text',

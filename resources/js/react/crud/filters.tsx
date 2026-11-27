@@ -10,6 +10,7 @@
 import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, RefObject } from 'react';
 import { debounce } from '../../core';
+import { useFloating } from '../float';
 import type { CrudController, CrudState } from '../../core';
 import {
     advancedOperators,
@@ -396,6 +397,8 @@ function DropdownFilter({ crud, session, item, list, labels, t }: ControlProps) 
     const lookup = useMemo(() => new FilterLookup(crud, session, item.field), [crud, session, item.field]);
     const box = useSyncExternalStore(lookup.subscribe, lookup.getState, lookup.getState);
     const ref = useRef<HTMLDivElement>(null);
+    // Fixed under the field (1.63.1): the filter dialog's body scrolls and hid the list.
+    const listEl = useFloating<HTMLUListElement>(ref, box.open, item.start_list === 'top');
     const parent = item.depends_on ? text(list.filters[item.depends_on]) : '';
     const firstParent = useRef(parent);
 
@@ -487,7 +490,7 @@ function DropdownFilter({ crud, session, item, list, labels, t }: ControlProps) 
                     <Icon name="chevronDown" />
                 </button>
                 {box.open && (
-                    <ul className={`pc-fp-list${item.start_list === 'top' ? ' pc-fp-list--top' : ''}`} id={listId} role="listbox" aria-label={item.label} aria-busy={box.loading}>
+                    <ul ref={listEl} className={`pc-fp-list${item.start_list === 'top' ? ' pc-fp-list--top' : ''}`} id={listId} role="listbox" aria-label={item.label} aria-busy={box.loading}>
                         {box.items.length === 0 && (
                             <li className="pc-fp-note" role={box.loading ? 'status' : undefined}>
                                 {box.loading ? t.loading : t.noResults}

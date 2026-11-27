@@ -5,6 +5,7 @@ import { isFailedLookup } from '../core/controller';
 import { optionLines } from '../core/crud/form';
 import type { LookupItem, Words } from '../core';
 import { Icon } from './icons';
+import { useFloating } from './float';
 
 const props = defineProps<{
     id: string;
@@ -29,6 +30,9 @@ const active = ref(-1);
 const loading = ref(false);
 const failed = ref(false);
 const root = ref<HTMLElement | null>(null);
+// Fixed under the field (1.63.1): the form dialog's body scrolls and hid the list.
+const list = ref<HTMLElement | null>(null);
+useFloating(root, list, () => items.value !== null, () => props.opensUp === true);
 const input = ref<HTMLInputElement | null>(null);
 let seq = 0;
 
@@ -188,7 +192,7 @@ onBeforeUnmount(() => {
             />
             <button type="button" tabindex="-1" class="pc-combo-toggle" :aria-label="t.toggleOptions" :aria-expanded="items !== null" :disabled="disabled" @mousedown.prevent="toggle"><Icon name="chevronDown" /></button>
         </div>
-        <ul v-if="items !== null" :id="`${id}-list`" :class="['pc-combo-list', { 'pc-combo-list--up': opensUp }]" role="listbox" :aria-busy="loading || undefined">
+        <ul v-if="items !== null" ref="list" :id="`${id}-list`" :class="['pc-combo-list', { 'pc-combo-list--up': opensUp }]" role="listbox" :aria-busy="loading || undefined">
             <li v-if="loading" class="pc-combo-note" role="status">{{ t.lookupLoading }}</li>
             <li v-else-if="failed" class="pc-combo-note pc-combo-note--error" role="alert">{{ t.lookupFailed }}</li>
             <li v-else-if="shown !== null && shown.length === 0" class="pc-combo-note">{{ t.noResults }}</li>
