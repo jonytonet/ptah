@@ -2846,6 +2846,15 @@ main { background-color: var(--ptah-canvas); }
     border-color: var(--ptah-line);
     color: var(--ptah-text-field);
 }
+/* 1.63.1: the button and the search of a module toolbar share the CRUD toolbar's
+   control height (--ptah-control-h, by density) — the sm button was 28px next to
+   a 42px search. */
+.ptah-module-toolbar > button,
+.ptah-module-toolbar > a,
+.ptah-module-toolbar input:not([type="checkbox"]):not([type="radio"]),
+.ptah-module-toolbar select { height: var(--ptah-control-h); padding-block: 0; }
+.ptah-module-toolbar > button,
+.ptah-module-toolbar > a { font-size: var(--ptah-control-fs); }
 .ptah-module-toolbar input[type="search"]::placeholder { color: var(--ptah-icon-muted); }
 .ptah-dark .ptah-module-toolbar input[type="search"]::placeholder { color: var(--ptah-icon-muted); }
 

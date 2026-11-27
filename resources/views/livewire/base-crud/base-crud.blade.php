@@ -282,7 +282,7 @@
                 <div x-transition:enter="transition ease-out duration-200"
                      x-transition:enter-start="opacity-0 scale-95"
                      x-transition:enter-end="opacity-100 scale-100"
-                     class="relative w-full max-w-md rounded-lg shadow-2xl bg-white dark:bg-slate-800 p-5"
+                     class="relative w-full max-w-md rounded-lg shadow-2xl ptah-c-modal_card p-5"
                      role="alertdialog" aria-modal="true">
                     <div class="flex items-center gap-4">
                         <div class="flex items-center justify-center flex-shrink-0 w-11 h-11 rounded-md bg-red-50 dark:bg-red-900/30 ring-4 ring-red-50 dark:ring-red-900/20">

@@ -132,7 +132,7 @@
                     </div>
                     <div>
                         <x-forge-input :label="__('ptah::ui.company_form_label')" wire:model.blur="label" :error="$errors->first('label')" placeholder="ACME" maxlength="4" />
-                        <p class="mt-1 text-[10px] text-slate-400">{{ __('ptah::ui.company_form_label_hint') }}</p>
+                        <p class="mt-1 text-xs text-slate-400">{{ __('ptah::ui.company_form_label_hint') }}</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

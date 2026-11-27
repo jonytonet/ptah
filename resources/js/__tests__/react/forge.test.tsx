@@ -120,14 +120,14 @@ describe('forge kit (React)', () => {
         const view = render(<ForgeSelect label="Papel" options={options} searchable onChange={onChange} />);
 
         fireEvent.click(screen.getByRole('button', { name: /Papel/ }));
-        const filter = screen.getByLabelText('Filter');
+        const filter = screen.getByLabelText('Filter options');
         fireEvent.change(filter, { target: { value: 'permissao' } });
         expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['Permissão Especial']);
 
         fireEvent.keyDown(filter, { key: 'Escape' });
         expect(screen.getAllByRole('option')).toHaveLength(2);
-        fireEvent.keyDown(screen.getByLabelText('Filter'), { key: 'ArrowDown' });
-        fireEvent.keyDown(screen.getByLabelText('Filter'), { key: 'Enter' });
+        fireEvent.keyDown(screen.getByLabelText('Filter options'), { key: 'ArrowDown' });
+        fireEvent.keyDown(screen.getByLabelText('Filter options'), { key: 'Enter' });
         expect(onChange).toHaveBeenCalledWith(1);
         expect(screen.queryByRole('listbox')).toBeNull();
 

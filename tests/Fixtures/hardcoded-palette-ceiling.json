@@ -27,7 +27,7 @@
     "livewire/ai/ai-chat-widget.blade.php": 20,
     "livewire/ai/ai-model-config-list.blade.php": 23,
     "livewire/auth/profile.blade.php": 12,
-    "livewire/base-crud/base-crud.blade.php": 13,
+    "livewire/base-crud/base-crud.blade.php": 11,
     "livewire/base-crud/crud-config.blade.php": 591,
     "livewire/base-crud/partials/_cards.blade.php": 6,
     "livewire/base-crud/partials/_config-form-preview.blade.php": 44,

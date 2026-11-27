@@ -100,13 +100,13 @@ describe('forge kit (Vue)', () => {
         const first = render(defineComponent({ render: () => h(ForgeSelect, { label: 'Papel', options, searchable: true, modelValue: single.value as never, 'onUpdate:modelValue': (next: unknown) => (single.value = next) }) }));
 
         await fireEvent.click(screen.getByRole('button', { name: /Papel/ }));
-        await fireEvent.update(screen.getByLabelText('Filter'), 'permissao');
+        await fireEvent.update(screen.getByLabelText('Filter options'), 'permissao');
         expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['Permissão Especial']);
 
-        await fireEvent.keyDown(screen.getByLabelText('Filter'), { key: 'Escape' });
+        await fireEvent.keyDown(screen.getByLabelText('Filter options'), { key: 'Escape' });
         expect(screen.getAllByRole('option')).toHaveLength(2);
-        await fireEvent.keyDown(screen.getByLabelText('Filter'), { key: 'ArrowDown' });
-        await fireEvent.keyDown(screen.getByLabelText('Filter'), { key: 'Enter' });
+        await fireEvent.keyDown(screen.getByLabelText('Filter options'), { key: 'ArrowDown' });
+        await fireEvent.keyDown(screen.getByLabelText('Filter options'), { key: 'Enter' });
         expect(single.value).toBe(1);
         expect(screen.queryByRole('listbox')).toBeNull();
         first.unmount();

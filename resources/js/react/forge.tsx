@@ -5,6 +5,9 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react';
 import { pagesAround } from '../core';
+import { trapFocus } from '../core/focus';
+import { forgeWords } from '../core/forge-words';
+import { Icon } from './icons';
 import { useFloating } from './float';
 
 export type ForgeColor = 'primary' | 'success' | 'danger' | 'warn' | 'dark' | 'light';
@@ -114,14 +117,13 @@ export function ForgeAlert({ color = 'primary', type, title, closable, dismissib
             {(closable || dismissible) && (
                 <button
                     type="button"
-                    className="pf-x"
-                    aria-label="Close"
+                    className="pf-x" aria-label={forgeWords().close} title={forgeWords().close}
                     onClick={() => {
                         setOpen(false);
                         onClose?.();
                     }}
                 >
-                    ✕
+                    <Icon name="x" />
                 </button>
             )}
         </div>
@@ -217,8 +219,8 @@ export function ForgePageHeader({ title = '', subtitle, back, children }: { titl
     return (
         <header className="pf pf-page-header">
             {back && (
-                <a className="pf pf-button pf-button--flat" href={back} aria-label="Back">
-                    ←
+                <a className="pf pf-button pf-button--flat" href={back} aria-label={forgeWords().back} title={forgeWords().back}>
+                    <Icon name="chevronLeft" />
                 </a>
             )}
             <div>
@@ -456,7 +458,7 @@ const fold = (text: string) =>
         .replace(/[̀-ͯ]/g, '')
         .toLowerCase();
 
-export function ForgeSelect({ label = '', options = [], placeholder = 'Select...', multiple, disabled, required, error, selected = null, name, searchable, onChange }: ForgeSelectProps) {
+export function ForgeSelect({ label = '', options = [], placeholder = forgeWords().select, multiple, disabled, required, error, selected = null, name, searchable, onChange }: ForgeSelectProps) {
     const id = useId();
     const [open, setOpen] = useState(false);
     const [filter, setFilter] = useState('');
@@ -550,7 +552,7 @@ export function ForgeSelect({ label = '', options = [], placeholder = 'Select...
                 </button>
                 {open && (
                     <div className="pf-select-panel" ref={panel}>
-                        {searchable && <input autoFocus type="text" className="pf-control pf-select-filter" aria-label="Filter" value={filter} onChange={(event) => { setFilter(event.target.value); setActive(-1); }} onKeyDown={onKey} />}
+                        {searchable && <input autoFocus type="text" className="pf-control pf-select-filter" aria-label={forgeWords().filter} value={filter} onChange={(event) => { setFilter(event.target.value); setActive(-1); }} onKeyDown={onKey} />}
                         <ul className="pf-select-list" role="listbox" aria-multiselectable={multiple || undefined}>
                             {shown.length === 0 && <li className="pf-select-empty">—</li>}
                             {shown.map((option, index) => (
@@ -587,6 +589,10 @@ export interface ForgeModalProps {
 
 export function ForgeModal({ open, onClose, title = '', subtitle, size = 'md', footer, children }: ForgeModalProps) {
     const titleId = useId();
+    const panel = useRef<HTMLDivElement>(null);
+
+    // The Tab key stays inside, and the focus goes back on close (forge-modal's x-trap).
+    useEffect(() => (open && panel.current ? trapFocus(panel.current) : undefined), [open]);
 
     useEffect(() => {
         if (!open) {
@@ -608,7 +614,7 @@ export function ForgeModal({ open, onClose, title = '', subtitle, size = 'md', f
 
     return (
         <div className="pf pf-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-            <div className="pf-modal" data-size={size} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+            <div className="pf-modal" ref={panel} data-size={size} role="dialog" aria-modal="true" aria-labelledby={titleId}>
                 <div className="pf-modal-head">
                     <div>
                         <h2 className="pf-modal-title" id={titleId}>
@@ -616,8 +622,8 @@ export function ForgeModal({ open, onClose, title = '', subtitle, size = 'md', f
                         </h2>
                         {subtitle && <p className="pf-modal-subtitle">{subtitle}</p>}
                     </div>
-                    <button type="button" className="pf-x" aria-label="Close" onClick={onClose}>
-                        ✕
+                    <button type="button" className="pf-modal-close" aria-label={forgeWords().close} title={forgeWords().close} onClick={onClose}>
+                        <Icon name="x" size={20} />
                     </button>
                 </div>
                 <div className="pf-modal-body">{children}</div>
@@ -710,7 +716,7 @@ export function ForgeStepper({ steps = [], currentStep = 1, color = 'primary' }:
 export function ForgePagination({ page, lastPage, onChange, previous = '‹', next = '›' }: { page: number; lastPage: number; onChange: (page: number) => void; previous?: ReactNode; next?: ReactNode }) {
     return (
         <nav className="pf pf-pagination" aria-label="Pagination">
-            <button type="button" className="pf-page" disabled={page <= 1} aria-label="Previous page" onClick={() => onChange(page - 1)}>
+            <button type="button" className="pf-page" disabled={page <= 1} aria-label={forgeWords().previousPage} onClick={() => onChange(page - 1)}>
                 {previous}
             </button>
             {pagesAround(page, lastPage).map((number) => (
@@ -718,7 +724,7 @@ export function ForgePagination({ page, lastPage, onChange, previous = '‹', ne
                     {number}
                 </button>
             ))}
-            <button type="button" className="pf-page" disabled={page >= lastPage} aria-label="Next page" onClick={() => onChange(page + 1)}>
+            <button type="button" className="pf-page" disabled={page >= lastPage} aria-label={forgeWords().nextPage} onClick={() => onChange(page + 1)}>
                 {next}
             </button>
         </nav>
@@ -758,7 +764,7 @@ export function ForgeTable({ headers = [], rows, searchable, sortable, emptyMess
         <div className="pf pf-table-wrap">
             {searchable && (
                 <div className="pf-table-tools">
-                    <input type="search" className="pf-control" aria-label="Search" placeholder="Search…" value={search} onChange={(event) => setSearch(event.target.value)} />
+                    <input type="search" className="pf-control" aria-label={forgeWords().search} placeholder={forgeWords().searchPlaceholder} value={search} onChange={(event) => setSearch(event.target.value)} />
                 </div>
             )}
             <table className="pf-table">
@@ -818,8 +824,8 @@ export function ForgeNotification({ show, onClose, color = 'primary', title = ''
                 {title && <strong className="pf-notification-title">{title}</strong>}
                 {text}
             </div>
-            <button type="button" className="pf-x" aria-label="Close" onClick={onClose}>
-                ✕
+            <button type="button" className="pf-x" aria-label={forgeWords().close} title={forgeWords().close} onClick={onClose}>
+                <Icon name="x" />
             </button>
         </div>
     );
@@ -881,14 +887,13 @@ export function ForgeToastHost() {
                     <span className="pf-toast-text">{toast.title}</span>
                     <button
                         type="button"
-                        className="pf-x"
-                        aria-label="Close"
+                        className="pf-x" aria-label={forgeWords().close} title={forgeWords().close}
                         onClick={() => {
                             toastList = toastList.filter((item) => item.id !== toast.id);
                             publish();
                         }}
                     >
-                        ✕
+                        <Icon name="x" />
                     </button>
                 </div>
             ))}

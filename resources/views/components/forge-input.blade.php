@@ -121,7 +121,7 @@
                 // plain (non-Livewire) form never showed its current value.
                 'value'       => $value,
                 'required'    => $required ?: null,
-                'class'       => "block w-full rounded border {$borderClass} outline-none {$paddingLeft} {$paddingRight} py-2.5 text-sm {$disabledClass} transition-colors duration-150 focus:ring-2",
+                'class'       => "block w-full rounded-md border {$borderClass} outline-none {$paddingLeft} {$paddingRight} py-2.5 text-sm {$disabledClass} transition-colors duration-150 focus:ring-2",
                 'disabled'    => $disabled,
             ]) }}
             @if($isPassword) :type="_show ? 'text' : 'password'" @endif

@@ -8,6 +8,9 @@
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { PropType, VNode } from 'vue';
 import { pagesAround } from '../core';
+import { trapFocus } from '../core/focus';
+import { forgeWords } from '../core/forge-words';
+import { icon } from './icons';
 import { useFloating } from './float';
 
 export type ForgeColor = 'primary' | 'success' | 'danger' | 'warn' | 'dark' | 'light';
@@ -104,13 +107,13 @@ export const ForgeAlert = defineComponent({
                           {
                               type: 'button',
                               class: 'pf-x',
-                              'aria-label': 'Close',
+                              'aria-label': forgeWords().close, title: forgeWords().close,
                               onClick: () => {
                                   open.value = false;
                                   emit('close');
                               },
                           },
-                          '✕',
+                          icon('x'),
                       )
                     : null,
             ]);
@@ -217,7 +220,7 @@ export const ForgePageHeader = defineComponent({
     setup(props, { slots }) {
         return () =>
             h('header', { class: 'pf pf-page-header' }, [
-                props.back ? h('a', { class: 'pf pf-button pf-button--flat', href: props.back, 'aria-label': 'Back' }, '←') : null,
+                props.back ? h('a', { class: 'pf pf-button pf-button--flat', href: props.back, 'aria-label': forgeWords().back, title: forgeWords().back }, icon('chevronLeft')) : null,
                 h('div', [h('h1', { class: 'pf-page-title' }, props.title), props.subtitle ? h('p', { class: 'pf-page-subtitle' }, props.subtitle) : null]),
                 slots.default ? h('div', { class: 'pf-page-actions' }, slots.default()) : null,
             ]);
@@ -451,7 +454,7 @@ export const ForgeSelect = defineComponent({
         modelValue: { type: [String, Number, Array] as PropType<Selected>, default: undefined },
         label: { type: String, default: '' },
         options: { type: Array as PropType<ForgeOption[]>, default: () => [] },
-        placeholder: { type: String, default: 'Select...' },
+        placeholder: { type: String, default: () => forgeWords().select },
         multiple: Boolean,
         disabled: Boolean,
         required: Boolean,
@@ -559,7 +562,7 @@ export const ForgeSelect = defineComponent({
                                   ? h('input', {
                                         type: 'text',
                                         class: 'pf-control pf-select-filter',
-                                        'aria-label': 'Filter',
+                                        'aria-label': forgeWords().filter,
                                         value: filter.value,
                                         onVnodeMounted: (vnode: VNode) => (vnode.el as HTMLInputElement | null)?.focus(),
                                         onInput: (event: Event) => {
@@ -596,6 +599,18 @@ export const ForgeModal = defineComponent({
     setup(props, { slots, emit }) {
         const titleId = uid('pf-modal');
         const close = () => emit('update:modelValue', false);
+        // The Tab key stays inside, and the focus goes back on close (forge-modal's x-trap).
+        const panel = ref<HTMLElement | null>(null);
+        let release: (() => void) | null = null;
+        watch(
+            () => props.modelValue && panel.value,
+            (el) => {
+                release?.();
+                release = el ? trapFocus(el) : null;
+            },
+            { flush: 'post' },
+        );
+        onBeforeUnmount(() => release?.());
         const onKey = (event: KeyboardEvent) => {
             if (props.modelValue && event.key === 'Escape') {
                 close();
@@ -607,10 +622,10 @@ export const ForgeModal = defineComponent({
         return () =>
             props.modelValue
                 ? h('div', { class: 'pf pf-overlay', onMousedown: (event: MouseEvent) => event.target === event.currentTarget && close() }, [
-                      h('div', { class: 'pf-modal', 'data-size': props.size, role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': titleId }, [
+                      h('div', { class: 'pf-modal', ref: panel, 'data-size': props.size, role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': titleId }, [
                           h('div', { class: 'pf-modal-head' }, [
                               h('div', [h('h2', { class: 'pf-modal-title', id: titleId }, props.title), props.subtitle ? h('p', { class: 'pf-modal-subtitle' }, props.subtitle) : null]),
-                              h('button', { type: 'button', class: 'pf-x', 'aria-label': 'Close', onClick: close }, '✕'),
+                              h('button', { type: 'button', class: 'pf-modal-close', 'aria-label': forgeWords().close, title: forgeWords().close, onClick: close }, icon('x', 20)),
                           ]),
                           h('div', { class: 'pf-modal-body' }, slots.default?.()),
                           slots.footer ? h('div', { class: 'pf-modal-foot' }, slots.footer()) : null,
@@ -713,11 +728,11 @@ export const ForgePagination = defineComponent({
     setup(props, { emit }) {
         return () =>
             h('nav', { class: 'pf pf-pagination', 'aria-label': 'Pagination' }, [
-                h('button', { type: 'button', class: 'pf-page', disabled: props.page <= 1, 'aria-label': 'Previous page', onClick: () => emit('change', props.page - 1) }, '‹'),
+                h('button', { type: 'button', class: 'pf-page', disabled: props.page <= 1, 'aria-label': forgeWords().previousPage, onClick: () => emit('change', props.page - 1) }, '‹'),
                 ...pagesAround(props.page, props.lastPage).map((number) =>
                     h('button', { key: number, type: 'button', class: 'pf-page', 'aria-current': number === props.page ? 'page' : undefined, onClick: () => emit('change', number) }, String(number)),
                 ),
-                h('button', { type: 'button', class: 'pf-page', disabled: props.page >= props.lastPage, 'aria-label': 'Next page', onClick: () => emit('change', props.page + 1) }, '›'),
+                h('button', { type: 'button', class: 'pf-page', disabled: props.page >= props.lastPage, 'aria-label': forgeWords().nextPage, onClick: () => emit('change', props.page + 1) }, '›'),
             ]);
     },
 });
@@ -758,7 +773,7 @@ export const ForgeTable = defineComponent({
             h('div', { class: 'pf pf-table-wrap' }, [
                 props.searchable
                     ? h('div', { class: 'pf-table-tools' }, [
-                          h('input', { type: 'search', class: 'pf-control', 'aria-label': 'Search', placeholder: 'Search…', value: search.value, onInput: (event: Event) => (search.value = (event.target as HTMLInputElement).value) }),
+                          h('input', { type: 'search', class: 'pf-control', 'aria-label': forgeWords().search, placeholder: forgeWords().searchPlaceholder, value: search.value, onInput: (event: Event) => (search.value = (event.target as HTMLInputElement).value) }),
                       ])
                     : null,
                 h('table', { class: 'pf-table' }, [
@@ -819,7 +834,7 @@ export const ForgeNotification = defineComponent({
             props.modelValue
                 ? h('div', { class: 'pf pf-notification', 'data-color': props.color, 'data-position': props.position, role: 'status' }, [
                       h('div', { style: { flex: 1 } }, [props.title ? h('strong', { class: 'pf-notification-title' }, props.title) : null, props.text]),
-                      h('button', { type: 'button', class: 'pf-x', 'aria-label': 'Close', onClick: close }, '✕'),
+                      h('button', { type: 'button', class: 'pf-x', 'aria-label': forgeWords().close, title: forgeWords().close, onClick: close }, icon('x')),
                   ])
                 : null;
     },
@@ -868,7 +883,7 @@ export const ForgeToastHost = defineComponent({
                 toasts.value.map((toast) =>
                     h('div', { key: toast.id, class: 'pf pf-toast', 'data-color': toast.color, role: 'status' }, [
                         h('span', { class: 'pf-toast-text' }, toast.title),
-                        h('button', { type: 'button', class: 'pf-x', 'aria-label': 'Close', onClick: () => (toasts.value = toasts.value.filter((item) => item.id !== toast.id)) }, '✕'),
+                        h('button', { type: 'button', class: 'pf-x', 'aria-label': forgeWords().close, title: forgeWords().close, onClick: () => (toasts.value = toasts.value.filter((item) => item.id !== toast.id)) }, icon('x')),
                     ]),
                 ),
             );
