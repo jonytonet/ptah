@@ -71,6 +71,17 @@ describe('forge kit (Vue)', () => {
         expect(value.value).toBe('a@b.c');
     });
 
+    it('a password input reveals and hides what is typed (1.63.1)', async () => {
+        render(ForgeInput, { props: { label: 'Senha', type: 'password', modelValue: 'segredo' } });
+        const input = screen.getByLabelText('Senha');
+        expect(input.getAttribute('type')).toBe('password');
+
+        await fireEvent.click(screen.getByRole('button', { name: 'Show password' }));
+        expect(input.getAttribute('type')).toBe('text');
+        await fireEvent.click(screen.getByRole('button', { name: 'Hide password' }));
+        expect(input.getAttribute('type')).toBe('password');
+    });
+
     it('textarea counts the text already there', async () => {
         const value = ref('texto salvo');
         render(defineComponent({ render: () => h(ForgeTextarea, { label: 'Obs', counter: true, maxlength: 100, modelValue: value.value, 'onUpdate:modelValue': (next: string) => (value.value = next) }) }));

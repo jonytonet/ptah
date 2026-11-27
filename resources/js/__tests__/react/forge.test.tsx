@@ -78,6 +78,17 @@ describe('forge kit (React)', () => {
         expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe('100');
     });
 
+    it('a password input reveals and hides what is typed (1.63.1)', () => {
+        render(<ForgeInput label="Senha" type="password" value="segredo" onChange={() => undefined} />);
+        const input = screen.getByLabelText('Senha');
+        expect(input.getAttribute('type')).toBe('password');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Show password' }));
+        expect(input.getAttribute('type')).toBe('text');
+        fireEvent.click(screen.getByRole('button', { name: 'Hide password' }));
+        expect(input.getAttribute('type')).toBe('password');
+    });
+
     it('input shows its error and reports what is typed', () => {
         const onChange = vi.fn();
         render(<ForgeInput label="E-mail" error="Inválido" required onChange={onChange} />);

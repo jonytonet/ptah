@@ -7,6 +7,47 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.63.1] - 2026-11-27
+
+### Added
+
+- **Show / hide password in React and Vue.** ForgeInput with `type="password"` shows the eye that the Livewire forge-input already had. It applies to login, reset, profile and 2FA. The labels are "Mostrar senha" / "Ocultar senha".
+
+### Fixed
+
+- **The open list of a select or searchdropdown no longer hides inside a modal.** It was `absolute` inside the modal body, which scrolls, so the body cut it and the options sat behind a scrollbar. This happened in the access modal of the permissions screen, the CRUD form and the filter modal. The list is now `fixed` under its field. It opens upwards when there is no room below, and follows scroll, resize and its own size.
+  - Livewire: partial `ptah::partials.float` on forge-select, the form's select and searchdropdown, the filter searchdropdown and the search-dropdown component. The forge-modal panel no longer clips (`overflow-hidden`), since the `translate` of dragging makes it the containing block.
+  - React/Vue: `core/float.ts` with `useFloating`, on ForgeSelect, the form lookup and the filter searchdropdown.
+- **React/Vue forge kit and admin screens now use the Livewire scale.** A UX review and a frontend review found the CRUD matching across stacks, but the `pf-*` kit and the `pc-btn` / `pc-input` / `pc-toolbar` classes of the admin screens used their own fixed pixel sizes and ignored the density and font of /profile.
+  - `.pf` reads the same tokens as the BaseCrud layer (`--ptah-control-*`, `--ptah-field-*`).
+  - Button, field, select, switch, badge, card, stat card, alert, empty state, tabs, pagination and toast take the values of the forge-* Blade components.
+  - ForgeModal:
+    - takes the Livewire widths: sm 24rem, md 28rem, lg 32rem, xl 36rem, 2xl 42rem. xl was 960px;
+    - is centred, and only its body scrolls;
+    - keeps the focus inside;
+    - closes with an icon and a translated label.
+  - Button colours:
+    - success and danger are AA;
+    - light and dark follow the dark theme;
+    - flat buttons are transparent at rest.
+  - Admin screens:
+    - the fields of the role and access dialogs were stuck together (`pa-section` was never defined);
+    - the toolbar is separated from the table and the footer is loose;
+    - edit and delete actions are coloured at rest;
+    - the "New" button and the search have the same height.
+  - The kit's fixed English labels (Close, Back, Select..., Previous page…) follow `<html lang>` (`core/forge-words.ts`).
+  - Dead CSS removed: `pc-modal*`, `pc-filters`, `pc-bulk`, `pc-range`.
+- **Livewire consistency:**
+  - forge-input is `rounded-md` like select and textarea.
+  - The textarea label is `text-xs`.
+  - Module toolbars give the button and the search the control height. The sm button was 28px next to a 42px search.
+  - The bulk confirmation no longer has a fixed `bg-white`.
+  - A `text-[10px]` hint is now `text-xs`.
+
+### Upgrading
+
+Nothing to run. A host with a published copy of `ptah-ui.css` or of the forge-* views should republish them.
+
 ## [1.63.0] - 2026-11-26
 
 ### Added

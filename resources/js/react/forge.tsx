@@ -293,6 +293,10 @@ export interface ForgeInputProps extends Omit<InputHTMLAttributes<HTMLInputEleme
 export function ForgeInput({ label = '', state = 'normal', iconBefore, iconAfter, loading, message = '', error, required, onChange, id, className, ...rest }: ForgeInputProps) {
     const auto = useId();
     const inputId = id ?? auto;
+    // A password shows an eye that reveals it (forge-input's _show).
+    const [shown, setShown] = useState(false);
+    const isPassword = rest.type === 'password';
+    const toggleText = shown ? forgeWords().hidePassword : forgeWords().showPassword;
 
     return (
         <div className="pf pf-field" data-state={error ? 'danger' : state}>
@@ -310,14 +314,19 @@ export function ForgeInput({ label = '', state = 'normal', iconBefore, iconAfter
                 )}
                 <input
                     {...rest}
+                    type={isPassword && shown ? 'text' : rest.type}
                     id={inputId}
                     required={required}
-                    className={cx('pf-control', iconBefore && 'pf-control--before', (iconAfter || loading) && 'pf-control--after', className)}
+                    className={cx('pf-control', iconBefore && 'pf-control--before', (iconAfter || loading || isPassword) && 'pf-control--after', className)}
                     aria-invalid={error ? true : undefined}
                     aria-describedby={error ? `${inputId}-error` : message ? `${inputId}-message` : undefined}
                     onChange={(event) => onChange?.(event.target.value)}
                 />
-                {(iconAfter || loading) && (
+                {isPassword && !loading ? (
+                    <button type="button" className="pf-field-toggle" aria-label={toggleText} title={toggleText} aria-pressed={shown} tabIndex={-1} onClick={() => setShown(!shown)}>
+                        <Icon name={shown ? 'eyeOff' : 'eye'} />
+                    </button>
+                ) : (iconAfter || loading) && (
                     <span className="pf-field-icon pf-field-icon--after" aria-hidden="true">
                         {loading ? <span className="pf-spinner" data-size="sm" /> : <i className={iconAfter ?? undefined} />}
                     </span>

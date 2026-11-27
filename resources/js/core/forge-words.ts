@@ -13,6 +13,8 @@ export interface ForgeWords {
     nextPage: string;
     search: string;
     searchPlaceholder: string;
+    showPassword: string;
+    hidePassword: string;
 }
 
 const pt: ForgeWords = {
@@ -24,6 +26,8 @@ const pt: ForgeWords = {
     nextPage: 'Próxima página',
     search: 'Buscar',
     searchPlaceholder: 'Buscar…',
+    showPassword: 'Mostrar senha',
+    hidePassword: 'Ocultar senha',
 };
 
 const en: ForgeWords = {
@@ -35,6 +39,8 @@ const en: ForgeWords = {
     nextPage: 'Next page',
     search: 'Search',
     searchPlaceholder: 'Search…',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
 };
 
 export function forgeWords(locale?: string | null): ForgeWords {

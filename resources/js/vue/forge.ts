@@ -304,10 +304,14 @@ export const ForgeInput = defineComponent({
     emits: ['update:modelValue'],
     setup(props, { attrs, emit }) {
         const auto = uid('pf-input');
+        // A password shows an eye that reveals it (forge-input's _show).
+        const shown = ref(false);
 
         return () => {
             const id = props.id ?? auto;
-            const after = props.iconAfter || props.loading;
+            const isPassword = props.type === 'password';
+            const after = props.iconAfter || props.loading || isPassword;
+            const toggleText = shown.value ? forgeWords().hidePassword : forgeWords().showPassword;
 
             return h('div', { class: 'pf pf-field', 'data-state': props.error ? 'danger' : props.state }, [
                 props.label ? h('label', { class: 'pf-field-label', for: id }, [props.label, props.required ? h('span', { 'aria-hidden': 'true' }, ' *') : null]) : null,
@@ -317,7 +321,7 @@ export const ForgeInput = defineComponent({
                         ...attrs,
                         id,
                         name: props.name,
-                        type: props.type,
+                        type: isPassword && shown.value ? 'text' : props.type,
                         placeholder: props.placeholder || undefined,
                         disabled: props.disabled,
                         required: props.required,
@@ -327,7 +331,11 @@ export const ForgeInput = defineComponent({
                         'aria-describedby': props.error ? `${id}-error` : props.message ? `${id}-message` : undefined,
                         onInput: (event: Event) => emit('update:modelValue', (event.target as HTMLInputElement).value),
                     }),
-                    after ? h('span', { class: 'pf-field-icon pf-field-icon--after', 'aria-hidden': 'true' }, [props.loading ? h('span', { class: 'pf-spinner', 'data-size': 'sm' }) : h('i', { class: props.iconAfter })]) : null,
+                    isPassword && !props.loading
+                        ? h('button', { type: 'button', class: 'pf-field-toggle', 'aria-label': toggleText, title: toggleText, 'aria-pressed': shown.value ? 'true' : 'false', tabindex: -1, onClick: () => (shown.value = !shown.value) }, [icon(shown.value ? 'eyeOff' : 'eye')])
+                        : after
+                          ? h('span', { class: 'pf-field-icon pf-field-icon--after', 'aria-hidden': 'true' }, [props.loading ? h('span', { class: 'pf-spinner', 'data-size': 'sm' }) : h('i', { class: props.iconAfter })])
+                          : null,
                 ]),
                 props.error
                     ? h('p', { class: 'pf-field-error', id: `${id}-error`, role: 'alert' }, props.error)

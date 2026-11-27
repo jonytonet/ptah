@@ -523,6 +523,9 @@ input[type='color'].pc-input { padding: 2px; height: 2.5rem; }
 .pf-field-icon { position: absolute; display: inline-flex; color: var(--pc-text-muted); pointer-events: none; }
 .pf-field-icon--before { left: .625rem; }
 .pf-field-icon--after { right: .625rem; }
+/* The eye of a password field (forge-input, 1.63.1). */
+.pf-field-toggle { position: absolute; right: .625rem; display: inline-flex; padding: 0; border: 0; background: transparent; color: var(--pc-icon-muted, var(--pc-text-muted)); cursor: pointer; transition: color .15s; }
+.pf-field-toggle:hover { color: var(--pc-text-2, var(--pc-text-strong)); }
 .pf-field-message { margin: 4px 0 0; font-size: 0.75rem; color: var(--pc-text-muted); }
 .pf-field-error { margin: 4px 0 0; font-size: 0.75rem; color: var(--pc-danger); }
 .pf-field-foot { display: flex; justify-content: space-between; gap: 8px; }
